@@ -1,0 +1,1517 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://arch0.dev/schemas/sdl/v0.1/solution.schema.json",
+  "title": "arch0 Solution Design Language v0.1",
+  "description": "Machine-readable specification for software system architecture",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": {}
+  },
+  "required": ["sdlVersion", "solution", "product", "architecture", "data", "nonFunctional", "deployment", "artifacts"],
+  "properties": {
+    "sdlVersion": {
+      "type": "string",
+      "enum": ["0.1"],
+      "description": "SDL schema version"
+    },
+    "solution": {
+      "$ref": "#/$defs/SolutionMetadata"
+    },
+    "product": {
+      "$ref": "#/$defs/ProductContext"
+    },
+    "architecture": {
+      "$ref": "#/$defs/Architecture"
+    },
+    "auth": {
+      "$ref": "#/$defs/Authentication"
+    },
+    "data": {
+      "$ref": "#/$defs/DataLayer"
+    },
+    "integrations": {
+      "$ref": "#/$defs/Integrations"
+    },
+    "nonFunctional": {
+      "$ref": "#/$defs/NFRs"
+    },
+    "deployment": {
+      "$ref": "#/$defs/Deployment"
+    },
+    "constraints": {
+      "$ref": "#/$defs/Constraints"
+    },
+    "technicalDebt": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TechDebt"
+      }
+    },
+    "evolution": {
+      "$ref": "#/$defs/Evolution"
+    },
+    "testing": {
+      "$ref": "#/$defs/Testing"
+    },
+    "observability": {
+      "$ref": "#/$defs/Observability"
+    },
+    "artifacts": {
+      "$ref": "#/$defs/ArtifactConfig"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "architecture": {
+            "properties": {
+              "style": { "const": "microservices" }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "architecture": {
+            "required": ["services"],
+            "properties": {
+              "services": {
+                "minItems": 2,
+                "errorMessage": "Microservices architecture requires at least 2 services"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "auth": {
+            "properties": {
+              "strategy": { "const": "oidc" }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "auth": {
+            "required": ["provider"],
+            "errorMessage": "OIDC strategy requires provider to be specified"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nonFunctional": {
+            "properties": {
+              "security": {
+                "properties": {
+                  "pii": { "const": true }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "nonFunctional": {
+            "properties": {
+              "security": {
+                "properties": {
+                  "encryptionAtRest": {
+                    "const": true,
+                    "errorMessage": "PII data requires encryptionAtRest: true"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "deployment": {
+            "required": ["infrastructure"],
+            "properties": {
+              "cloud": { "const": "azure" },
+              "infrastructure": {
+                "required": ["iac"],
+                "properties": {
+                  "iac": { "const": "cloudformation" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "errorMessage": "CloudFormation can only be used with AWS (cloud: 'aws')",
+        "not": {}
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "data": {
+            "properties": {
+              "primaryDatabase": {
+                "properties": {
+                  "type": { "const": "mongodb" }
+                }
+              }
+            }
+          },
+          "architecture": {
+            "properties": {
+              "projects": {
+                "properties": {
+                  "backend": {
+                    "items": {
+                      "properties": {
+                        "orm": { "const": "ef-core" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "errorMessage": "MongoDB cannot be used with Entity Framework Core - use Mongoose instead",
+        "not": {}
+      }
+    }
+  ],
+  "$defs": {
+    "SolutionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name", "description", "stage"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50,
+          "pattern": "^[a-zA-Z0-9\\s\\-]+$",
+          "description": "Solution name"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "One-line pitch"
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["MVP", "Growth", "Enterprise"],
+          "description": "Current product stage"
+        },
+        "domain": {
+          "type": "string",
+          "format": "hostname",
+          "description": "Primary domain"
+        },
+        "regions": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "required": ["primary"],
+          "properties": {
+            "primary": {
+              "type": "string",
+              "description": "Primary deployment region"
+            },
+            "secondary": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "DR/multi-region deployments"
+            }
+          }
+        },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "org": {
+              "type": "string"
+            },
+            "naming": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ProductContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["personas"],
+      "properties": {
+        "personas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": ["name", "goals"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "goals": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "accessLevel": {
+                "type": "string",
+                "enum": ["public", "authenticated", "admin"]
+              }
+            }
+          }
+        },
+        "coreFlows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"]
+              }
+            }
+          }
+        },
+        "valueProposition": {
+          "type": "string"
+        }
+      }
+    },
+    "Architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["style", "projects"],
+      "properties": {
+        "style": {
+          "type": "string",
+          "enum": ["modular-monolith", "microservices", "serverless"]
+        },
+        "projects": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "frontend": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FrontendProject"
+              }
+            },
+            "backend": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/BackendProject"
+              }
+            },
+            "mobile": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MobileProject"
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Service"
+          }
+        },
+        "sharedLibraries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "FrontendProject": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name", "framework"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["web", "mobile-web", "admin"],
+          "default": "web"
+        },
+        "framework": {
+          "type": "string",
+          "enum": ["nextjs", "react", "vue", "angular", "svelte", "solid"]
+        },
+        "rendering": {
+          "type": "string",
+          "enum": ["ssr", "ssg", "spa"]
+        },
+        "stateManagement": {
+          "type": "string",
+          "enum": ["context", "redux", "zustand", "mobx", "none"]
+        },
+        "styling": {
+          "type": "string",
+          "enum": ["tailwind", "css-modules", "styled-components", "sass", "emotion"]
+        }
+      }
+    },
+    "BackendProject": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name", "framework"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["backend", "worker", "function"],
+          "default": "backend"
+        },
+        "framework": {
+          "type": "string",
+          "enum": ["dotnet-8", "nodejs", "python-fastapi", "go", "java-spring", "ruby-rails", "php-laravel"]
+        },
+        "apiStyle": {
+          "type": "string",
+          "enum": ["rest", "graphql", "grpc", "mixed"]
+        },
+        "orm": {
+          "type": "string",
+          "enum": ["ef-core", "prisma", "typeorm", "sqlalchemy", "gorm", "sequelize", "mongoose"]
+        },
+        "apiVersioning": {
+          "type": "string",
+          "enum": ["url-prefix", "header", "query-param", "none"]
+        }
+      }
+    },
+    "MobileProject": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name", "platform", "framework"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["ios", "android", "cross-platform"]
+        },
+        "framework": {
+          "type": "string",
+          "enum": ["react-native", "flutter", "swift", "kotlin", "ionic"]
+        }
+      }
+    },
+    "Service": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name", "kind"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["backend", "worker", "function", "api-gateway"]
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exposes": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "http": {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^x-": {}
+              },
+              "properties": {
+                "basePath": {
+                  "type": "string"
+                },
+                "openapi": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "grpc": {
+              "type": "boolean"
+            },
+            "graphql": {
+              "type": "boolean"
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["strategy"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["oidc", "passwordless", "magic-link", "api-key", "none"]
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["cognito", "auth0", "entra-id", "entra-id-b2c", "firebase", "supabase", "clerk", "custom"]
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "sessions": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "accessToken": {
+              "type": "string",
+              "enum": ["jwt", "opaque"]
+            },
+            "refreshToken": {
+              "type": "boolean"
+            },
+            "ttl": {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^x-": {}
+              },
+              "properties": {
+                "access": {
+                  "type": "string"
+                },
+                "refresh": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "mfa": {
+          "type": "boolean"
+        },
+        "socialProviders": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["google", "github", "microsoft", "apple", "facebook", "twitter"]
+          }
+        }
+      }
+    },
+    "DataLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["primaryDatabase"],
+      "properties": {
+        "primaryDatabase": {
+          "$ref": "#/$defs/Database"
+        },
+        "secondaryDatabases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Database"
+          }
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "blobs": {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^x-": {}
+              },
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["azure-blob", "s3", "gcs", "cloudflare-r2"]
+                },
+                "public": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "files": {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^x-": {}
+              },
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["azure-blob", "s3", "gcs", "cloudflare-r2"]
+                }
+              }
+            }
+          }
+        },
+        "cache": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["redis", "memcached", "none"]
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "useCase": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["session", "api", "query"]
+              }
+            }
+          }
+        },
+        "queues": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["rabbitmq", "azure-service-bus", "sqs", "kafka", "redis"]
+            },
+            "useCase": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["async-jobs", "event-streaming", "notifications"]
+              }
+            }
+          }
+        },
+        "search": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["elasticsearch", "algolia", "typesense", "azure-search", "meilisearch", "pinecone", "qdrant", "weaviate"]
+            }
+          }
+        }
+      }
+    },
+    "Database": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["type", "hosting"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["postgres", "mysql", "sqlserver", "mongodb", "dynamodb", "cockroachdb", "planetscale"]
+        },
+        "hosting": {
+          "type": "string",
+          "enum": ["managed", "self-hosted", "serverless"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "enum": ["small", "medium", "large"]
+        },
+        "role": {
+          "type": "string",
+          "enum": ["primary", "read-replica", "analytics"]
+        }
+      }
+    },
+    "Integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "payments": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["stripe", "paypal", "square", "adyen", "braintree"]
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["subscriptions", "one-time", "marketplace"]
+            },
+            "currency": {
+              "type": "string"
+            }
+          }
+        },
+        "email": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["sendgrid", "mailgun", "ses", "postmark", "resend", "smtp"]
+            },
+            "useCase": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["transactional", "marketing", "notifications"]
+              }
+            }
+          }
+        },
+        "sms": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["twilio", "vonage", "aws-sns", "messagebird"]
+            }
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["posthog", "mixpanel", "amplitude", "google-analytics", "plausible"]
+            }
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["datadog", "newrelic", "azure-monitor", "sentry", "cloudwatch"]
+            }
+          }
+        },
+        "cdn": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["cloudflare", "fastly", "azure-cdn", "cloudfront"]
+            }
+          }
+        },
+        "custom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": ["name", "apiType"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "apiType": {
+                "type": "string",
+                "enum": ["rest", "graphql", "soap", "grpc"]
+              },
+              "authMethod": {
+                "type": "string",
+                "enum": ["api-key", "oauth2", "basic", "none"]
+              },
+              "rateLimit": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "NFRs": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["availability", "scaling"],
+      "properties": {
+        "availability": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "required": ["target"],
+          "properties": {
+            "target": {
+              "type": "string",
+              "pattern": "^[0-9]{2}\\.[0-9]{1,2}$"
+            },
+            "maintenanceWindow": {
+              "type": "string"
+            }
+          }
+        },
+        "scaling": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "expectedUsersMonth1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "expectedUsersYear1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "peakConcurrentUsers": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dataGrowthPerMonth": {
+              "type": "string"
+            }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "apiResponseTime": {
+              "type": "string"
+            },
+            "pageLoadTime": {
+              "type": "string"
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "required": ["pii"],
+          "properties": {
+            "pii": {
+              "type": "boolean"
+            },
+            "phi": {
+              "type": "boolean"
+            },
+            "pci": {
+              "type": "boolean"
+            },
+            "encryptionAtRest": {
+              "type": "boolean"
+            },
+            "encryptionInTransit": {
+              "type": "boolean"
+            },
+            "auditLogging": {
+              "type": "string",
+              "enum": ["none", "basic", "detailed", "compliance"]
+            },
+            "penetrationTesting": {
+              "type": "boolean"
+            }
+          }
+        },
+        "compliance": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "frameworks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["gdpr", "hipaa", "sox", "pci-dss", "iso27001", "soc2"]
+              }
+            }
+          }
+        },
+        "backup": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "frequency": {
+              "type": "string",
+              "enum": ["hourly", "daily", "weekly"]
+            },
+            "retention": {
+              "type": "string"
+            },
+            "pointInTimeRecovery": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "Deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["cloud"],
+      "properties": {
+        "cloud": {
+          "type": "string",
+          "enum": ["azure", "aws", "gcp", "cloudflare", "vercel", "railway", "render", "fly-io"]
+        },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "frontend": {
+              "type": "string",
+              "enum": ["static-web-apps", "vercel", "cloudflare-pages", "s3+cloudfront", "app-service", "netlify"]
+            },
+            "backend": {
+              "type": "string",
+              "enum": ["container-apps", "ecs", "cloud-run", "kubernetes", "app-service", "lambda", "cloud-functions"]
+            },
+            "worker": {
+              "type": "string",
+              "enum": ["container-apps", "ecs", "cloud-run", "kubernetes", "app-service", "lambda", "cloud-functions"]
+            }
+          }
+        },
+        "networking": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "required": ["publicApi"],
+          "properties": {
+            "publicApi": {
+              "type": "boolean"
+            },
+            "waf": {
+              "type": "boolean"
+            },
+            "ddos": {
+              "type": "boolean"
+            },
+            "privateEndpoints": {
+              "type": "boolean"
+            },
+            "customDomain": {
+              "type": "boolean"
+            }
+          }
+        },
+        "ciCd": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "required": ["provider"],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["github-actions", "gitlab-ci", "azure-devops", "circleci", "jenkins"]
+            },
+            "environments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Environment"
+              }
+            }
+          }
+        },
+        "infrastructure": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "iac": {
+              "type": "string",
+              "enum": ["terraform", "bicep", "pulumi", "cdk", "cloudformation"]
+            },
+            "stateBacking": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "autoApproval": {
+          "type": "boolean"
+        },
+        "requiresTests": {
+          "type": "boolean"
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "budget": {
+          "type": "string",
+          "enum": ["startup", "scaleup", "enterprise", "custom"]
+        },
+        "budgetAmount": {
+          "type": "string"
+        },
+        "team": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "backend": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "frontend": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fullstack": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "devops": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "designer": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "developers": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total developer count (simplified, use instead of role-specific counts)"
+            }
+          }
+        },
+        "timeline": {
+          "type": "string"
+        },
+        "compliance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["gdpr", "hipaa", "sox", "pci-dss", "iso27001", "soc2"]
+          }
+        },
+        "existingInfra": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "mustReuse": {
+              "type": "boolean"
+            }
+          }
+        },
+        "skills": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cloudExperience": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["azure", "aws", "gcp"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "TechDebt": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["id", "decision", "reason", "impact"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "effort": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "triggerCondition": {
+          "type": "string"
+        },
+        "mitigationPlan": {
+          "type": "string"
+        }
+      }
+    },
+    "Evolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": ["condition", "action"],
+            "properties": {
+              "condition": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "estimatedEffort": {
+                "type": "string"
+              },
+              "blockers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "roadmap": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": ["MVP", "Growth", "Enterprise"]
+              },
+              "targetDate": {
+                "type": "string"
+              },
+              "architectureChanges": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "newCapabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "costProjection": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "currentMonthly": {
+              "type": "string"
+            },
+            "atMVP": {
+              "type": "string"
+            },
+            "atGrowth": {
+              "type": "string"
+            },
+            "atEnterprise": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ArtifactConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "required": ["generate"],
+      "properties": {
+        "generate": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "architecture-diagram",
+              "sequence-diagrams",
+              "openapi",
+              "data-model",
+              "repo-scaffold",
+              "iac-skeleton",
+              "backlog",
+              "adr",
+              "deployment-guide",
+              "cost-estimate",
+              "coding-rules",
+              "coding-rules-enforcement"
+            ]
+          }
+        },
+        "formats": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "diagrams": {
+              "type": "string",
+              "enum": ["mermaid", "plantuml", "structurizr"]
+            },
+            "adr": {
+              "type": "string",
+              "enum": ["markdown", "asciidoc"]
+            }
+          }
+        }
+      }
+    },
+    "Testing": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "framework": {
+              "type": "string",
+              "enum": ["jest", "vitest", "pytest", "xunit", "go-test", "junit", "rspec", "phpunit"]
+            }
+          }
+        },
+        "e2e": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "framework": {
+              "type": "string",
+              "enum": ["playwright", "cypress", "selenium", "none"]
+            }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "target": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "enforce": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "Observability": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "logging": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["pino", "winston", "serilog", "zerolog", "log4j", "structured"]
+            },
+            "structured": {
+              "type": "boolean"
+            },
+            "level": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"]
+            }
+          }
+        },
+        "tracing": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["opentelemetry", "jaeger", "zipkin", "xray", "none"]
+            },
+            "samplingRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["prometheus", "datadog", "cloudwatch", "grafana", "none"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

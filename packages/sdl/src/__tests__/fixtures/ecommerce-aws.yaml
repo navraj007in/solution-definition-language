@@ -1,0 +1,127 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "ShopHub"
+  description: "Multi-vendor e-commerce marketplace"
+  stage: "Enterprise"
+
+product:
+  personas:
+    - name: "Shopper"
+      goals:
+        - "Browse products"
+        - "Add to cart"
+        - "Submit order"
+    - name: "Admin"
+      accessLevel: "admin"
+      goals:
+        - "Manage products"
+        - "View orders"
+  coreFlows:
+    - name: "Purchase Flow"
+      priority: "critical"
+      steps:
+        - "Select product"
+        - "Add to cart"
+        - "Enter shipping details"
+        - "Submit payment"
+        - "Display confirmation"
+    - name: "Inventory Management"
+      priority: "high"
+      steps:
+        - "Upload product data"
+        - "Save to catalog"
+
+architecture:
+  style: "microservices"
+  projects:
+    frontend:
+      - name: "storefront"
+        framework: "react"
+        styling: "tailwind"
+      - name: "admin-panel"
+        framework: "angular"
+        type: "admin"
+    backend:
+      - name: "api-gateway"
+        framework: "nodejs"
+        orm: "mongoose"
+      - name: "worker"
+        framework: "go"
+        type: "worker"
+  services:
+    - name: "order-service"
+      kind: "backend"
+      responsibilities:
+        - "Order processing"
+        - "Payment orchestration"
+    - name: "catalog-service"
+      kind: "backend"
+      responsibilities:
+        - "Product catalog"
+        - "Inventory management"
+
+auth:
+  strategy: "oidc"
+  provider: "cognito"
+  roles:
+    - "customer"
+    - "admin"
+  mfa: true
+  socialProviders:
+    - "google"
+    - "github"
+  sessions:
+    refreshToken: true
+
+data:
+  primaryDatabase:
+    type: "mongodb"
+    hosting: "managed"
+  secondaryDatabases:
+    - type: "postgres"
+      hosting: "managed"
+      role: "analytics"
+  cache:
+    type: "redis"
+    useCase:
+      - "session"
+      - "api"
+
+integrations:
+  payments:
+    provider: "stripe"
+    mode: "marketplace"
+  email:
+    provider: "sendgrid"
+  monitoring:
+    provider: "datadog"
+  cdn:
+    provider: "cloudfront"
+
+deployment:
+  cloud: "aws"
+
+nonFunctional:
+  availability:
+    target: "99.99"
+  scaling:
+    expectedUsersMonth1: 5000
+    expectedUsersYear1: 100000
+  security:
+    pii: true
+    encryptionAtRest: true
+    encryptionInTransit: true
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "sequence-diagrams"
+    - "openapi"
+    - "data-model"
+    - "repo-scaffold"
+    - "iac-skeleton"
+    - "backlog"
+    - "adr"
+    - "deployment-guide"
+    - "cost-estimate"

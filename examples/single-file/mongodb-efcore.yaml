@@ -1,0 +1,39 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "BadOrm"
+  description: "MongoDB with EF Core should fail"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "User"
+      goals:
+        - "Test validation"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    backend:
+      - name: "api"
+        framework: "dotnet-8"
+        orm: "ef-core"
+
+data:
+  primaryDatabase:
+    type: "mongodb"
+    hosting: "managed"
+
+deployment:
+  cloud: "aws"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 10
+    expectedUsersYear1: 100
+
+artifacts:
+  generate:
+    - "architecture-diagram"

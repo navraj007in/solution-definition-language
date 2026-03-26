@@ -1,0 +1,142 @@
+deployment:
+  provider: aws
+  x-confidence: high
+  x-evidence: "intent.json specifies AWS; AWS has the most mature HIPAA BAA and eligible services"
+
+  regions:
+    primary: us-east-1
+    failover: us-west-2
+    x-confidence: medium
+    x-evidence: "US data residency required for HIPAA; dual-region for disaster recovery"
+
+  strategy: containerized
+  x-confidence: high
+  x-evidence: "ECS Fargate provides serverless containers with HIPAA eligibility; simpler than EKS for small team"
+
+  infrastructure:
+    compute:
+      service: "AWS ECS Fargate"
+      tasks:
+        - name: medchat-api
+          cpu: 1024
+          memory: 2048
+          desiredCount: 2
+          autoScaling:
+            minTasks: 2
+            maxTasks: 10
+            targetCpuUtilization: 70
+            targetMemoryUtilization: 80
+        - name: medchat-ws
+          cpu: 512
+          memory: 1024
+          desiredCount: 2
+          description: "WebSocket server (separate task for sticky sessions)"
+          autoScaling:
+            minTasks: 2
+            maxTasks: 8
+            targetConnectionCount: 2500
+
+    loadBalancer:
+      service: "AWS ALB"
+      features:
+        - "Path-based routing (/api/* → API tasks, /ws/* → WebSocket tasks)"
+        - "SSL termination with ACM certificate"
+        - "WebSocket support with sticky sessions"
+        - "WAF integration for OWASP protection"
+
+    database:
+      service: "AWS RDS PostgreSQL 16"
+      instanceClass: "db.r6g.large"
+      multiAZ: true
+      encryption: "AES-256 via KMS"
+      backup:
+        automated: true
+        retentionPeriod: "35 days"
+        crossRegionReplication: true
+
+    cache:
+      service: "AWS ElastiCache Redis 7"
+      nodeType: "cache.r6g.large"
+      clusterMode: true
+      encryption:
+        atRest: true
+        inTransit: true
+
+    storage:
+      service: "AWS S3"
+      encryption: "SSE-KMS"
+      versioning: true
+      lifecycle:
+        - rule: "Move to S3-IA after 90 days"
+        - rule: "Delete after org-configured retention period"
+
+    cdn:
+      service: "AWS CloudFront"
+      purpose: "Static asset delivery for web app"
+
+    secrets:
+      service: "AWS Secrets Manager"
+      items:
+        - "Database credentials"
+        - "Redis auth token"
+        - "SAML signing certificates"
+        - "APNs/FCM credentials"
+        - "KMS key references"
+
+    monitoring:
+      service: "AWS CloudWatch"
+      dashboards:
+        - "API latency and error rates"
+        - "WebSocket connection counts"
+        - "Database performance"
+        - "ECS task health"
+
+environments:
+  - name: development
+    description: "Local development with Docker Compose"
+    infrastructure: "Local PostgreSQL, Redis, MinIO (S3-compatible)"
+
+  - name: staging
+    description: "Pre-production environment mirroring production"
+    infrastructure: "AWS (reduced capacity: single-AZ, smaller instances)"
+    purpose: "Integration testing, security scanning, UAT"
+
+  - name: production
+    description: "Live environment serving hospital customers"
+    infrastructure: "AWS (full capacity: multi-AZ, auto-scaling)"
+    purpose: "Production workloads"
+    compliance: "HIPAA BAA in place with AWS"
+
+cicd:
+  provider: "GitHub Actions"
+  x-confidence: medium
+  x-evidence: "GitHub Actions is the default for TypeScript projects; alternative: GitLab CI"
+
+  pipelines:
+    - name: ci
+      trigger: "Pull request to main"
+      steps:
+        - "Lint (ESLint + Prettier)"
+        - "Type check (tsc --noEmit)"
+        - "Unit tests (Vitest)"
+        - "Integration tests (against test DB)"
+        - "Security scan (Snyk/Trivy)"
+        - "HIPAA compliance check (custom rules)"
+
+    - name: deploy-staging
+      trigger: "Merge to main"
+      steps:
+        - "Build Docker images"
+        - "Push to ECR"
+        - "Run database migrations"
+        - "Deploy to ECS (staging)"
+        - "Run smoke tests"
+        - "Run E2E tests (Playwright)"
+
+    - name: deploy-production
+      trigger: "Manual approval after staging validation"
+      steps:
+        - "Deploy to ECS (production) with rolling update"
+        - "Run smoke tests"
+        - "Monitor error rates for 15 minutes"
+        - "Auto-rollback if error rate > 1%"

@@ -1,0 +1,182 @@
+data:
+  primaryDatabase:
+    engine: postgresql
+    version: "16"
+    x-confidence: high
+    x-evidence: "PostgreSQL is the standard for HIPAA-compliant applications on AWS (RDS); supports row-level security, encryption, and JSON for flexible message metadata"
+    hosting: "AWS RDS (Multi-AZ)"
+    encryption: "AES-256 at rest via AWS KMS"
+    tables:
+      - name: organizations
+        description: "Hospital/health system tenants"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: name, type: varchar(255), required: true }
+          - { name: slug, type: varchar(100), unique: true }
+          - { name: settings, type: jsonb, description: "Session timeout, retention, notification policies" }
+          - { name: encryption_key_id, type: varchar(255), description: "AWS KMS key ARN for org" }
+          - { name: created_at, type: timestamptz }
+          - { name: updated_at, type: timestamptz }
+
+      - name: users
+        description: "Clinicians and admin users"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: organization_id, type: uuid, fk: organizations.id }
+          - { name: email, type: varchar(255), unique: true }
+          - { name: password_hash, type: varchar(255), nullable: true, description: "Null for SSO-only users" }
+          - { name: first_name, type: varchar(100) }
+          - { name: last_name, type: varchar(100) }
+          - { name: role, type: "enum(physician, nurse, pharmacist, admin, other)" }
+          - { name: department, type: varchar(100) }
+          - { name: specialty, type: varchar(100), nullable: true }
+          - { name: is_active, type: boolean, default: true }
+          - { name: mfa_secret, type: varchar(255), nullable: true }
+          - { name: last_login_at, type: timestamptz, nullable: true }
+          - { name: created_at, type: timestamptz }
+          - { name: updated_at, type: timestamptz }
+        indexes:
+          - { columns: [organization_id, department], name: idx_users_org_dept }
+          - { columns: [organization_id, role], name: idx_users_org_role }
+          - { columns: [email], unique: true }
+
+      - name: conversations
+        description: "1:1 and group conversation containers"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: organization_id, type: uuid, fk: organizations.id }
+          - { name: type, type: "enum(direct, group)" }
+          - { name: name, type: varchar(255), nullable: true, description: "Display name for group conversations" }
+          - { name: created_by, type: uuid, fk: users.id }
+          - { name: created_at, type: timestamptz }
+          - { name: updated_at, type: timestamptz }
+
+      - name: conversation_members
+        description: "Membership junction table"
+        columns:
+          - { name: conversation_id, type: uuid, fk: conversations.id }
+          - { name: user_id, type: uuid, fk: users.id }
+          - { name: joined_at, type: timestamptz }
+          - { name: left_at, type: timestamptz, nullable: true }
+          - { name: notification_preference, type: "enum(all, urgent_only, muted)", default: all }
+        indexes:
+          - { columns: [conversation_id, user_id], unique: true, name: idx_conv_members_unique }
+          - { columns: [user_id, left_at], name: idx_members_active }
+
+      - name: messages
+        description: "Individual messages within conversations"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: conversation_id, type: uuid, fk: conversations.id }
+          - { name: sender_id, type: uuid, fk: users.id }
+          - { name: content_encrypted, type: bytea, description: "AES-256 encrypted message content" }
+          - { name: priority, type: "enum(normal, urgent, critical)", default: normal }
+          - { name: type, type: "enum(text, image, file, system)", default: text }
+          - { name: forwarded_from, type: uuid, nullable: true, fk: messages.id }
+          - { name: created_at, type: timestamptz }
+        indexes:
+          - { columns: [conversation_id, created_at], name: idx_messages_conv_time }
+          - { columns: [sender_id, created_at], name: idx_messages_sender_time }
+
+      - name: message_receipts
+        description: "Delivery and read receipt tracking"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: message_id, type: uuid, fk: messages.id }
+          - { name: user_id, type: uuid, fk: users.id }
+          - { name: delivered_at, type: timestamptz, nullable: true }
+          - { name: read_at, type: timestamptz, nullable: true }
+          - { name: acknowledged_at, type: timestamptz, nullable: true, description: "For critical priority messages" }
+        indexes:
+          - { columns: [message_id, user_id], unique: true }
+
+      - name: attachments
+        description: "File and image attachments"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: message_id, type: uuid, fk: messages.id }
+          - { name: file_name, type: varchar(255) }
+          - { name: file_type, type: varchar(100) }
+          - { name: file_size, type: integer }
+          - { name: s3_key, type: varchar(500), description: "Encrypted file location in S3" }
+          - { name: file_hash, type: varchar(128), description: "SHA-256 hash for integrity verification" }
+          - { name: created_at, type: timestamptz }
+
+      - name: on_call_schedules
+        description: "Department on-call schedule entries"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: organization_id, type: uuid, fk: organizations.id }
+          - { name: department, type: varchar(100) }
+          - { name: user_id, type: uuid, fk: users.id }
+          - { name: start_time, type: timestamptz }
+          - { name: end_time, type: timestamptz }
+          - { name: created_by, type: uuid, fk: users.id }
+          - { name: created_at, type: timestamptz }
+        indexes:
+          - { columns: [organization_id, department, start_time, end_time], name: idx_oncall_lookup }
+
+      - name: audit_events
+        description: "Immutable HIPAA audit trail"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: organization_id, type: uuid, fk: organizations.id }
+          - { name: event_type, type: "enum(message_sent, message_delivered, message_read, message_acknowledged, file_uploaded, file_accessed, user_login, user_logout, admin_action, schedule_updated)" }
+          - { name: actor_id, type: uuid, fk: users.id }
+          - { name: target_id, type: uuid, nullable: true, description: "Message ID, user ID, or other entity" }
+          - { name: metadata, type: jsonb, description: "Event-specific details (IP, device, etc.)" }
+          - { name: created_at, type: timestamptz }
+        indexes:
+          - { columns: [organization_id, created_at], name: idx_audit_org_time }
+          - { columns: [actor_id, created_at], name: idx_audit_actor_time }
+          - { columns: [event_type, created_at], name: idx_audit_type_time }
+        constraints:
+          - "Table is append-only; no UPDATE or DELETE permissions granted to application role"
+
+      - name: device_tokens
+        description: "Push notification device registrations"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: user_id, type: uuid, fk: users.id }
+          - { name: platform, type: "enum(ios, android, web)" }
+          - { name: token, type: varchar(500) }
+          - { name: is_active, type: boolean, default: true }
+          - { name: created_at, type: timestamptz }
+          - { name: updated_at, type: timestamptz }
+
+      - name: sessions
+        description: "Active user sessions"
+        columns:
+          - { name: id, type: uuid, pk: true }
+          - { name: user_id, type: uuid, fk: users.id }
+          - { name: device_info, type: jsonb }
+          - { name: ip_address, type: inet }
+          - { name: expires_at, type: timestamptz }
+          - { name: created_at, type: timestamptz }
+
+  caching:
+    engine: redis
+    version: "7"
+    x-confidence: high
+    x-evidence: "Redis required for WebSocket pub/sub fanout across multiple API nodes, session caching, and on-call schedule caching"
+    hosting: "AWS ElastiCache (Multi-AZ)"
+    useCases:
+      - "WebSocket message fanout across API nodes (pub/sub)"
+      - "On-call schedule cache (invalidated on CSV upload)"
+      - "User session store"
+      - "Presence/online status tracking"
+      - "Rate limiting"
+
+  fileStorage:
+    provider: "AWS S3"
+    x-confidence: high
+    x-evidence: "S3 is the standard for encrypted file storage on AWS HIPAA-eligible services"
+    encryption: "SSE-KMS with per-organization keys"
+    bucket: "medchat-attachments-{env}"
+    lifecycle: "Matches message retention policy per organization"
+
+  migrations:
+    tool: prisma
+    x-confidence: medium
+    x-evidence: "Prisma is the most popular TypeScript ORM with strong migration tooling; Drizzle is an alternative"
+    strategy: "Forward-only migrations; no destructive changes without explicit admin approval"

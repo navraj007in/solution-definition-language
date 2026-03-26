@@ -1,0 +1,56 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "TaskFlow"
+  description: "Simple task management for small teams"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "User"
+      goals:
+        - "Create tasks"
+        - "Mark tasks complete"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    frontend:
+      - name: "web"
+        framework: "nextjs"
+    backend:
+      - name: "api"
+        framework: "nodejs"
+
+auth:
+  strategy: "oidc"
+  provider: "auth0"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+
+deployment:
+  cloud: "vercel"
+
+constraints:
+  budget: "startup"
+  team:
+    developers: 1
+  timeline: "6-weeks"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 50
+    expectedUsersYear1: 1000
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "adr"
+    - "openapi"
+    - "data-model"
+    - "repo-scaffold"

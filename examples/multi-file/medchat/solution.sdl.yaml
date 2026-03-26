@@ -1,0 +1,75 @@
+sdlVersion: "1.1"
+
+imports:
+  - sdl/services.sdl.yaml
+  - sdl/data.sdl.yaml
+  - sdl/auth.sdl.yaml
+  - sdl/deployment.sdl.yaml
+  - sdl/nfr.sdl.yaml
+  - sdl/design.sdl.yaml
+
+solution:
+  name: MedChat
+  description: >
+    HIPAA-compliant real-time messaging platform for healthcare providers.
+    Enables secure messaging, patient file sharing, and care coordination
+    across departments and hospitals. Targets mid-market hospitals (100-500 beds)
+    underserved by enterprise CC&C platforms.
+  x-confidence: high
+  x-evidence: "Derived from 6 planning documents: market research, personas, problem validation, pitch deck, MVP scope, user journeys"
+
+product:
+  personas:
+    - name: ED Physician (Dr. Moreno)
+      role: Emergency medicine attending
+      primaryNeed: Fast specialist consults with image sharing
+      adoptionDriver: Must be faster than paging/iMessage
+    - name: Med-Surg Nurse (Maria Santos)
+      role: Night shift floor nurse
+      primaryNeed: Reach correct on-call provider without being tethered to desk phone
+      adoptionDriver: Must be simpler than calling
+    - name: CMIO (Dr. Chakrabarti)
+      role: Chief Medical Information Officer / buyer
+      primaryNeed: System-wide adoption metrics and HIPAA compliance audit trail
+      adoptionDriver: Must prove ROI with data
+    - name: Overnight Pharmacist (James Okafor)
+      role: Solo overnight clinical pharmacist
+      primaryNeed: Async medication clarifications and broadcast alerts
+      adoptionDriver: Must reduce phone interruptions
+
+  coreFlows:
+    - name: Urgent Specialist Consult
+      trigger: Clinician identifies need for specialist input
+      steps:
+        - Search provider directory for on-call specialist
+        - Compose message with priority level and image attachment
+        - Send to auto-resolved on-call provider
+        - Receive response with clinical guidance
+      targetTime: "<5 minutes end-to-end"
+
+    - name: Deteriorating Patient Escalation
+      trigger: Nurse observes concerning vital sign changes
+      steps:
+        - Search for covering physician via on-call directory
+        - Send urgent message with vitals and clinical concern
+        - Continue patient care while awaiting mobile response
+        - Receive orders and act
+      targetTime: "<6 minutes to physician orders"
+
+    - name: Multi-Party Care Coordination
+      trigger: Clinical issue requires physician + pharmacy + nursing alignment
+      steps:
+        - Create group message with relevant care team members
+        - State the clinical question with clear asks for each role
+        - Async discussion with all parties in one thread
+        - Resolution documented in persistent thread
+      targetTime: "<10 minutes to resolution"
+
+    - name: HIPAA Compliance Investigation
+      trigger: Compliance officer receives patient complaint about information sharing
+      steps:
+        - Admin searches audit trail by patient/room, date range
+        - Reviews message content, attachments, and read receipts
+        - Exports timestamped evidence trail
+        - Prepares compliance response with definitive documentation
+      targetTime: "<1 hour for complete investigation"

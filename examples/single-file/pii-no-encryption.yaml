@@ -1,0 +1,41 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "PiiTest"
+  description: "PII without encryption should fail"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "User"
+      goals:
+        - "Test validation"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    backend:
+      - name: "api"
+        framework: "nodejs"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+
+deployment:
+  cloud: "aws"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 10
+    expectedUsersYear1: 100
+  security:
+    pii: true
+    encryptionAtRest: false
+
+artifacts:
+  generate:
+    - "architecture-diagram"

@@ -1,0 +1,59 @@
+name: Validate SDL Templates
+
+on:
+  push:
+    paths:
+      - 'templates/**'
+      - 'examples/**'
+      - 'schema/**'
+      - 'packages/sdl/**'
+  pull_request:
+    paths:
+      - 'templates/**'
+      - 'examples/**'
+      - 'schema/**'
+      - 'packages/sdl/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: packages/sdl
+        run: npm ci
+
+      - name: Build SDL package
+        working-directory: packages/sdl
+        run: npm run build
+
+      - name: Run tests
+        working-directory: packages/sdl
+        run: npm test
+
+      - name: Validate templates
+        run: |
+          for file in templates/*.sdl.yaml; do
+            echo "Validating $file..."
+            node -e "
+              const { parse, validate } = require('./packages/sdl/dist');
+              const fs = require('fs');
+              const yaml = fs.readFileSync('$file', 'utf-8');
+              const { data, errors } = parse(yaml);
+              if (errors.length > 0) {
+                console.error('Parse errors:', errors);
+                process.exit(1);
+              }
+              const result = validate(data);
+              if (!result.valid) {
+                console.error('Validation errors:', result.errors);
+                process.exit(1);
+              }
+              console.log('  OK');
+            "
+          done

@@ -1,0 +1,49 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "StatusPage"
+  description: "Public status page for service monitoring"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "Visitor"
+      accessLevel: "public"
+      goals:
+        - "View status"
+        - "Browse incidents"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    frontend:
+      - name: "page"
+        framework: "svelte"
+    backend:
+      - name: "api"
+        framework: "go"
+
+data:
+  primaryDatabase:
+    type: "dynamodb"
+    hosting: "serverless"
+
+deployment:
+  cloud: "cloudflare"
+
+nonFunctional:
+  availability:
+    target: "99.99"
+  scaling:
+    expectedUsersMonth1: 1000
+    expectedUsersYear1: 5000
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "openapi"
+    - "data-model"
+    - "repo-scaffold"
+    - "iac-skeleton"
+    - "adr"
+    - "cost-estimate"

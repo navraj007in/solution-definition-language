@@ -1,0 +1,22 @@
+{
+  "name": "@arch0/sdl",
+  "version": "0.1.0",
+  "description": "SDL parser, validator, and normalizer for arch0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/__tests__/**/*.test.js",
+    "pretest": "tsc"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "files": ["dist"],
+  "license": "UNLICENSED"
+}

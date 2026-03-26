@@ -1,0 +1,65 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "InvoiceCloud"
+  description: "Cloud invoicing and payment tracking for small businesses"
+  stage: "Growth"
+
+product:
+  personas:
+    - name: "Business Owner"
+      goals:
+        - "Create invoices"
+        - "Track payments"
+    - name: "Accountant"
+      accessLevel: "authenticated"
+      goals:
+        - "View reports"
+        - "Export data"
+
+architecture:
+  style: "serverless"
+  projects:
+    frontend:
+      - name: "dashboard"
+        framework: "vue"
+        styling: "css-modules"
+    backend:
+      - name: "api"
+        framework: "python-fastapi"
+        apiStyle: "rest"
+
+auth:
+  strategy: "api-key"
+
+data:
+  primaryDatabase:
+    type: "mysql"
+    hosting: "serverless"
+
+integrations:
+  email:
+    provider: "resend"
+
+deployment:
+  cloud: "gcp"
+  ciCd:
+    provider: "gitlab-ci"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 500
+    expectedUsersYear1: 10000
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "sequence-diagrams"
+    - "openapi"
+    - "data-model"
+    - "backlog"
+    - "adr"
+    - "deployment-guide"
+    - "cost-estimate"

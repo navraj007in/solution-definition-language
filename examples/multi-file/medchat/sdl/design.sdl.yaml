@@ -1,0 +1,110 @@
+design:
+  personality:
+    brief: "Clinical Calm. Consumer Speed."
+    attributes:
+      - trustworthy
+      - calm
+      - fast
+      - clear
+      - accessible
+    x-confidence: high
+    x-evidence: "Derived from healthcare domain (clinical trust), personas (high-stress clinicians), and competitive positioning (consumer-grade UX vs enterprise tools)"
+
+  palette:
+    primary:
+      name: Teal
+      rationale: "Most widely associated with healthcare — connotes cleanliness, care, and clinical authority without coldness"
+      shades:
+        50: "#F0FDFA"
+        100: "#CCFBF1"
+        200: "#99F6E4"
+        300: "#5EEAD4"
+        400: "#2DD4BF"
+        500: "#14B8A6"
+        600: "#0D9488"
+        700: "#0F766E"
+        800: "#115E59"
+        900: "#134E4A"
+        950: "#042F2E"
+    neutral:
+      name: Slate
+      shades:
+        50: "#F8FAFC"
+        100: "#F1F5F9"
+        200: "#E2E8F0"
+        300: "#CBD5E1"
+        400: "#94A3B8"
+        500: "#64748B"
+        600: "#475569"
+        700: "#334155"
+        800: "#1E293B"
+        900: "#0F172A"
+        950: "#020617"
+    semantic:
+      critical: "#EF4444"
+      urgent: "#F59E0B"
+      success: "#22C55E"
+      info: "#3B82F6"
+
+  typography:
+    headingFont: "Plus Jakarta Sans"
+    bodyFont: "Inter"
+    monospaceFont: "JetBrains Mono"
+    source: "Google Fonts"
+    scale: "1.200 minor third from 16px base"
+    x-confidence: high
+    x-evidence: "Plus Jakarta Sans provides distinctive brand identity; Inter is optimal for clinical UI readability (tall x-height, clear letter distinction for mg vs mcg)"
+
+  motion:
+    philosophy: "Purposeful, fast, never decorative"
+    durations:
+      instant: "100ms"
+      fast: "150ms"
+      normal: "200ms"
+      slow: "300ms"
+    rules:
+      - "No entrance animations on message arrival — instant render"
+      - "Send button gets micro-animation (100ms) for confirmation feedback"
+      - "Priority alerts appear immediately, no fade-in"
+      - "Respect prefers-reduced-motion on all animations"
+
+  shape:
+    radiusScale: [0, 4, 8, 12, 16, 9999]
+    defaultRadius: "8px"
+    shadowStrategy: "Minimal — prefer borders; shadows only for floating elements"
+
+  layout:
+    style: "conversation-centric"
+    approach: "mobile-first"
+    sidebarWidth: "320px"
+    maxWidths:
+      conversation: "768px"
+      content: "1024px"
+      dashboard: "1280px"
+    minTapTarget: "48px"
+    gridBase: "4px"
+
+  darkMode:
+    required: true
+    rationale: "Night-shift clinicians need reduced eye strain in dimly-lit nursing stations"
+
+  accessibility:
+    level: "WCAG 2.1 AA"
+    contrastValidation:
+      - { combo: "Primary-500 on white", ratio: "4.56:1", result: "Pass AA" }
+      - { combo: "Slate-800 on Slate-50", ratio: "13.2:1", result: "Pass AAA" }
+      - { combo: "Primary-400 on Slate-900", ratio: "7.20:1", result: "Pass AAA" }
+      - { combo: "White on Primary-500", ratio: "4.56:1", result: "Pass AA" }
+      - { combo: "White on Critical-500", ratio: "4.63:1", result: "Pass AA" }
+
+  iconography:
+    library: "Lucide Icons"
+    style: "Outlined, 24px base, 1.5px stroke"
+    source: "https://lucide.dev"
+
+  artifacts:
+    designBrief: "architecture-output/design-system/design-brief.md"
+    designTokens: "architecture-output/design-system/design-tokens.json"
+    componentInventory: "architecture-output/design-system/component-inventory.md"
+    tailwindConfig: "architecture-output/design-system/tailwind.config.patch.ts"
+    palettePreview: "architecture-output/design-system/palette-preview.html"

@@ -1,0 +1,101 @@
+auth:
+  strategy: session-based
+  x-confidence: medium
+  x-evidence: "Session-based auth is simpler for MVP and works well with SSO/SAML flows; JWT is an alternative but adds token revocation complexity for HIPAA"
+
+  providers:
+    primary:
+      type: saml
+      x-confidence: high
+      x-evidence: "MVP scope M9 requires SAML 2.0 SSO; hospitals use Azure AD, Okta, PingFederate"
+      supportedIdPs:
+        - Azure AD
+        - Okta
+        - PingFederate
+      configuration:
+        metadataUrl: "per-organization SAML metadata URL"
+        assertionConsumerService: "/api/v1/auth/saml/callback"
+        signedRequests: true
+        encryptedAssertions: true
+
+    fallback:
+      type: email-password
+      x-confidence: high
+      x-evidence: "MVP scope M9 specifies email/password fallback for hospitals without SSO"
+      passwordPolicy:
+        minLength: 12
+        requireUppercase: true
+        requireNumber: true
+        requireSpecial: true
+        maxAge: "90 days"
+
+  mfa:
+    required: configurable-per-org
+    x-confidence: high
+    x-evidence: "MVP scope M9 requires MFA support; HIPAA recommends but doesn't mandate"
+    methods:
+      - totp
+      - push-based
+
+  sessions:
+    store: redis
+    activeTimeout: "8 hours (configurable by admin)"
+    idleTimeout: "15 minutes (configurable by admin)"
+    x-confidence: high
+    x-evidence: "MVP scope M13 specifies configurable session timeout with 15-min idle default"
+    reAuthentication: "Biometric or PIN required after app backgrounding/lock screen"
+    concurrentSessions: "Allowed (clinicians use mobile + desktop simultaneously)"
+    revocation: "Immediate on account deactivation; all active sessions terminated"
+
+  provisioning:
+    manual: "Admin creates users via admin console"
+    automated: "SCIM 2.0 for auto-provisioning from IdP"
+    x-confidence: medium
+    x-evidence: "MVP scope M9 mentions SCIM; manual is primary for MVP pilot"
+    deprovisioning: "Account deactivation immediately revokes all sessions and access"
+
+  roles:
+    - name: clinician
+      description: "Physicians, nurses, pharmacists — standard messaging access"
+      permissions:
+        - send_messages
+        - read_own_conversations
+        - search_directory
+        - upload_files
+        - manage_own_notifications
+
+    - name: department_admin
+      description: "Charge nurse or department lead — manages department schedules"
+      permissions:
+        - all_clinician_permissions
+        - manage_department_schedule
+        - view_department_analytics
+
+    - name: org_admin
+      description: "CMIO, CIO, IT admin — full administrative access"
+      permissions:
+        - all_department_admin_permissions
+        - manage_users
+        - manage_organization_settings
+        - view_audit_trail
+        - export_audit_data
+        - manage_all_schedules
+        - view_all_analytics
+
+    - name: compliance_officer
+      description: "Read-only access to audit trail and message content for investigations"
+      permissions:
+        - search_audit_trail
+        - view_message_content_for_audit
+        - export_audit_data
+
+  authorization:
+    model: "Organization-scoped with role-based access"
+    x-confidence: high
+    x-evidence: "Multi-tenant with organization isolation is required for HIPAA; RBAC aligns with hospital hierarchy"
+    rules:
+      - "Users can only access data within their organization"
+      - "Users can only read messages in conversations they are members of"
+      - "Admin actions are scoped to the admin's organization"
+      - "Compliance officers can access message content only via audit trail interface"
+      - "All authorization decisions are logged in audit trail"

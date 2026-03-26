@@ -1,0 +1,50 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "MicroSmallTeam"
+  description: "Microservices with a small team should warn"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "User"
+      goals:
+        - "Test warnings"
+
+architecture:
+  style: "microservices"
+  projects:
+    backend:
+      - name: "api"
+        framework: "nodejs"
+  services:
+    - name: "auth-service"
+      kind: "backend"
+    - name: "order-service"
+      kind: "backend"
+    - name: "payment-service"
+      kind: "backend"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+
+deployment:
+  cloud: "aws"
+
+constraints:
+  budget: "startup"
+  team:
+    developers: 1
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 10
+    expectedUsersYear1: 100
+
+artifacts:
+  generate:
+    - "architecture-diagram"

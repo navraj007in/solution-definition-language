@@ -1,0 +1,75 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "FitTrack"
+  description: "Fitness tracking app for athletes and coaches"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "Athlete"
+      goals:
+        - "Log workouts"
+        - "View progress"
+    - name: "Coach"
+      accessLevel: "authenticated"
+      goals:
+        - "Create training plans"
+        - "Assign plans"
+  coreFlows:
+    - name: "Log Workout"
+      priority: "critical"
+    - name: "Review Progress"
+      priority: "medium"
+      steps:
+        - "Select athlete"
+        - "Fetch performance data"
+        - "Display charts"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    frontend:
+      - name: "web"
+        framework: "react"
+    mobile:
+      - name: "mobile-app"
+        platform: "cross-platform"
+        framework: "react-native"
+    backend:
+      - name: "api"
+        framework: "dotnet-8"
+
+auth:
+  strategy: "magic-link"
+  provider: "clerk"
+  socialProviders:
+    - "apple"
+    - "google"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+  cache:
+    type: "redis"
+
+deployment:
+  cloud: "railway"
+
+nonFunctional:
+  availability:
+    target: "99.5"
+  scaling:
+    expectedUsersMonth1: 100
+    expectedUsersYear1: 500
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "sequence-diagrams"
+    - "data-model"
+    - "repo-scaffold"
+    - "backlog"
+    - "deployment-guide"
+    - "cost-estimate"

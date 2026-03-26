@@ -1,0 +1,28 @@
+# Missing solution.name, product, and artifacts
+sdlVersion: "0.1"
+
+solution:
+  description: "A tool for testing"
+  stage: "MVP"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    backend:
+      - name: "api"
+        framework: "nodejs"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+
+deployment:
+  cloud: "vercel"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 10
+    expectedUsersYear1: 100

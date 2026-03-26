@@ -1,0 +1,150 @@
+architecture:
+  style: modular-monolith
+  x-confidence: high
+  x-evidence: "MVP scope specifies 20-week build with 3-4 engineers; modular monolith is appropriate for team size and initial scale. Microservices deferred post-PMF."
+
+  projects:
+    backend:
+      - name: medchat-api
+        type: api
+        path: "server"
+        runtime: node
+        x-confidence: high
+        x-evidence: "server/package.json defines @medchat/api; server/src/app.ts is the entry point"
+        language: typescript
+        framework: express
+        x-confidence: high
+        x-evidence: "express 4.19 imported in server/src/app.ts; confirmed in server/package.json dependencies"
+        description: >
+          Core API server handling REST endpoints, WebSocket connections,
+          authentication, message routing, file uploads, and admin operations.
+          Modular internal structure with domain separation.
+        modules:
+          - name: messaging
+            description: "1:1 and group message CRUD, delivery, read receipts"
+            endpoints:
+              - "POST /api/v1/messages"
+              - "GET /api/v1/messages/:id"
+              - "GET /api/v1/conversations"
+              - "GET /api/v1/conversations/:id/messages"
+              - "POST /api/v1/conversations/:id/read"
+              - "POST /api/v1/messages/:id/acknowledge"
+              - "POST /api/v1/conversations"
+              - "WS /ws (real-time: message:send, message:read, message:acknowledge, presence:ping)"
+          - name: directory
+            description: "Provider directory search and on-call schedule management"
+            endpoints:
+              - "GET /api/v1/directory/search?q=&role=&dept=&onCall="
+              - "GET /api/v1/directory/providers/:id"
+              - "GET /api/v1/directory/on-call?department="
+              - "POST /api/v1/admin/schedules/upload (CSV)"
+              - "PUT /api/v1/admin/schedules/:id"
+              - "GET /api/v1/admin/schedules"
+          - name: auth
+            description: "SSO/SAML, session management, MFA"
+            endpoints:
+              - "POST /api/v1/auth/login"
+              - "POST /api/v1/auth/saml/callback"
+              - "POST /api/v1/auth/logout"
+              - "POST /api/v1/auth/mfa/verify"
+              - "GET /api/v1/auth/session"
+          - name: files
+            description: "Encrypted file upload, download, and management"
+            endpoints:
+              - "POST /api/v1/files/upload"
+              - "GET /api/v1/files/:id"
+              - "DELETE /api/v1/files/:id"
+          - name: notifications
+            description: "Push notification dispatch via APNs/FCM"
+            endpoints:
+              - "POST /api/v1/notifications/register-device"
+              - "DELETE /api/v1/notifications/devices/:id"
+              - "PUT /api/v1/notifications/preferences"
+          - name: admin
+            description: "User management, analytics, audit trail, configuration"
+            endpoints:
+              - "GET /api/v1/admin/users"
+              - "POST /api/v1/admin/users"
+              - "PUT /api/v1/admin/users/:id"
+              - "DELETE /api/v1/admin/users/:id"
+              - "GET /api/v1/admin/analytics/overview"
+              - "GET /api/v1/admin/analytics/adoption"
+              - "GET /api/v1/admin/analytics/response-times"
+              - "GET /api/v1/admin/audit-trail?sender=&recipient=&dateFrom=&dateTo=&keyword="
+              - "GET /api/v1/admin/audit-trail/export"
+              - "PUT /api/v1/admin/settings"
+
+    shared:
+      - name: medchat-shared
+        type: shared-lib
+        path: "packages/shared"
+        runtime: node
+        x-confidence: high
+        x-evidence: "packages/shared/package.json defines @medchat/shared; exports types, validation schemas, and constants"
+        language: typescript
+        description: >
+          Shared TypeScript package providing types (User, Message, Conversation, etc.),
+          Zod validation schemas, and constants used by server, web, and mobile.
+
+    frontend:
+      - name: medchat-mobile
+        type: mobile
+        path: "apps/mobile"
+        runtime: node
+        x-confidence: high
+        x-evidence: "MVP scope requires iOS + Android; React Native is the standard cross-platform choice for TypeScript teams"
+        language: typescript
+        framework: react-native
+        description: >
+          Cross-platform mobile app (iOS + Android) for clinicians.
+          Primary interface for bedside messaging, image capture, and notifications.
+        screens:
+          - ConversationList
+          - ConversationThread
+          - NewMessage (with directory search)
+          - ProviderDirectory
+          - ImageCapture
+          - NotificationPreferences
+          - BiometricLock
+
+      - name: medchat-web
+        type: web
+        path: "apps/web"
+        runtime: node
+        x-confidence: high
+        x-evidence: "MVP scope requires web app for desktop; React is specified in intent.json"
+        language: typescript
+        framework: react
+        description: >
+          Web application for desktop browser use (pharmacists, admins).
+          Responsive layout supporting side-by-side use with EHR systems.
+        screens:
+          - ConversationList
+          - ConversationThread
+          - NewMessage
+          - ProviderDirectory
+          - AdminDashboard
+          - AdminUserManagement
+          - AdminScheduleManagement
+          - AdminAuditTrail
+          - AdminSettings
+
+  crossCutting:
+    encryption:
+      atRest: AES-256
+      inTransit: TLS-1.3
+      keyManagement: per-organization keys with rotation support
+      x-confidence: high
+      x-evidence: "HIPAA technical safeguard requirement; specified in MVP scope M10"
+
+    logging:
+      provider: structured-json
+      auditTrail: immutable-append-only
+      retention: "6 years minimum (HIPAA)"
+      x-confidence: high
+      x-evidence: "MVP scope M11 specifies immutable audit trail with 6-year retention"
+
+    errorHandling:
+      strategy: "Structured error responses with correlation IDs; no PHI in error messages"
+      x-confidence: medium
+      x-evidence: "HIPAA minimum necessary principle requires PHI exclusion from logs/errors"

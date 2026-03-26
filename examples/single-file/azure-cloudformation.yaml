@@ -1,0 +1,40 @@
+sdlVersion: "0.1"
+
+solution:
+  name: "BadCombo"
+  description: "Azure with CloudFormation should fail"
+  stage: "MVP"
+
+product:
+  personas:
+    - name: "User"
+      goals:
+        - "Test validation"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    backend:
+      - name: "api"
+        framework: "dotnet-8"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+
+deployment:
+  cloud: "azure"
+  infrastructure:
+    iac: "cloudformation"
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 10
+    expectedUsersYear1: 100
+
+artifacts:
+  generate:
+    - "architecture-diagram"
