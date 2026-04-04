@@ -282,9 +282,29 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation + 5 conditional rules
+2. **Validate** — JSON Schema validation + 6 conditional rules
 3. **Normalize** — 15 auto-inference rules fill missing fields
 4. **Warnings** — 4 rules detect potential issues (non-blocking)
+
+### Conditional Rules (Errors)
+
+These rules catch logical inconsistencies and must pass for valid SDL:
+
+1. **Microservices** → `architecture.style: "microservices"` requires 2+ services in `architecture.projects`
+2. **OIDC** → `auth.provider: "oidc"` requires `auth.provider` value to be set
+3. **PII** → if any entity has PII fields, `data.primaryDatabase` must have `encryption: { atRest: true }`
+4. **CloudFormation** → `deployment.ciCd.provider: "cloudformation"` only valid with `deployment.cloud: "aws"`
+5. **MongoDB** → `data.primaryDatabase.type: "mongodb"` is incompatible with `.orm: "entity-framework"`
+6. **Environment Components** → every component name in `environments[].components` must exist in `architecture.projects` (all categories combined)
+
+### Warning Rules
+
+These are non-blocking but flag potential issues:
+
+1. **Microservices with small team** — `architecture.style: "microservices"` with `constraints.team.size < 3`
+2. **Aggressive timeline vs scope** — complex architecture with very tight `constraints.timeline`
+3. **Multi-persona without auth** — `product.personas[]` with 3+ personas but no `auth` section defined
+4. **Budget vs infrastructure mismatch** — estimated `costs` exceed `constraints.budget`
 
 See [error-codes.md](../reference/error-codes.md) for the complete error reference.
 See [normalization-defaults.md](../reference/normalization-defaults.md) for all inference rules.

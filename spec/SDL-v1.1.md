@@ -716,6 +716,40 @@ imports:
 
 ---
 
+## Validation Pipeline
+
+SDL v1.1 uses the same validation pipeline as v0.1, with extended conditional rules for new sections:
+
+```
+YAML string → parse() → validate() → normalize() → detectWarnings() → SDL document
+```
+
+1. **Parse** — YAML to JavaScript object
+2. **Validate** — JSON Schema validation + 8 conditional rules
+3. **Normalize** — 15+ auto-inference rules fill missing fields
+4. **Warnings** — 4+ rules detect potential issues (non-blocking)
+
+### Conditional Rules (Errors)
+
+These rules catch logical inconsistencies and must pass for valid SDL:
+
+1. **Microservices** → `architecture.style: "microservices"` requires 2+ services
+2. **OIDC** → `auth.provider: "oidc"` requires provider value
+3. **PII** → if any entity has PII fields, `data` must have `encryption.atRest: true`
+4. **CloudFormation** → `deployment.ciCd.provider: "cloudformation"` only with `deployment.cloud: "aws"`
+5. **MongoDB** → `data.primaryDatabase.type: "mongodb"` incompatible with `.orm: "entity-framework"`
+6. **Environment Components** → every component in `environments[].components` must exist in `architecture.projects`
+7. **SLO Components** → every component in `slos[].component` must exist in `architecture.projects`
+8. **Cost Components** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
+
+### Additional v1.1 Validations
+
+- **Feature Dependencies** → `features.phase*.dependencies` must reference features in the same or earlier phases
+- **Compliance Controls** → `compliance.frameworks[].controls[]` must be valid control types per framework
+- **Resilience Targets** → `resilience.circuitBreaker[].failureThreshold` must be > 0
+
+---
+
 ## Version Strategy
 
 - **v0.1** — Core architecture (lightweight, fast)
