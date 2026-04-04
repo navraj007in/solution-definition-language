@@ -70,6 +70,7 @@ System structure and component definitions.
 | `framework` | string | No | `express`, `fastapi`, `gin`, `spring`, etc. |
 | `orm` | string | No | `prisma`, `drizzle`, `sqlalchemy`, `mongoose`, etc. |
 | `port` | number | No | Default port |
+| `deployable` | boolean | No | Whether this component is deployable (default: `true`). Set to `false` for shared libraries, type packages, etc. |
 | `endpoints` | array | No | API endpoint definitions |
 
 #### Frontend Project
@@ -83,6 +84,7 @@ System structure and component definitions.
 | `rendering` | enum | No | `ssr`, `spa`, `ssg`, `isr` |
 | `styling` | string | No | `tailwind`, `scss`, `styled-components`, `css-modules` |
 | `stateManagement` | string | No | `zustand`, `pinia`, `ngrx`, `redux` |
+| `deployable` | boolean | No | Whether this component is deployable (default: `true`) |
 
 ### `data`
 
@@ -172,6 +174,53 @@ integrations:
 | `monitoring` | object | `{ provider, metrics, dashboards }` |
 | `tracing` | object | `{ provider, sampling }` |
 | `alerting` | object | `{ provider, channels, rules }` |
+
+### `environments`
+
+Environment-specific configuration and deployment overrides. Defines URLs, ports, scaling, and deployment status per environment.
+
+```yaml
+environments:
+  - name: dev
+    description: "Local development"
+    components:
+      api-server:
+        url: "http://localhost:3000"
+        port: 3000
+        instances: 1
+        deployed: true
+  - name: staging
+    description: "Pre-production testing"
+    components:
+      api-server:
+        url: "https://api-staging.example.com"
+        instances: 2
+        deployed: true
+  - name: production
+    description: "Production"
+    components:
+      api-server:
+        url: "https://api.example.com"
+        instances: 3
+        scaling:
+          minReplicas: 3
+          maxReplicas: 10
+        deployed: true
+```
+
+**Per-environment component overrides:**
+- `url` — deployment URL for this component in this environment
+- `port` — listening port (dev only)
+- `instances` — number of instances/replicas
+- `deployed` — whether component is deployed in this environment
+- `scaling` — auto-scaling config (`minReplicas`, `maxReplicas`, `metrics`)
+- `replicas` — synonym for `instances`
+
+**Rules:**
+- Only include environments that exist in your deployment strategy
+- Component entries in an environment override global component config
+- If a component has `deployable: false`, it should have `deployed: false` in all environments
+- If a component is not listed in an environment, it's assumed not deployed there
 
 ### `artifacts`
 
