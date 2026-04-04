@@ -725,28 +725,71 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation + 8 conditional rules
+2. **Validate** — JSON Schema validation + 26 conditional rules
 3. **Normalize** — 15+ auto-inference rules fill missing fields
-4. **Warnings** — 4+ rules detect potential issues (non-blocking)
+4. **Warnings** — 10+ rules detect potential issues (non-blocking)
 
 ### Conditional Rules (Errors)
 
-These rules catch logical inconsistencies and must pass for valid SDL:
+These rules catch logical inconsistencies and must pass for valid SDL (26 rules total):
 
-1. **Microservices** → `architecture.style: "microservices"` requires 2+ services
-2. **OIDC** → `auth.provider: "oidc"` requires provider value
-3. **PII** → if any entity has PII fields, `data` must have `encryption.atRest: true`
-4. **CloudFormation** → `deployment.ciCd.provider: "cloudformation"` only with `deployment.cloud: "aws"`
-5. **MongoDB** → `data.primaryDatabase.type: "mongodb"` incompatible with `.orm: "entity-framework"`
-6. **Environment Components** → every component in `environments[].components` must exist in `architecture.projects`
-7. **SLO Components** → every component in `slos[].component` must exist in `architecture.projects`
-8. **Cost Components** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
+**Reference Integrity (9 rules):**
+1. **Environment Components** → every component in `environments[].components` must exist in `architecture.projects`
+2. **SLO Components** → every component in `slos[].component` must exist in `architecture.projects`
+3. **Cost Components** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
+4. **Circular Dependencies** → `architecture.projects[].dependsOn` must not form cycles
+5. **API Endpoint Service** → each `contracts[].paths[].service` must exist in `architecture.projects`
+6. **Foreign Key Targets** → entities in `domain.entities[].relationships[].target` must exist as entities
+7. **Feature Dependencies** → `features.phase*.features[].dependsOn` must reference features in same/earlier phases
+8. **Resilience Service References** → services in `resilience.circuitBreaker[].service` must exist in `architecture.projects`
+9. **Backup Database References** → databases in `backupDr.databases[].name` must match `data.databases[].name`
 
-### Additional v1.1 Validations
+**Type Compatibility (3 rules):**
+10. **ORM-Database Pair** → `data.primaryDatabase.type` must be compatible with `architecture.projects[].orm`
+11. **Framework-Language** → `architecture.projects[].framework` must be compatible with `.language`
+12. **Auth Provider Integration** → if `auth.provider` is in integrations list, it must exist in `integrations[]`
 
-- **Feature Dependencies** → `features.phase*.dependencies` must reference features in the same or earlier phases
-- **Compliance Controls** → `compliance.frameworks[].controls[]` must be valid control types per framework
-- **Resilience Targets** → `resilience.circuitBreaker[].failureThreshold` must be > 0
+**Deployment Integrity (5 rules):**
+13. **Microservices Count** → `architecture.style: "microservices"` requires 2+ services
+14. **Deployable Coverage** → every `deployable: true` component must appear in at least one environment
+15. **Port Conflicts** → within each environment, no duplicate ports
+16. **Region Support** → `deployment.regions[]` valid for `deployment.cloud`
+17. **CloudFormation Constraint** → `deployment.ciCd.provider: "cloudformation"` only with AWS
+
+**Data Model Integrity (4 rules):**
+18. **Primary Key Required** → all `domain.entities[]` must have `primaryKey: true` field
+19. **Cross-Database Foreign Keys** → FK relationships across databases noted as limitations
+20. **Unique Component Names** → component names globally unique (all categories)
+21. **Entity Ownership** (v1.1) → each `domain.entities[]` should be owned by a component
+
+**Configuration Completeness (3 rules):**
+22. **Deployable Component Fields** → `deployable: true` components must have `path` and `runtime`
+23. **OIDC Provider** → `auth.provider: "oidc"` requires issuer URL
+24. **Compliance Framework Validity** → `compliance.frameworks[].name` must be recognized (GDPR, HIPAA, SOC2, PCI-DSS, CCPA)
+
+**Resilience & Performance (2 rules):**
+25. **Resilience Thresholds** → `resilience.circuitBreaker[].failureThreshold` and `retryPolicy[].maxRetries` > 0
+26. **SLO Reasonableness** → `slos[].availability.target` between 90-99.99%, latency.p99 > latency.p50
+
+**PII & Security (1 rule):**
+27. **PII Encryption** → if any entity has PII fields, `data` must have `encryption.atRest: true`
+
+### Warning Rules
+
+These are non-blocking but flag potential issues (10+ rules):
+
+1. **Microservices with small team** — microservices style with < 3 team members
+2. **Aggressive timeline vs scope** — complex architecture with < 4 week timeline
+3. **Multi-persona without auth** — 3+ personas but no auth defined
+4. **Budget vs cost mismatch** — estimated costs exceed budget
+5. **Cross-database foreign keys** — relationships span different databases
+6. **Unused integrations** — integrations listed but not in any `dependsOn`
+7. **Missing observability** — production-stage architecture without observability section
+8. **Loose SLO targets** — production SLOs < 99% availability
+9. **High cost variance** — scenarios differ by >10x between low/high
+10. **Feature phase cycles** — features depend on features in future phases (soft validation)
+11. **Compliance gaps** — project stage suggests compliance need but no frameworks defined
+12. **Design tokens missing** → stage: "production" without `design.tokens` defined
 
 ---
 
