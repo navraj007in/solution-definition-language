@@ -97,11 +97,36 @@ Each imported file contains one or more SDL sections. The system resolves and me
 | Cost Estimate | Infrastructure cost projections |
 | Backlog | Sprint planning from architecture |
 
+## Versions
+
+- **v0.1** — Core architecture (lightweight)
+  - Solution metadata, architecture style, projects, data infrastructure
+  - Auth, deployment, environments, observability, integrations
+  - ~40 fields, focuses on architecture decisions
+  - Use for: MVP planning, architecture sketches, quick scaffolding
+  - Spec: [SDL-v0.1.md](spec/SDL-v0.1.md)
+
+- **v1.1** — Complete specification (production-grade)
+  - All v0.1 fields PLUS:
+  - API contracts (OpenAPI, GraphQL, gRPC)
+  - Data model (entity definitions with fields, relationships, constraints)
+  - Feature planning (MVP phases, feature flags, dependencies)
+  - Compliance (GDPR, HIPAA, SOC2, PCI-DSS, CCPA)
+  - SLO/SLI (service level objectives, KPIs, alert thresholds)
+  - Resilience (circuit breakers, retries, timeouts, fallbacks)
+  - Cost model (pricing, usage-based costs, per-component breakdown)
+  - Backup & DR (RTO/RPO, failover, replication)
+  - Design system (tokens, theming, component library)
+  - ~150+ fields, comprehensive architecture + operations
+  - Use for: Production systems, compliance audits, cost modeling, SLA agreements
+  - Spec: [SDL-v1.1.md](spec/SDL-v1.1.md)
+
 ## Documentation
 
 | Document | Description |
 |---|---|
-| [Specification](spec/SDL-v0.1.md) | Formal SDL specification (v0.1) |
+| [Specification v0.1](spec/SDL-v0.1.md) | Core architecture (lightweight) |
+| [Specification v1.1](spec/SDL-v1.1.md) | Complete specification (production-grade) |
 | [Schema Reference](reference/schema-reference.md) | Field-by-field reference for every SDL section |
 | [Generators](reference/generators.md) | What each generator produces and what SDL sections it consumes |
 | [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
