@@ -2,6 +2,12 @@
 
 SDL is a structured YAML specification for capturing complete software architecture decisions. It serves as the single source of truth for a project's architecture — from tech stack and service boundaries to auth strategy, data model, deployment targets, and design system.
 
+## Status
+
+**SDL v1.1 is the active standard.**
+
+SDL v0.1 is retained only as deprecated reference material for older documents and migration work. New SDL documents, examples, generators, and integrations should target `sdlVersion: "1.1"`.
+
 ## Why SDL?
 
 Architecture decisions are typically scattered across documents, Slack threads, and people's heads. SDL consolidates them into one machine-readable file that:
@@ -16,7 +22,7 @@ Architecture decisions are typically scattered across documents, Slack threads, 
 ## Quick Example
 
 ```yaml
-sdlVersion: "0.1"
+sdlVersion: "1.1"
 
 solution:
   name: TaskFlow
@@ -56,6 +62,24 @@ deployment:
   cloud: aws
   ciCd:
     provider: github-actions
+
+contracts:
+  - name: api
+    type: openapi
+    version: "3.1.0"
+    path: sdl/contracts/api.openapi.yaml
+
+domain:
+  entities:
+    - name: Task
+      table: tasks
+      fields:
+        - name: id
+          type: uuid
+          primaryKey: true
+        - name: title
+          type: string
+          nullable: false
 ```
 
 ## Multi-File SDL
@@ -70,6 +94,9 @@ imports:
   - sdl/data.sdl.yaml
   - sdl/auth.sdl.yaml
   - sdl/deployment.sdl.yaml
+  - sdl/contracts.sdl.yaml
+  - sdl/domain.sdl.yaml
+  - sdl/design.sdl.yaml
 
 solution:
   name: MedChat
@@ -99,15 +126,7 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## Versions
 
-- **v0.1** — Core architecture (lightweight)
-  - Solution metadata, architecture style, projects, data infrastructure
-  - Auth, deployment, environments, observability, integrations
-  - ~40 fields, focuses on architecture decisions
-  - Use for: MVP planning, architecture sketches, quick scaffolding
-  - Spec: [SDL-v0.1.md](spec/SDL-v0.1.md)
-
-- **v1.1** — Complete specification (production-grade)
-  - All v0.1 fields PLUS:
+- **v1.1** — Active specification (production-grade)
   - API contracts (OpenAPI, GraphQL, gRPC)
   - Data model (entity definitions with fields, relationships, constraints)
   - Feature planning (MVP phases, feature flags, dependencies)
@@ -117,21 +136,24 @@ Each imported file contains one or more SDL sections. The system resolves and me
   - Cost model (pricing, usage-based costs, per-component breakdown)
   - Backup & DR (RTO/RPO, failover, replication)
   - Design system (tokens, theming, component library)
-  - ~150+ fields, comprehensive architecture + operations
-  - Use for: Production systems, compliance audits, cost modeling, SLA agreements
   - Spec: [SDL-v1.1.md](spec/SDL-v1.1.md)
+
+- **v0.1** — Deprecated
+  - Retained only for legacy documents and migration reference
+  - Do not use for new SDL generation
+  - Spec: [SDL-v0.1.md](spec/SDL-v0.1.md)
 
 ## Documentation
 
 | Document | Description |
 |---|---|
-| [Specification v0.1](spec/SDL-v0.1.md) | Core architecture (lightweight) |
-| [Specification v1.1](spec/SDL-v1.1.md) | Complete specification (production-grade) |
-| [Schema Reference](reference/schema-reference.md) | Field-by-field reference for every SDL section |
+| [Specification v1.1](spec/SDL-v1.1.md) | Active complete specification |
+| [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
 | [Generators](reference/generators.md) | What each generator produces and what SDL sections it consumes |
 | [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
-| [Normalization](reference/normalization-defaults.md) | 15 auto-inference rules and mapping tables |
-| [SDL Knowledge](reference/sdl-knowledge.md) | Comprehensive knowledge base |
+| [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
+| [SDL Knowledge](reference/sdl-knowledge.md) | SDL generation and validation guidance |
+| [Specification v0.1](spec/SDL-v0.1.md) | Deprecated legacy reference |
 
 ## Templates
 
@@ -159,8 +181,10 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## Schema
 
-- [JSON Schema (v0.1)](schema/sdl-v0.1.schema.json) — machine-readable validation schema
-- [TypeScript Types](schema/sdl-v0.1.d.ts) — type definitions for the SDL document structure
+- [JSON Schema (v0.1)](schema/sdl-v0.1.schema.json) — deprecated machine-readable validation schema for legacy SDL
+- [TypeScript Types (v0.1)](schema/sdl-v0.1.d.ts) — deprecated legacy type definitions
+
+Note: v1.1 is the active spec. If the machine-readable `v1.1` schema artifacts are not yet published in `schema/`, use [Specification v1.1](spec/SDL-v1.1.md) as the canonical source.
 
 ## Reference Implementation
 
@@ -171,7 +195,7 @@ The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
 - **Normalizer** — Auto-inference of defaults
 - **Resolver** — Multi-file import resolution
 - **Diff** — Structural comparison of SDL versions
-- **16 Generators** — Docker Compose, Kubernetes, Terraform, CI/CD, coding rules, etc.
+- **Generators** — Docker Compose, Kubernetes, Terraform, CI/CD, coding rules, and related outputs
 - **Progress Tracker** — Verification spec derivation for build progress
 
 ## Version History
