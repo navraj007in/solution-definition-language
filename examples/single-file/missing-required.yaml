@@ -1,5 +1,5 @@
 # Missing solution.name, product, and artifacts
-sdlVersion: "0.1"
+sdlVersion: "1.1"
 
 solution:
   description: "A tool for testing"
