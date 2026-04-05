@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import type { ValidateFunction } from 'ajv';
-import sdlSchema from './schema/sdl-v0.1.schema.json';
+import sdlSchema from './schema/sdl-v1.1.schema.json';
 import { mapAjvErrors } from './error-map';
 import { detectWarnings } from './warnings';
 import type { SDLDocument, ValidationResult, ValidationSummary } from './types';
@@ -50,16 +50,16 @@ function buildSummary(sdl: SDLDocument): ValidationSummary {
     architecture: sdl.architecture.style,
     projects,
     estimatedCost: estimateCostRange(sdl),
-    artifactsToGenerate: sdl.artifacts.generate.length,
+    artifactsToGenerate: sdl.artifacts?.generate?.length ?? 0,
   };
 }
 
 function estimateCostRange(sdl: SDLDocument): string {
-  const cloud = sdl.deployment.cloud;
+  const cloud = sdl.deployment?.cloud;
   const budget = sdl.constraints?.budget;
 
   // Simple heuristics based on cloud + budget tier
-  if (budget === 'startup' || ['vercel', 'railway', 'render'].includes(cloud)) {
+  if (budget === 'startup' || (cloud !== undefined && ['vercel', 'railway', 'render'].includes(cloud))) {
     return '$0-100/mo';
   }
   if (budget === 'scaleup') {

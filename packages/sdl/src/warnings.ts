@@ -55,7 +55,7 @@ function checkTimelineVsScope(sdl: SDLDocument): ValidationWarning[] {
   const backendCount = sdl.architecture.projects.backend?.length ?? 0;
   const mobileCount = sdl.architecture.projects.mobile?.length ?? 0;
   const projectCount = frontendCount + backendCount + mobileCount;
-  const flowCount = sdl.product.coreFlows?.length ?? 0;
+  const flowCount = sdl.product?.coreFlows?.length ?? 0;
 
   // Heuristic: each project+flow combination needs roughly 1.5 dev-weeks
   const estimatedWeeks = (projectCount * flowCount * 1.5) / totalDevs;
@@ -77,7 +77,7 @@ function checkTimelineVsScope(sdl: SDLDocument): ValidationWarning[] {
 function checkAuthForMultiPersona(sdl: SDLDocument): ValidationWarning[] {
   if (sdl.auth) return [];
 
-  const personas = sdl.product.personas;
+  const personas = sdl.product?.personas ?? [];
   if (personas.length <= 1) return [];
 
   const hasAdmin = personas.some(p =>
@@ -110,8 +110,8 @@ function checkBudgetVsInfrastructure(sdl: SDLDocument): ValidationWarning[] {
   let estimatedCost = 0;
 
   // Cloud platform base cost
-  const cloud = sdl.deployment.cloud;
-  if (['aws', 'gcp', 'azure'].includes(cloud)) {
+  const cloud = sdl.deployment?.cloud;
+  if (cloud !== undefined && ['aws', 'gcp', 'azure'].includes(cloud)) {
     estimatedCost += 100;
   }
 
@@ -139,7 +139,7 @@ function checkBudgetVsInfrastructure(sdl: SDLDocument): ValidationWarning[] {
   }
 
   // Kubernetes-based runtimes
-  const runtime = sdl.deployment.runtime;
+  const runtime = sdl.deployment?.runtime;
   if (runtime?.backend === 'kubernetes' || runtime?.frontend === 'kubernetes') {
     estimatedCost += 300;
   }
@@ -155,7 +155,7 @@ function checkBudgetVsInfrastructure(sdl: SDLDocument): ValidationWarning[] {
   }
 
   // Scale multiplier based on expected users
-  const users = sdl.nonFunctional.scaling.expectedUsersYear1 ?? 0;
+  const users = sdl.nonFunctional?.scaling.expectedUsersYear1 ?? 0;
   if (users > 10000) {
     estimatedCost *= 2;
   } else if (users > 5000) {

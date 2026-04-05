@@ -43,12 +43,12 @@ export function generate(doc: SDLDocument, artifactType: ArtifactType): Generato
   return generator(doc);
 }
 
-/** Generate all artifacts listed in doc.artifacts.generate */
+/** Generate all artifacts listed in doc.artifacts.generate when present */
 export function generateAll(doc: SDLDocument): GenerateAllResult {
   const results: GeneratorResult[] = [];
   const skipped: ArtifactType[] = [];
 
-  for (const artifactType of doc.artifacts.generate) {
+  for (const artifactType of doc.artifacts?.generate ?? []) {
     const generator = GENERATOR_MAP[artifactType];
     if (generator) {
       results.push(generator(doc));

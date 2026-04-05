@@ -1,5 +1,5 @@
-# Missing solution.name, product, and artifacts
-sdlVersion: "0.1"
+# Missing solution.name in required v1.1 core fields
+sdlVersion: "1.1"
 
 solution:
   description: "A tool for testing"

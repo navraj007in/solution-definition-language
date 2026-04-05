@@ -86,6 +86,7 @@ function applyRuntimeDefaults(sdl: SDLDocument): void {
   const mapping = CLOUD_RUNTIME_MAP[cloud];
   if (!mapping) return;
 
+  if (!sdl.deployment) return;
   if (!sdl.deployment.runtime) {
     setProperty(sdl.deployment, 'runtime', {});
   }
@@ -102,6 +103,7 @@ function applyRuntimeDefaults(sdl: SDLDocument): void {
 // ─── Rule 7: deployment.networking.publicApi → true ───
 
 function applyNetworkingDefaults(sdl: SDLDocument): void {
+  if (!sdl.deployment) return;
   if (!sdl.deployment.networking) {
     setProperty(sdl.deployment, 'networking', { publicApi: true });
   } else if (sdl.deployment.networking.publicApi === undefined) {
@@ -112,6 +114,7 @@ function applyNetworkingDefaults(sdl: SDLDocument): void {
 // ─── Rule 8: deployment.ciCd.provider → "github-actions" ───
 
 function applyCiCdDefaults(sdl: SDLDocument): void {
+  if (!sdl.deployment) return;
   if (!sdl.deployment.ciCd) {
     setProperty(sdl.deployment, 'ciCd', { provider: 'github-actions' });
   }
@@ -120,6 +123,7 @@ function applyCiCdDefaults(sdl: SDLDocument): void {
 // ─── Rule 9: nonFunctional.availability.target → stage-based ───
 
 function applyAvailabilityDefaults(sdl: SDLDocument): void {
+  if (!sdl.nonFunctional?.availability) return;
   if (!sdl.nonFunctional.availability.target) {
     sdl.nonFunctional.availability.target =
       AVAILABILITY_BY_STAGE[sdl.solution.stage] ?? '99.9';
@@ -129,7 +133,7 @@ function applyAvailabilityDefaults(sdl: SDLDocument): void {
 // ─── Rules 10-12: security defaults ───
 
 function applySecurityDefaults(sdl: SDLDocument): void {
-  if (!sdl.nonFunctional.security) return;
+  if (!sdl.nonFunctional?.security) return;
 
   const security = sdl.nonFunctional.security;
 

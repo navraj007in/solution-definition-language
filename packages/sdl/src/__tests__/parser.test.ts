@@ -13,7 +13,7 @@ describe('parse', () => {
     const result = parse(fixture('taskflow.yaml'));
     assert.equal(result.errors.length, 0);
     assert.ok(result.data);
-    assert.equal((result.data as Record<string, unknown>).sdlVersion, '0.1');
+    assert.equal((result.data as Record<string, unknown>).sdlVersion, '1.1');
   });
 
   it('returns EMPTY_INPUT for empty string', () => {

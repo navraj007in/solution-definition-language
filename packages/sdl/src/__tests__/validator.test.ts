@@ -32,7 +32,7 @@ describe('validate', () => {
   });
 
   describe('missing required fields', () => {
-    it('rejects SDL missing product and artifacts', () => {
+    it('rejects SDL missing required core fields', () => {
       const result = validate(fixture('missing-required.yaml'));
       assert.equal(result.valid, false);
       assert.ok(result.errors.length > 0);

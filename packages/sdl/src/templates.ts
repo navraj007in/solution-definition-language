@@ -47,7 +47,7 @@ function saasStarterTemplate(): SDLTemplate {
     description: 'Multi-tenant SaaS application with auth, billing, and a dashboard. Next.js frontend, Node.js API, PostgreSQL.',
     stage: 'MVP',
     tags: ['saas', 'web', 'auth', 'billing', 'postgres'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MySaaS"
@@ -149,7 +149,7 @@ function ecommerceTemplate(): SDLTemplate {
     description: 'Multi-vendor marketplace with product catalog, cart, checkout, and payment processing. Microservices on AWS.',
     stage: 'Growth',
     tags: ['ecommerce', 'marketplace', 'payments', 'microservices', 'aws'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyShop"
@@ -300,7 +300,7 @@ function mobileBackendTemplate(): SDLTemplate {
     description: 'Backend API for a cross-platform mobile app with push notifications, real-time sync, and social auth.',
     stage: 'MVP',
     tags: ['mobile', 'react-native', 'api', 'push-notifications', 'realtime'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyApp"
@@ -389,7 +389,7 @@ function internalToolTemplate(): SDLTemplate {
     description: 'Internal business tool with SSO, RBAC, and audit logging. Python FastAPI backend with Vue dashboard.',
     stage: 'MVP',
     tags: ['internal', 'admin', 'sso', 'rbac', 'python', 'vue'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "BackOffice"
@@ -470,7 +470,7 @@ function apiFirstTemplate(): SDLTemplate {
     description: 'Developer-facing API platform with API keys, rate limiting, and OpenAPI docs. Go backend, DynamoDB, serverless.',
     stage: 'Growth',
     tags: ['api', 'developer-platform', 'go', 'serverless', 'dynamodb'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "DevAPI"
@@ -561,7 +561,7 @@ function aiProductTemplate(): SDLTemplate {
     description: 'AI-powered analysis tool with document processing, semantic search, and RAG pipeline. Python FastAPI backend, Next.js dashboard, AWS.',
     stage: 'MVP',
     tags: ['ai', 'rag', 'python', 'fastapi', 'aws', 'postgres'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyAIProduct"
@@ -641,7 +641,7 @@ function marketplaceTemplate(): SDLTemplate {
     description: 'Buyer/seller marketplace with Stripe Connect split payments, moderation, and analytics. .NET 8 backend, Next.js storefront, AWS.',
     stage: 'MVP',
     tags: ['marketplace', 'dotnet', 'stripe-connect', 'payments', 'aws'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyMarketplace"
@@ -736,7 +736,7 @@ function adminDashboardTemplate(): SDLTemplate {
     description: 'Lightweight internal CRUD tool with record management and reporting. Node.js backend, React frontend, Railway hosting.',
     stage: 'MVP',
     tags: ['internal', 'admin', 'crud', 'nodejs', 'react', 'railway'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyInternalTool"
@@ -819,7 +819,7 @@ function saasSubscriptionTemplate(): SDLTemplate {
     description: 'Subscription SaaS app with Stripe billing, team management, and usage analytics. Next.js + Node.js on Vercel.',
     stage: 'MVP',
     tags: ['saas', 'stripe', 'subscriptions', 'nextjs', 'nodejs', 'vercel'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "MyApp"
@@ -905,7 +905,7 @@ function realtimeTemplate(): SDLTemplate {
     description: 'Real-time collaborative app (like Figma/Notion). WebSocket backend, event streaming, and conflict resolution.',
     stage: 'MVP',
     tags: ['realtime', 'collaboration', 'websocket', 'event-streaming'],
-    yaml: `sdlVersion: "0.1"
+    yaml: `sdlVersion: "1.1"
 
 solution:
   name: "CollabSpace"

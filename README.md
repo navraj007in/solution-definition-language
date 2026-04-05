@@ -181,10 +181,10 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## Schema
 
+- [JSON Schema (v1.1)](schema/sdl-v1.1.schema.json) — active machine-readable validation schema for SDL v1.1
+- [TypeScript Types (v1.1)](schema/sdl-v1.1.d.ts) — active TypeScript declaration file for SDL v1.1
 - [JSON Schema (v0.1)](schema/sdl-v0.1.schema.json) — deprecated machine-readable validation schema for legacy SDL
 - [TypeScript Types (v0.1)](schema/sdl-v0.1.d.ts) — deprecated legacy type definitions
-
-Note: v1.1 is the active spec. If the machine-readable `v1.1` schema artifacts are not yet published in `schema/`, use [Specification v1.1](spec/SDL-v1.1.md) as the canonical source.
 
 ## Reference Implementation
 

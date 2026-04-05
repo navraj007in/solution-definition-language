@@ -5,7 +5,7 @@ type ExtensionFields = { [key: `x-${string}`]: unknown };
 // ─── Root SDL Document ───
 
 export interface SDLDocument extends ExtensionFields {
-  sdlVersion: '0.1';
+  sdlVersion: '1.1';
   solution: SolutionMetadata;
   product: ProductContext;
   architecture: Architecture;
@@ -15,11 +15,21 @@ export interface SDLDocument extends ExtensionFields {
   nonFunctional: NFRs;
   deployment: Deployment;
   constraints?: Constraints;
+  techDebt?: TechDebt[];
   technicalDebt?: TechDebt[];
   evolution?: Evolution;
   testing?: Testing;
   observability?: Observability;
-  artifacts: ArtifactConfig;
+  artifacts?: ArtifactConfig;
+  contracts?: ContractsSection;
+  domain?: DomainSection;
+  features?: FeatureSection[];
+  compliance?: ComplianceSection;
+  slos?: SloSection;
+  resilience?: ResilienceSection;
+  costs?: CostSection;
+  backupDr?: BackupDrSection;
+  design?: DesignSection;
 }
 
 // ─── $defs types ───
@@ -490,4 +500,71 @@ export interface CompileResult {
   warnings: ValidationWarning[];
   document: SDLDocument | null;
   summary: ValidationSummary | null;
+}
+
+export interface ContractsSection extends ExtensionFields {
+  apis?: ContractDefinition[];
+}
+
+export interface ContractDefinition extends ExtensionFields {
+  name: string;
+  type?: 'rest' | 'graphql' | 'grpc' | 'webhook' | 'asyncapi';
+  owner?: string;
+}
+
+export interface DomainSection extends ExtensionFields {
+  entities?: DomainEntity[];
+  relationships?: DomainRelationship[];
+}
+
+export interface DomainEntity extends ExtensionFields {
+  name: string;
+  fields?: DomainField[];
+}
+
+export interface DomainField extends ExtensionFields {
+  name: string;
+  type: string;
+  required?: boolean;
+}
+
+export interface DomainRelationship extends ExtensionFields {
+  from: string;
+  to: string;
+  type?: string;
+}
+
+export interface FeatureSection extends ExtensionFields {
+  name: string;
+  description?: string;
+  priority?: 'critical' | 'high' | 'medium' | 'low';
+}
+
+export interface ComplianceSection extends ExtensionFields {
+  frameworks?: Array<'gdpr' | 'hipaa' | 'sox' | 'pci-dss' | 'iso27001' | 'soc2'>;
+}
+
+export interface SloSection extends ExtensionFields {
+  services?: Array<{ name: string; availability?: string; latencyP95?: string }>;
+}
+
+export interface ResilienceSection extends ExtensionFields {
+  strategy?: string;
+  rto?: string;
+  rpo?: string;
+}
+
+export interface CostSection extends ExtensionFields {
+  monthly?: string;
+  notes?: string[];
+}
+
+export interface BackupDrSection extends ExtensionFields {
+  backups?: Array<{ target: string; frequency?: string; retention?: string }>;
+}
+
+export interface DesignSection extends ExtensionFields {
+  personality?: string;
+  colors?: Record<string, string>;
+  typography?: Record<string, string>;
 }
