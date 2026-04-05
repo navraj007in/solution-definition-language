@@ -18,6 +18,7 @@ function setProperty(obj: any, key: string, value: unknown): void {
 export function normalize(sdl: SDLDocument): SDLDocument {
   const result = structuredClone(sdl);
 
+  applyLegacySectionDefaults(result);
   applyRegionDefaults(result);
   applyDatabaseNameDefault(result);
   applyFrontendTypeDefaults(result);
@@ -32,6 +33,57 @@ export function normalize(sdl: SDLDocument): SDLDocument {
   applyObservabilityDefaults(result);
 
   return result;
+}
+
+
+function applyLegacySectionDefaults(sdl: SDLDocument): void {
+  if (!sdl.product) {
+    setProperty(sdl, 'product', { personas: [], coreFlows: [] });
+  } else {
+    if (!sdl.product.personas) setProperty(sdl.product, 'personas', []);
+    if (!sdl.product.coreFlows) setProperty(sdl.product, 'coreFlows', []);
+  }
+
+  if (!sdl.deployment) {
+    setProperty(sdl, 'deployment', { cloud: inferDefaultCloud(sdl) });
+  }
+
+  if (!sdl.nonFunctional) {
+    setProperty(sdl, 'nonFunctional', {
+      availability: { target: AVAILABILITY_BY_STAGE[sdl.solution.stage] ?? '99.9' },
+      scaling: defaultScalingForStage(sdl.solution.stage),
+    });
+  } else {
+    if (!sdl.nonFunctional.availability) {
+      setProperty(sdl.nonFunctional, 'availability', { target: AVAILABILITY_BY_STAGE[sdl.solution.stage] ?? '99.9' });
+    }
+    if (!sdl.nonFunctional.scaling) {
+      setProperty(sdl.nonFunctional, 'scaling', defaultScalingForStage(sdl.solution.stage));
+    }
+  }
+
+  if (!sdl.artifacts) {
+    setProperty(sdl, 'artifacts', { generate: [] });
+  }
+}
+
+function inferDefaultCloud(sdl: SDLDocument): 'vercel' | 'railway' {
+  const frontendCount = sdl.architecture.projects.frontend?.length ?? 0;
+  const backendCount = sdl.architecture.projects.backend?.length ?? 0;
+  const mobileCount = sdl.architecture.projects.mobile?.length ?? 0;
+  return backendCount > 0 || mobileCount > 0 ? 'railway' : frontendCount > 0 ? 'vercel' : 'railway';
+}
+
+function defaultScalingForStage(stage: SDLDocument['solution']['stage']): { expectedUsersMonth1: number; expectedUsersYear1: number } {
+  switch (stage) {
+    case 'Growth':
+      return { expectedUsersMonth1: 1000, expectedUsersYear1: 10000 };
+    case 'Enterprise':
+      return { expectedUsersMonth1: 10000, expectedUsersYear1: 100000 };
+    case 'MVP':
+    default:
+      return { expectedUsersMonth1: 100, expectedUsersYear1: 1000 };
+  }
 }
 
 // ─── Rule 1: solution.regions.primary → "us-east-1" ───

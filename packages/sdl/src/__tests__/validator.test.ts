@@ -13,6 +13,31 @@ const fixture = (name: string) => {
 
 describe('validate', () => {
   describe('valid input', () => {
+    it('accepts a core-only v1.1 document', () => {
+      const result = validate({
+        sdlVersion: '1.1',
+        solution: {
+          name: 'CoreOnly',
+          description: 'Minimal SDL v1.1 document',
+          stage: 'MVP',
+        },
+        architecture: {
+          style: 'modular-monolith',
+          projects: {
+            backend: [{ name: 'api', framework: 'nodejs' }],
+          },
+        },
+        data: {
+          primaryDatabase: { type: 'postgres', hosting: 'managed' },
+        },
+      });
+
+      assert.equal(result.valid, true);
+      assert.equal(result.errors.length, 0);
+      assert.ok(result.summary);
+      assert.equal(result.summary!.artifactsToGenerate, 0);
+    });
+
     it('accepts the TaskFlow minimal example', () => {
       const result = validate(fixture('taskflow.yaml'));
       assert.equal(result.valid, true);

@@ -34,6 +34,40 @@ describe('compile', () => {
     assert.equal(result.summary!.artifactsToGenerate, 5);
   });
 
+  it('compiles core-only v1.1 documents and normalizes omitted sections', () => {
+    const yaml = `sdlVersion: "1.1"
+
+solution:
+  name: "CoreOnly"
+  description: "Minimal SDL v1.1 document"
+  stage: "MVP"
+
+architecture:
+  style: "modular-monolith"
+  projects:
+    backend:
+      - name: "api"
+        framework: "nodejs"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "managed"
+`;
+
+    const result = compile(yaml);
+    assert.equal(result.success, true);
+    assert.ok(result.document);
+
+    const doc = result.document!;
+    assert.deepEqual(doc.product.personas, []);
+    assert.deepEqual(doc.product.coreFlows, []);
+    assert.equal(doc.deployment.cloud, 'railway');
+    assert.equal(doc.nonFunctional.availability.target, '99.9');
+    assert.equal(doc.nonFunctional.scaling.expectedUsersMonth1, 100);
+    assert.equal(doc.artifacts!.generate.length, 0);
+  });
+
   it('is deterministic (same input → same output)', () => {
     const yaml = fixture('taskflow.yaml');
     const result1 = compile(yaml);

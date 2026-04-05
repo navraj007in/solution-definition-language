@@ -8,11 +8,22 @@
   "patternProperties": {
     "^x-": {}
   },
-  "required": ["sdlVersion", "solution", "product", "architecture", "data", "nonFunctional", "deployment", "artifacts"],
+  "required": [
+    "sdlVersion",
+    "solution",
+    "product",
+    "architecture",
+    "data",
+    "nonFunctional",
+    "deployment",
+    "artifacts"
+  ],
   "properties": {
     "sdlVersion": {
       "type": "string",
-      "enum": ["0.1"],
+      "enum": [
+        "0.1"
+      ],
       "description": "SDL schema version"
     },
     "solution": {
@@ -64,10 +75,18 @@
   "allOf": [
     {
       "if": {
+        "required": [
+          "architecture"
+        ],
         "properties": {
           "architecture": {
+            "required": [
+              "style"
+            ],
             "properties": {
-              "style": { "const": "microservices" }
+              "style": {
+                "const": "microservices"
+              }
             }
           }
         }
@@ -75,7 +94,9 @@
       "then": {
         "properties": {
           "architecture": {
-            "required": ["services"],
+            "required": [
+              "services"
+            ],
             "properties": {
               "services": {
                 "minItems": 2,
@@ -88,10 +109,18 @@
     },
     {
       "if": {
+        "required": [
+          "auth"
+        ],
         "properties": {
           "auth": {
+            "required": [
+              "strategy"
+            ],
             "properties": {
-              "strategy": { "const": "oidc" }
+              "strategy": {
+                "const": "oidc"
+              }
             }
           }
         }
@@ -99,7 +128,9 @@
       "then": {
         "properties": {
           "auth": {
-            "required": ["provider"],
+            "required": [
+              "provider"
+            ],
             "errorMessage": "OIDC strategy requires provider to be specified"
           }
         }
@@ -107,12 +138,23 @@
     },
     {
       "if": {
+        "required": [
+          "nonFunctional"
+        ],
         "properties": {
           "nonFunctional": {
+            "required": [
+              "security"
+            ],
             "properties": {
               "security": {
+                "required": [
+                  "pii"
+                ],
                 "properties": {
-                  "pii": { "const": true }
+                  "pii": {
+                    "const": true
+                  }
                 }
               }
             }
@@ -138,15 +180,23 @@
     },
     {
       "if": {
+        "required": [
+          "deployment"
+        ],
         "properties": {
           "deployment": {
-            "required": ["infrastructure"],
+            "required": [
+              "infrastructure"
+            ],
             "properties": {
-              "cloud": { "const": "azure" },
               "infrastructure": {
-                "required": ["iac"],
+                "required": [
+                  "iac"
+                ],
                 "properties": {
-                  "iac": { "const": "cloudformation" }
+                  "iac": {
+                    "const": "cloudformation"
+                  }
                 }
               }
             }
@@ -160,12 +210,24 @@
     },
     {
       "if": {
+        "required": [
+          "data",
+          "architecture"
+        ],
         "properties": {
           "data": {
+            "required": [
+              "primaryDatabase"
+            ],
             "properties": {
               "primaryDatabase": {
+                "required": [
+                  "type"
+                ],
                 "properties": {
-                  "type": { "const": "mongodb" }
+                  "type": {
+                    "const": "mongodb"
+                  }
                 }
               }
             }
@@ -175,9 +237,16 @@
               "projects": {
                 "properties": {
                   "backend": {
-                    "items": {
+                    "type": "array",
+                    "contains": {
+                      "type": "object",
+                      "required": [
+                        "orm"
+                      ],
                       "properties": {
-                        "orm": { "const": "ef-core" }
+                        "orm": {
+                          "const": "ef-core"
+                        }
                       }
                     }
                   }
@@ -200,7 +269,11 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name", "description", "stage"],
+      "required": [
+        "name",
+        "description",
+        "stage"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -217,13 +290,17 @@
         },
         "stage": {
           "type": "string",
-          "enum": ["MVP", "Growth", "Enterprise"],
+          "enum": [
+            "MVP",
+            "Growth",
+            "Enterprise"
+          ],
           "description": "Current product stage"
         },
         "domain": {
           "type": "string",
-          "format": "hostname",
-          "description": "Primary domain"
+          "description": "Primary domain",
+          "pattern": "^[A-Za-z0-9.-]+$"
         },
         "regions": {
           "type": "object",
@@ -231,7 +308,9 @@
           "patternProperties": {
             "^x-": {}
           },
-          "required": ["primary"],
+          "required": [
+            "primary"
+          ],
           "properties": {
             "primary": {
               "type": "string",
@@ -269,7 +348,9 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["personas"],
+      "required": [
+        "personas"
+      ],
       "properties": {
         "personas": {
           "type": "array",
@@ -280,7 +361,10 @@
             "patternProperties": {
               "^x-": {}
             },
-            "required": ["name", "goals"],
+            "required": [
+              "name",
+              "goals"
+            ],
             "properties": {
               "name": {
                 "type": "string"
@@ -293,7 +377,11 @@
               },
               "accessLevel": {
                 "type": "string",
-                "enum": ["public", "authenticated", "admin"]
+                "enum": [
+                  "public",
+                  "authenticated",
+                  "admin"
+                ]
               }
             }
           }
@@ -306,7 +394,9 @@
             "patternProperties": {
               "^x-": {}
             },
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string"
@@ -319,7 +409,12 @@
               },
               "priority": {
                 "type": "string",
-                "enum": ["critical", "high", "medium", "low"]
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low"
+                ]
               }
             }
           }
@@ -335,11 +430,18 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["style", "projects"],
+      "required": [
+        "style",
+        "projects"
+      ],
       "properties": {
         "style": {
           "type": "string",
-          "enum": ["modular-monolith", "microservices", "serverless"]
+          "enum": [
+            "modular-monolith",
+            "microservices",
+            "serverless"
+          ]
         },
         "projects": {
           "type": "object",
@@ -400,31 +502,61 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name", "framework"],
+      "required": [
+        "name",
+        "framework"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "type": {
           "type": "string",
-          "enum": ["web", "mobile-web", "admin"],
+          "enum": [
+            "web",
+            "mobile-web",
+            "admin"
+          ],
           "default": "web"
         },
         "framework": {
           "type": "string",
-          "enum": ["nextjs", "react", "vue", "angular", "svelte", "solid"]
+          "enum": [
+            "nextjs",
+            "react",
+            "vue",
+            "angular",
+            "svelte",
+            "solid"
+          ]
         },
         "rendering": {
           "type": "string",
-          "enum": ["ssr", "ssg", "spa"]
+          "enum": [
+            "ssr",
+            "ssg",
+            "spa"
+          ]
         },
         "stateManagement": {
           "type": "string",
-          "enum": ["context", "redux", "zustand", "mobx", "none"]
+          "enum": [
+            "context",
+            "redux",
+            "zustand",
+            "mobx",
+            "none"
+          ]
         },
         "styling": {
           "type": "string",
-          "enum": ["tailwind", "css-modules", "styled-components", "sass", "emotion"]
+          "enum": [
+            "tailwind",
+            "css-modules",
+            "styled-components",
+            "sass",
+            "emotion"
+          ]
         }
       }
     },
@@ -434,31 +566,64 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name", "framework"],
+      "required": [
+        "name",
+        "framework"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "type": {
           "type": "string",
-          "enum": ["backend", "worker", "function"],
+          "enum": [
+            "backend",
+            "worker",
+            "function"
+          ],
           "default": "backend"
         },
         "framework": {
           "type": "string",
-          "enum": ["dotnet-8", "nodejs", "python-fastapi", "go", "java-spring", "ruby-rails", "php-laravel"]
+          "enum": [
+            "dotnet-8",
+            "nodejs",
+            "python-fastapi",
+            "go",
+            "java-spring",
+            "ruby-rails",
+            "php-laravel"
+          ]
         },
         "apiStyle": {
           "type": "string",
-          "enum": ["rest", "graphql", "grpc", "mixed"]
+          "enum": [
+            "rest",
+            "graphql",
+            "grpc",
+            "mixed"
+          ]
         },
         "orm": {
           "type": "string",
-          "enum": ["ef-core", "prisma", "typeorm", "sqlalchemy", "gorm", "sequelize", "mongoose"]
+          "enum": [
+            "ef-core",
+            "prisma",
+            "typeorm",
+            "sqlalchemy",
+            "gorm",
+            "sequelize",
+            "mongoose"
+          ]
         },
         "apiVersioning": {
           "type": "string",
-          "enum": ["url-prefix", "header", "query-param", "none"]
+          "enum": [
+            "url-prefix",
+            "header",
+            "query-param",
+            "none"
+          ]
         }
       }
     },
@@ -468,18 +633,32 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name", "platform", "framework"],
+      "required": [
+        "name",
+        "platform",
+        "framework"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "platform": {
           "type": "string",
-          "enum": ["ios", "android", "cross-platform"]
+          "enum": [
+            "ios",
+            "android",
+            "cross-platform"
+          ]
         },
         "framework": {
           "type": "string",
-          "enum": ["react-native", "flutter", "swift", "kotlin", "ionic"]
+          "enum": [
+            "react-native",
+            "flutter",
+            "swift",
+            "kotlin",
+            "ionic"
+          ]
         }
       }
     },
@@ -489,14 +668,22 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name", "kind"],
+      "required": [
+        "name",
+        "kind"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "kind": {
           "type": "string",
-          "enum": ["backend", "worker", "function", "api-gateway"]
+          "enum": [
+            "backend",
+            "worker",
+            "function",
+            "api-gateway"
+          ]
         },
         "responsibilities": {
           "type": "array",
@@ -548,15 +735,32 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["strategy"],
+      "required": [
+        "strategy"
+      ],
       "properties": {
         "strategy": {
           "type": "string",
-          "enum": ["oidc", "passwordless", "magic-link", "api-key", "none"]
+          "enum": [
+            "oidc",
+            "passwordless",
+            "magic-link",
+            "api-key",
+            "none"
+          ]
         },
         "provider": {
           "type": "string",
-          "enum": ["cognito", "auth0", "entra-id", "entra-id-b2c", "firebase", "supabase", "clerk", "custom"]
+          "enum": [
+            "cognito",
+            "auth0",
+            "entra-id",
+            "entra-id-b2c",
+            "firebase",
+            "supabase",
+            "clerk",
+            "custom"
+          ]
         },
         "roles": {
           "type": "array",
@@ -574,7 +778,10 @@
           "properties": {
             "accessToken": {
               "type": "string",
-              "enum": ["jwt", "opaque"]
+              "enum": [
+                "jwt",
+                "opaque"
+              ]
             },
             "refreshToken": {
               "type": "boolean"
@@ -603,7 +810,14 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["google", "github", "microsoft", "apple", "facebook", "twitter"]
+            "enum": [
+              "google",
+              "github",
+              "microsoft",
+              "apple",
+              "facebook",
+              "twitter"
+            ]
           }
         }
       }
@@ -614,7 +828,9 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["primaryDatabase"],
+      "required": [
+        "primaryDatabase"
+      ],
       "properties": {
         "primaryDatabase": {
           "$ref": "#/$defs/Database"
@@ -641,7 +857,12 @@
               "properties": {
                 "provider": {
                   "type": "string",
-                  "enum": ["azure-blob", "s3", "gcs", "cloudflare-r2"]
+                  "enum": [
+                    "azure-blob",
+                    "s3",
+                    "gcs",
+                    "cloudflare-r2"
+                  ]
                 },
                 "public": {
                   "type": "boolean"
@@ -657,7 +878,12 @@
               "properties": {
                 "provider": {
                   "type": "string",
-                  "enum": ["azure-blob", "s3", "gcs", "cloudflare-r2"]
+                  "enum": [
+                    "azure-blob",
+                    "s3",
+                    "gcs",
+                    "cloudflare-r2"
+                  ]
                 }
               }
             }
@@ -672,7 +898,11 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["redis", "memcached", "none"]
+              "enum": [
+                "redis",
+                "memcached",
+                "none"
+              ]
             },
             "required": {
               "type": "boolean"
@@ -681,7 +911,11 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["session", "api", "query"]
+                "enum": [
+                  "session",
+                  "api",
+                  "query"
+                ]
               }
             }
           }
@@ -695,13 +929,23 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["rabbitmq", "azure-service-bus", "sqs", "kafka", "redis"]
+              "enum": [
+                "rabbitmq",
+                "azure-service-bus",
+                "sqs",
+                "kafka",
+                "redis"
+              ]
             },
             "useCase": {
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["async-jobs", "event-streaming", "notifications"]
+                "enum": [
+                  "async-jobs",
+                  "event-streaming",
+                  "notifications"
+                ]
               }
             }
           }
@@ -715,7 +959,16 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["elasticsearch", "algolia", "typesense", "azure-search", "meilisearch", "pinecone", "qdrant", "weaviate"]
+              "enum": [
+                "elasticsearch",
+                "algolia",
+                "typesense",
+                "azure-search",
+                "meilisearch",
+                "pinecone",
+                "qdrant",
+                "weaviate"
+              ]
             }
           }
         }
@@ -727,26 +980,49 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["type", "hosting"],
+      "required": [
+        "type",
+        "hosting"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["postgres", "mysql", "sqlserver", "mongodb", "dynamodb", "cockroachdb", "planetscale"]
+          "enum": [
+            "postgres",
+            "mysql",
+            "sqlserver",
+            "mongodb",
+            "dynamodb",
+            "cockroachdb",
+            "planetscale"
+          ]
         },
         "hosting": {
           "type": "string",
-          "enum": ["managed", "self-hosted", "serverless"]
+          "enum": [
+            "managed",
+            "self-hosted",
+            "serverless"
+          ]
         },
         "name": {
           "type": "string"
         },
         "size": {
           "type": "string",
-          "enum": ["small", "medium", "large"]
+          "enum": [
+            "small",
+            "medium",
+            "large"
+          ]
         },
         "role": {
           "type": "string",
-          "enum": ["primary", "read-replica", "analytics"]
+          "enum": [
+            "primary",
+            "read-replica",
+            "analytics"
+          ]
         }
       }
     },
@@ -766,11 +1042,21 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["stripe", "paypal", "square", "adyen", "braintree"]
+              "enum": [
+                "stripe",
+                "paypal",
+                "square",
+                "adyen",
+                "braintree"
+              ]
             },
             "mode": {
               "type": "string",
-              "enum": ["subscriptions", "one-time", "marketplace"]
+              "enum": [
+                "subscriptions",
+                "one-time",
+                "marketplace"
+              ]
             },
             "currency": {
               "type": "string"
@@ -786,13 +1072,24 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["sendgrid", "mailgun", "ses", "postmark", "resend", "smtp"]
+              "enum": [
+                "sendgrid",
+                "mailgun",
+                "ses",
+                "postmark",
+                "resend",
+                "smtp"
+              ]
             },
             "useCase": {
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["transactional", "marketing", "notifications"]
+                "enum": [
+                  "transactional",
+                  "marketing",
+                  "notifications"
+                ]
               }
             }
           }
@@ -806,7 +1103,12 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["twilio", "vonage", "aws-sns", "messagebird"]
+              "enum": [
+                "twilio",
+                "vonage",
+                "aws-sns",
+                "messagebird"
+              ]
             }
           }
         },
@@ -819,7 +1121,13 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["posthog", "mixpanel", "amplitude", "google-analytics", "plausible"]
+              "enum": [
+                "posthog",
+                "mixpanel",
+                "amplitude",
+                "google-analytics",
+                "plausible"
+              ]
             }
           }
         },
@@ -832,7 +1140,13 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["datadog", "newrelic", "azure-monitor", "sentry", "cloudwatch"]
+              "enum": [
+                "datadog",
+                "newrelic",
+                "azure-monitor",
+                "sentry",
+                "cloudwatch"
+              ]
             }
           }
         },
@@ -845,7 +1159,12 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["cloudflare", "fastly", "azure-cdn", "cloudfront"]
+              "enum": [
+                "cloudflare",
+                "fastly",
+                "azure-cdn",
+                "cloudfront"
+              ]
             }
           }
         },
@@ -857,18 +1176,31 @@
             "patternProperties": {
               "^x-": {}
             },
-            "required": ["name", "apiType"],
+            "required": [
+              "name",
+              "apiType"
+            ],
             "properties": {
               "name": {
                 "type": "string"
               },
               "apiType": {
                 "type": "string",
-                "enum": ["rest", "graphql", "soap", "grpc"]
+                "enum": [
+                  "rest",
+                  "graphql",
+                  "soap",
+                  "grpc"
+                ]
               },
               "authMethod": {
                 "type": "string",
-                "enum": ["api-key", "oauth2", "basic", "none"]
+                "enum": [
+                  "api-key",
+                  "oauth2",
+                  "basic",
+                  "none"
+                ]
               },
               "rateLimit": {
                 "type": "string"
@@ -884,7 +1216,10 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["availability", "scaling"],
+      "required": [
+        "availability",
+        "scaling"
+      ],
       "properties": {
         "availability": {
           "type": "object",
@@ -892,7 +1227,9 @@
           "patternProperties": {
             "^x-": {}
           },
-          "required": ["target"],
+          "required": [
+            "target"
+          ],
           "properties": {
             "target": {
               "type": "string",
@@ -948,7 +1285,9 @@
           "patternProperties": {
             "^x-": {}
           },
-          "required": ["pii"],
+          "required": [
+            "pii"
+          ],
           "properties": {
             "pii": {
               "type": "boolean"
@@ -967,7 +1306,12 @@
             },
             "auditLogging": {
               "type": "string",
-              "enum": ["none", "basic", "detailed", "compliance"]
+              "enum": [
+                "none",
+                "basic",
+                "detailed",
+                "compliance"
+              ]
             },
             "penetrationTesting": {
               "type": "boolean"
@@ -985,7 +1329,14 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["gdpr", "hipaa", "sox", "pci-dss", "iso27001", "soc2"]
+                "enum": [
+                  "gdpr",
+                  "hipaa",
+                  "sox",
+                  "pci-dss",
+                  "iso27001",
+                  "soc2"
+                ]
               }
             }
           }
@@ -999,7 +1350,11 @@
           "properties": {
             "frequency": {
               "type": "string",
-              "enum": ["hourly", "daily", "weekly"]
+              "enum": [
+                "hourly",
+                "daily",
+                "weekly"
+              ]
             },
             "retention": {
               "type": "string"
@@ -1017,11 +1372,22 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["cloud"],
+      "required": [
+        "cloud"
+      ],
       "properties": {
         "cloud": {
           "type": "string",
-          "enum": ["azure", "aws", "gcp", "cloudflare", "vercel", "railway", "render", "fly-io"]
+          "enum": [
+            "azure",
+            "aws",
+            "gcp",
+            "cloudflare",
+            "vercel",
+            "railway",
+            "render",
+            "fly-io"
+          ]
         },
         "runtime": {
           "type": "object",
@@ -1032,15 +1398,38 @@
           "properties": {
             "frontend": {
               "type": "string",
-              "enum": ["static-web-apps", "vercel", "cloudflare-pages", "s3+cloudfront", "app-service", "netlify"]
+              "enum": [
+                "static-web-apps",
+                "vercel",
+                "cloudflare-pages",
+                "s3+cloudfront",
+                "app-service",
+                "netlify"
+              ]
             },
             "backend": {
               "type": "string",
-              "enum": ["container-apps", "ecs", "cloud-run", "kubernetes", "app-service", "lambda", "cloud-functions"]
+              "enum": [
+                "container-apps",
+                "ecs",
+                "cloud-run",
+                "kubernetes",
+                "app-service",
+                "lambda",
+                "cloud-functions"
+              ]
             },
             "worker": {
               "type": "string",
-              "enum": ["container-apps", "ecs", "cloud-run", "kubernetes", "app-service", "lambda", "cloud-functions"]
+              "enum": [
+                "container-apps",
+                "ecs",
+                "cloud-run",
+                "kubernetes",
+                "app-service",
+                "lambda",
+                "cloud-functions"
+              ]
             }
           }
         },
@@ -1050,7 +1439,9 @@
           "patternProperties": {
             "^x-": {}
           },
-          "required": ["publicApi"],
+          "required": [
+            "publicApi"
+          ],
           "properties": {
             "publicApi": {
               "type": "boolean"
@@ -1075,11 +1466,19 @@
           "patternProperties": {
             "^x-": {}
           },
-          "required": ["provider"],
+          "required": [
+            "provider"
+          ],
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["github-actions", "gitlab-ci", "azure-devops", "circleci", "jenkins"]
+              "enum": [
+                "github-actions",
+                "gitlab-ci",
+                "azure-devops",
+                "circleci",
+                "jenkins"
+              ]
             },
             "environments": {
               "type": "array",
@@ -1098,7 +1497,13 @@
           "properties": {
             "iac": {
               "type": "string",
-              "enum": ["terraform", "bicep", "pulumi", "cdk", "cloudformation"]
+              "enum": [
+                "terraform",
+                "bicep",
+                "pulumi",
+                "cdk",
+                "cloudformation"
+              ]
             },
             "stateBacking": {
               "type": "string"
@@ -1113,7 +1518,9 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string"
@@ -1141,7 +1548,12 @@
       "properties": {
         "budget": {
           "type": "string",
-          "enum": ["startup", "scaleup", "enterprise", "custom"]
+          "enum": [
+            "startup",
+            "scaleup",
+            "enterprise",
+            "custom"
+          ]
         },
         "budgetAmount": {
           "type": "string"
@@ -1187,7 +1599,14 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["gdpr", "hipaa", "sox", "pci-dss", "iso27001", "soc2"]
+            "enum": [
+              "gdpr",
+              "hipaa",
+              "sox",
+              "pci-dss",
+              "iso27001",
+              "soc2"
+            ]
           }
         },
         "existingInfra": {
@@ -1222,7 +1641,11 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["azure", "aws", "gcp"]
+                "enum": [
+                  "azure",
+                  "aws",
+                  "gcp"
+                ]
               }
             }
           }
@@ -1235,7 +1658,12 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["id", "decision", "reason", "impact"],
+      "required": [
+        "id",
+        "decision",
+        "reason",
+        "impact"
+      ],
       "properties": {
         "id": {
           "type": "string"
@@ -1254,7 +1682,12 @@
         },
         "priority": {
           "type": "string",
-          "enum": ["low", "medium", "high", "critical"]
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
         },
         "triggerCondition": {
           "type": "string"
@@ -1279,7 +1712,10 @@
             "patternProperties": {
               "^x-": {}
             },
-            "required": ["condition", "action"],
+            "required": [
+              "condition",
+              "action"
+            ],
             "properties": {
               "condition": {
                 "type": "string"
@@ -1310,7 +1746,11 @@
             "properties": {
               "stage": {
                 "type": "string",
-                "enum": ["MVP", "Growth", "Enterprise"]
+                "enum": [
+                  "MVP",
+                  "Growth",
+                  "Enterprise"
+                ]
               },
               "targetDate": {
                 "type": "string"
@@ -1359,7 +1799,9 @@
       "patternProperties": {
         "^x-": {}
       },
-      "required": ["generate"],
+      "required": [
+        "generate"
+      ],
       "properties": {
         "generate": {
           "type": "array",
@@ -1391,11 +1833,18 @@
           "properties": {
             "diagrams": {
               "type": "string",
-              "enum": ["mermaid", "plantuml", "structurizr"]
+              "enum": [
+                "mermaid",
+                "plantuml",
+                "structurizr"
+              ]
             },
             "adr": {
               "type": "string",
-              "enum": ["markdown", "asciidoc"]
+              "enum": [
+                "markdown",
+                "asciidoc"
+              ]
             }
           }
         }
@@ -1417,7 +1866,16 @@
           "properties": {
             "framework": {
               "type": "string",
-              "enum": ["jest", "vitest", "pytest", "xunit", "go-test", "junit", "rspec", "phpunit"]
+              "enum": [
+                "jest",
+                "vitest",
+                "pytest",
+                "xunit",
+                "go-test",
+                "junit",
+                "rspec",
+                "phpunit"
+              ]
             }
           }
         },
@@ -1430,7 +1888,12 @@
           "properties": {
             "framework": {
               "type": "string",
-              "enum": ["playwright", "cypress", "selenium", "none"]
+              "enum": [
+                "playwright",
+                "cypress",
+                "selenium",
+                "none"
+              ]
             }
           }
         },
@@ -1469,14 +1932,26 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["pino", "winston", "serilog", "zerolog", "log4j", "structured"]
+              "enum": [
+                "pino",
+                "winston",
+                "serilog",
+                "zerolog",
+                "log4j",
+                "structured"
+              ]
             },
             "structured": {
               "type": "boolean"
             },
             "level": {
               "type": "string",
-              "enum": ["debug", "info", "warn", "error"]
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error"
+              ]
             }
           }
         },
@@ -1489,7 +1964,13 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["opentelemetry", "jaeger", "zipkin", "xray", "none"]
+              "enum": [
+                "opentelemetry",
+                "jaeger",
+                "zipkin",
+                "xray",
+                "none"
+              ]
             },
             "samplingRate": {
               "type": "number",
@@ -1507,7 +1988,13 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["prometheus", "datadog", "cloudwatch", "grafana", "none"]
+              "enum": [
+                "prometheus",
+                "datadog",
+                "cloudwatch",
+                "grafana",
+                "none"
+              ]
             }
           }
         }

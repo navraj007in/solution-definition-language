@@ -11,12 +11,8 @@
   "required": [
     "sdlVersion",
     "solution",
-    "product",
     "architecture",
-    "data",
-    "nonFunctional",
-    "deployment",
-    "artifacts"
+    "data"
   ],
   "properties": {
     "sdlVersion": {
@@ -212,8 +208,14 @@
   "allOf": [
     {
       "if": {
+        "required": [
+          "architecture"
+        ],
         "properties": {
           "architecture": {
+            "required": [
+              "style"
+            ],
             "properties": {
               "style": {
                 "const": "microservices"
@@ -240,8 +242,14 @@
     },
     {
       "if": {
+        "required": [
+          "auth"
+        ],
         "properties": {
           "auth": {
+            "required": [
+              "strategy"
+            ],
             "properties": {
               "strategy": {
                 "const": "oidc"
@@ -263,10 +271,19 @@
     },
     {
       "if": {
+        "required": [
+          "nonFunctional"
+        ],
         "properties": {
           "nonFunctional": {
+            "required": [
+              "security"
+            ],
             "properties": {
               "security": {
+                "required": [
+                  "pii"
+                ],
                 "properties": {
                   "pii": {
                     "const": true
@@ -296,15 +313,15 @@
     },
     {
       "if": {
+        "required": [
+          "deployment"
+        ],
         "properties": {
           "deployment": {
             "required": [
               "infrastructure"
             ],
             "properties": {
-              "cloud": {
-                "const": "azure"
-              },
               "infrastructure": {
                 "required": [
                   "iac"
@@ -326,10 +343,20 @@
     },
     {
       "if": {
+        "required": [
+          "data",
+          "architecture"
+        ],
         "properties": {
           "data": {
+            "required": [
+              "primaryDatabase"
+            ],
             "properties": {
               "primaryDatabase": {
+                "required": [
+                  "type"
+                ],
                 "properties": {
                   "type": {
                     "const": "mongodb"
@@ -343,7 +370,12 @@
               "projects": {
                 "properties": {
                   "backend": {
-                    "items": {
+                    "type": "array",
+                    "contains": {
+                      "type": "object",
+                      "required": [
+                        "orm"
+                      ],
                       "properties": {
                         "orm": {
                           "const": "ef-core"
@@ -400,8 +432,8 @@
         },
         "domain": {
           "type": "string",
-          "format": "hostname",
-          "description": "Primary domain"
+          "description": "Primary domain",
+          "pattern": "^[A-Za-z0-9.-]+$"
         },
         "regions": {
           "type": "object",
