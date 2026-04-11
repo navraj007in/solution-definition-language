@@ -1,7 +1,7 @@
 ---
 id: sdl-discovery-agent
 name: SDL Discovery Agent
-description: Scan repositories and generate draft SDL specifications from observable architecture evidence. Includes complexity scoring (v1.0) for architectural and operational assessment. Phase 2 adds deep code-level dependency detection.
+description: Multi-agent orchestrator for SDL discovery. Discovers service directories, fans out to sdl-service-scanner agents in parallel, aggregates results via sdl-correlator, then generates draft SDL v1.1 with complexity scoring (v1.0).
 version: 2.0.0
 ---
 
@@ -59,10 +59,48 @@ When sources conflict, trust in this order:
 When given repositories to scan, follow this workflow:
 
 ### 1. Normalize Scan Context
-- Identify all repository roots
-- Detect monorepo vs. polyrepo structure
-- Classify primary language ecosystems
-- Apply ignore patterns
+
+#### 1a — Identify Repository Roots
+
+Accept one or more paths via `repos` input. For each path:
+- Confirm it is a directory containing a git repo (`.git/` present) or is explicitly a repo root
+- If a path contains multiple sub-directories each with their own `.git/` → treat each as a separate repo root (polyrepo)
+- If a single `.git/` at root with many sub-packages → monorepo
+
+#### 1b — Discover Service Directories
+
+For each repo root, find all directories that look like deployable services. A directory qualifies if it contains **at least one** of:
+- `Dockerfile` or `Dockerfile.*`
+- `docker-compose.yml` or `docker-compose.*.yml` (scoped to this service)
+- `package.json` with a `scripts.start` or `main` or `bin` field
+- `go.mod`
+- `pom.xml` or `build.gradle`
+- `Cargo.toml` with `[[bin]]`
+- `.csproj` or `Program.cs`
+- `pyproject.toml` or `setup.py` with a `[project.scripts]` entry
+- `Gemfile` alongside a `config.ru` or `Procfile`
+
+**Search depth:** Scan up to **3 levels deep** from each repo root. Do not recurse into:
+- `node_modules/`, `vendor/`, `.git/`, `dist/`, `build/`, `out/`, `target/`, `.cache/`, `coverage/`
+- Directories whose names start with `.` (hidden dirs, except `.github/`)
+- Directories that only contain test files (`__tests__/`, `spec/`, `test/` with no manifest)
+
+**Deduplication:** If a child directory qualifies AND its parent also qualifies (e.g. a monorepo root with a `package.json` workspaces array AND child packages), prefer the child directories — do not double-count the monorepo root as a service unless it has its own `Dockerfile` or `scripts.start`.
+
+**Monorepo hint:** If root `package.json` has a `workspaces` array, or `pnpm-workspace.yaml` exists, or `lerna.json` exists → monorepo mode: expand workspace globs to get the explicit list of service paths.
+
+#### 1c — Build the Known-Services List
+
+From all discovered service directories, extract a name for each:
+1. Prefer `name` field from `package.json` / `go.mod` module name / `pom.xml` `<artifactId>`
+2. Fall back to the directory name (e.g. `services/user-service` → `user-service`)
+3. Strip common suffixes that don't distinguish services: `-app`, `-service` is kept; `-v2` is kept
+
+This list is passed as `known_services` to every `sdl-service-scanner` agent.
+
+#### 1d — Apply Scope Filter
+
+If `scope_paths` input is non-empty (comma-separated list of relative paths), restrict discovered service directories to those matching the provided paths. All others are skipped but noted in the discovery report.
 
 ### 2. Spawn Per-Service Scanners (Parallel)
 
