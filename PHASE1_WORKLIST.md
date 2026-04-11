@@ -8,14 +8,12 @@ Purpose: restore one canonical SDL contract across docs, examples, schema refere
 
 ## Remaining
 
-- Add support-level labeling per section:
-  - documented
-  - schema-validated
-  - normalized
-  - generator-consumed
 - Add an AI authoring quick reference for canonical values and required sections.
 
 ## Completed
+
+- Published `reference/section-support.md` — support-level matrix per section covering schema strictness, normalization, generator consumption, and maturity level (stable / partial / minimal / placeholder).
+- Added pointer from `reference/canonical-contract.md` to `reference/section-support.md`.
 
 - Wrote the repo audit in `AUDIT_REPORT.md`.
 - Updated the audit to clarify scope classification, AI reliability priority, and spec-depth direction.

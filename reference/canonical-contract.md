@@ -9,6 +9,8 @@ Use it for:
 - alias and deprecation policy
 - stable root section shapes
 
+For the support level of each section (schema strictness, normalization, generator consumption, maturity), see [`reference/section-support.md`](section-support.md).
+
 If any other prose example conflicts with this file, follow this file, the active JSON schema, and the exported runtime types in `packages/sdl/src/types.ts`.
 
 ## Authority Order
