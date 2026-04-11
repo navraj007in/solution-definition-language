@@ -494,12 +494,27 @@ export interface ValidationResult {
   summary?: ValidationSummary;
 }
 
+/**
+ * A single field that was filled by the normalizer rather than explicitly
+ * authored in the SDL document.
+ */
+export interface Inference {
+  /** Dot-notation path to the inferred field (e.g. "deployment.ciCd.provider") */
+  path: string;
+  /** The value that was applied */
+  value: unknown;
+  /** Human-readable reason for the inference */
+  reason: string;
+}
+
 export interface CompileResult {
   success: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];
   document: SDLDocument | null;
   summary: ValidationSummary | null;
+  /** Fields filled by the normalizer that were not explicitly authored */
+  inferences: Inference[];
 }
 
 export interface ContractsSection extends ExtensionFields {

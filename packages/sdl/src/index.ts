@@ -2,6 +2,7 @@ export { parse } from './parser';
 export type { ParseResult } from './parser';
 export { validate } from './validator';
 export { normalize } from './normalizer';
+export type { NormalizeResult } from './normalizer';
 export { detectWarnings } from './warnings';
 
 // Resolver (modular SDL imports)
@@ -53,6 +54,7 @@ export { getTemplates, getTemplate, listTemplates } from './templates';
 export type { SDLTemplate } from './templates';
 
 export type {
+  Inference,
   SDLDocument,
   SolutionMetadata,
   ProductContext,
@@ -94,7 +96,7 @@ import { validate } from './validator';
 import { normalize } from './normalizer';
 import { parseWithImports } from './resolver';
 import type { FileReader, ResolvedSdl } from './resolver';
-import type { SDLDocument, CompileResult, ValidationError as VError } from './types';
+import type { SDLDocument, CompileResult, ValidationError as VError, Inference } from './types';
 
 /**
  * Combined pipeline: parse YAML → validate schema → normalize defaults.
@@ -129,6 +131,7 @@ export function compileWithImports(
       warnings: [],
       document: null,
       summary: null,
+      inferences: [],
       modules: resolved.modules,
       resolveWarnings: resolved.warnings,
       resolveErrors: resolved.errors,
@@ -144,6 +147,7 @@ export function compileWithImports(
       warnings: [],
       document: null,
       summary: null,
+      inferences: [],
       modules: resolved.modules,
       resolveWarnings: resolved.warnings,
       resolveErrors: resolved.errors,
@@ -151,7 +155,7 @@ export function compileWithImports(
   }
 
   // Normalize
-  const normalized = normalize(resolved.document as unknown as SDLDocument);
+  const { document: normalized, inferences } = normalize(resolved.document as unknown as SDLDocument);
 
   return {
     success: true,
@@ -159,6 +163,7 @@ export function compileWithImports(
     warnings: validationResult.warnings,
     document: normalized,
     summary: validationResult.summary ?? null,
+    inferences,
     modules: resolved.modules,
     resolveWarnings: resolved.warnings,
     resolveErrors: resolved.errors,
@@ -167,7 +172,8 @@ export function compileWithImports(
 
 /**
  * Combined pipeline: parse YAML → validate schema → normalize defaults.
- * Returns a fully resolved SDL document or errors.
+ * Returns a fully resolved SDL document, validation warnings, and a list
+ * of every field that was inferred by the normalizer.
  */
 export function compile(yamlString: string): CompileResult {
   // 1. Parse YAML
@@ -179,6 +185,7 @@ export function compile(yamlString: string): CompileResult {
       warnings: [],
       document: null,
       summary: null,
+      inferences: [],
     };
   }
 
@@ -191,11 +198,12 @@ export function compile(yamlString: string): CompileResult {
       warnings: [],
       document: null,
       summary: null,
+      inferences: [],
     };
   }
 
   // 3. Normalize (apply auto-inference defaults)
-  const normalized = normalize(parseResult.data as SDLDocument);
+  const { document: normalized, inferences } = normalize(parseResult.data as SDLDocument);
 
   return {
     success: true,
@@ -203,5 +211,6 @@ export function compile(yamlString: string): CompileResult {
     warnings: validationResult.warnings,
     document: normalized,
     summary: validationResult.summary ?? null,
+    inferences,
   };
 }

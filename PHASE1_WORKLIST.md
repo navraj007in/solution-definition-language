@@ -24,6 +24,27 @@ None. Phase 1 complete.
 - Exported `getGeneratorTier()` for callers that need tier without generating.
 - Updated `reference/generators.md` with tier table, per-tier guidance, and advisory output section explaining what each advisory generator produces and what it does not.
 
+---
+
+## Phase 4 — Optimize for AI Reliability
+
+### Completed
+
+- Published `reference/ai-authoring.md` — compact machine-first authoring reference (Phase 1).
+- Formalized alias and deprecation policy in `reference/canonical-contract.md` (Phase 1).
+- Added `Inference` type to `types.ts`: `{ path, value, reason }`.
+- Updated `CompileResult` to include `inferences: Inference[]`.
+- Rewrote `normalizer.ts` to return `NormalizeResult = { document, inferences }` — every defaulted field now records its path, applied value, and human-readable reason.
+- Updated `compile()` and `compileWithImports()` to surface `inferences` end-to-end.
+- Added `normalizer.test.ts` coverage for inference array: presence, shape, correct paths, and no inference when fields are explicitly set.
+- Added `ai-authoring.test.ts` — 44 fixtures across 6 categories simulating realistic AI generation mistakes:
+  - Wrong enum casing (mvp, growth, Microservices)
+  - Stale vocabulary (express, next, fastapi, jwt strategy, heroku)
+  - Wrong section shapes (contracts as array, features as object, slos as array)
+  - Invented fields without x- prefix
+  - Missing required fields inside optional sections
+  - Over-inference (verifying normalizer does and doesn't fire based on explicit vs. absent fields)
+
 ## Completed
 
 - Published `reference/section-support.md` — support-level matrix per section covering schema strictness, normalization, generator consumption, and maturity level (stable / partial / minimal / placeholder).
