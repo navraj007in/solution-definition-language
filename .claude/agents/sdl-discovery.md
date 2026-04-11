@@ -139,6 +139,16 @@ Read `{output_dir}/correlation.json` produced by the `sdl-correlator` agent in S
 
 Use this data as the authoritative dependency graph input for SDL generation (Step 6).
 
+### 4b. Run Drift Analysis (drift mode only)
+
+**Skip this step if `mode` is not `drift` or `existing_sdl_path` is not provided.**
+
+1. Spawn the `sdl-drift` sub-agent via the Agent tool
+2. Pass `output_dir` and `existing_sdl_path`
+3. The drift agent reads `{output_dir}/correlation.json` alongside the existing SDL files and diffs them
+4. Drift agent writes `{output_dir}/drift.json` and `{output_dir}/drift-report.md`
+5. Read `{output_dir}/drift.json` before proceeding — it contains the classified change set used by Step 6
+
 ### 5. Score Confidence
 
 Assign confidence per field and component:
@@ -155,6 +165,30 @@ Each SDL section includes:
 - `evidence: [list of evidence sources]` (or `x-evidence`)
 - `review_required: boolean` (if applicable)
 - Comments explaining inferred relationships
+
+#### Drift Mode: Selective SDL Regeneration
+
+**Only applies when `mode=drift` and `drift.json` was produced in Step 4b.**
+
+Use the drift change set to decide what to regenerate vs preserve:
+
+| Change type | Action |
+|-------------|--------|
+| Added service/dependency/datastore | Generate new SDL entry |
+| Removed service/dependency/datastore | Remove entry from SDL; add review item |
+| Modified (type/protocol/endpoint changed) | Regenerate that entry; preserve unchanged fields where possible |
+| Unchanged | Copy from existing SDL verbatim — do NOT regenerate |
+
+**If `preserve_existing_sdl=true`** (the default): merge generated entries into the existing SDL files rather than overwriting. Entries not touched by the diff are preserved exactly as they were, including any manually edited `x-confidence` or human-added annotations.
+
+**If `preserve_existing_sdl=false`**: regenerate all SDL files from scratch using correlation.json, ignoring existing SDL content.
+
+Add a `x-drift` annotation to every entry that was added or modified:
+```yaml
+- service: payment-service
+  x-drift: added          # added | removed | modified
+  x-drift-since: "2026-04-11T10:00:00Z"
+```
 
 #### Specific Rules for `sdl/contracts.sdl.yaml`
 
@@ -300,6 +334,10 @@ Generate a **modular multi-file SDL v1.1 structure** (not monolithic).
 - **confidence-report.json** — Confidence scores per component/field
 - **unknowns-and-review-items.md** — Human decision checklist
 - **sdl-discovery.json** — Structured metadata about the scan (includes `complexity_scores` field)
+
+**Drift mode additional outputs** (only when `mode=drift`):
+- **drift-report.md** — Human-readable topology diff: services added/removed/modified, dependency changes, datastore changes, review items
+- **drift.json** — Structured diff for machine consumption (CI gates, dashboards)
 
 **Structure example:**
 ```
