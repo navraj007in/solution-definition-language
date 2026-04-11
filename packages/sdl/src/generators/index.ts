@@ -16,6 +16,7 @@ import { generateMonitoring as generateMonitoringInternal } from './monitoring';
 import { generateNginxConfig as generateNginxConfigInternal } from './nginx';
 import { generateCodingRules as generateCodingRulesInternal } from './coding-rules';
 import { generateCodingRulesEnforcement as generateCodingRulesEnforcementInternal } from './coding-rules-enforcement';
+import { generateComplianceChecklist as generateComplianceChecklistInternal } from './compliance-checklist';
 
 /** Maps each implemented artifact type to its generator function */
 const GENERATOR_MAP: Partial<Record<ArtifactType, GeneratorFn>> = {
@@ -29,6 +30,7 @@ const GENERATOR_MAP: Partial<Record<ArtifactType, GeneratorFn>> = {
   backlog: generateBacklog,
   'deployment-guide': generateDeploymentGuide,
   'cost-estimate': generateCostEstimate,
+  'compliance-checklist': generateComplianceChecklistInternal,
 };
 
 /**
@@ -54,10 +56,11 @@ const REGISTRY_TIER_MAP: Record<ArtifactType, GeneratorTier> = {
   'coding-rules':             'inferred',
   'coding-rules-enforcement': 'inferred',
   // advisory — useful starting points; require review before use
-  backlog:            'advisory',
-  adr:                'advisory',
-  'deployment-guide': 'advisory',
-  'cost-estimate':    'advisory',
+  backlog:               'advisory',
+  adr:                   'advisory',
+  'deployment-guide':    'advisory',
+  'cost-estimate':       'advisory',
+  'compliance-checklist': 'advisory',
 };
 
 /** Confidence tier for each direct API generator */
@@ -70,8 +73,18 @@ const DIRECT_TIER_MAP: Record<string, GeneratorTier> = {
   'deploy-diagram': 'deterministic',
 };
 
-/** Inject tier into a raw generator result */
+const ADVISORY_HEADER = '<!-- sdl:generated tier:advisory — review and edit before committing -->\n\n';
+
+/** Inject tier into a raw generator result. Advisory outputs get a review header on Markdown files. */
 function withTier(raw: RawGeneratorResult, tier: GeneratorTier): GeneratorResult {
+  if (tier === 'advisory') {
+    const files = raw.files.map((f) =>
+      f.path.endsWith('.md') || f.path.endsWith('.mdc')
+        ? { ...f, content: ADVISORY_HEADER + f.content }
+        : f,
+    );
+    return { ...raw, files, tier };
+  }
   return { ...raw, tier };
 }
 
@@ -142,6 +155,61 @@ export function generateCodingRules(doc: SDLDocument): GeneratorResult {
 /** Generate enforcement configs (ESLint, dependency-cruiser, arch tests, CI gates) from SDL */
 export function generateCodingRulesEnforcement(doc: SDLDocument): GeneratorResult {
   return withTier(generateCodingRulesEnforcementInternal(doc), REGISTRY_TIER_MAP['coding-rules-enforcement']);
+}
+
+/** Generate a per-framework compliance checklist from compliance.frameworks[] */
+export function generateComplianceChecklist(doc: SDLDocument): GeneratorResult {
+  return withTier(generateComplianceChecklistInternal(doc), REGISTRY_TIER_MAP['compliance-checklist']);
+}
+
+/**
+ * Returns a human-readable tier summary for a set of generator results.
+ * Useful for CLI output and logging.
+ *
+ * Example output:
+ *   Generated 8 artifacts:
+ *
+ *     deterministic (6)  architecture-diagram, repo-scaffold, openapi, ...
+ *     inferred (2)       coding-rules, coding-rules-enforcement  ← review before committing
+ *     advisory (4)       adr, backlog, deployment-guide, cost-estimate  ← drafts, edit before use
+ *
+ *   Advisory outputs require review. Run with --tier deterministic to skip them.
+ */
+export function summarizeGenerationResults(results: GeneratorResult[]): string {
+  const byTier: Record<GeneratorTier, string[]> = {
+    deterministic: [],
+    inferred: [],
+    advisory: [],
+  };
+  for (const r of results) {
+    byTier[r.tier].push(r.artifactType);
+  }
+
+  const total = results.length;
+  const lines: string[] = [`Generated ${total} artifact${total !== 1 ? 's' : ''}:`];
+
+  const tierLines: string[] = [];
+  if (byTier.deterministic.length > 0) {
+    tierLines.push(`  deterministic (${byTier.deterministic.length})  ${byTier.deterministic.join(', ')}`);
+  }
+  if (byTier.inferred.length > 0) {
+    tierLines.push(`  inferred (${byTier.inferred.length})       ${byTier.inferred.join(', ')}  ← review before committing`);
+  }
+  if (byTier.advisory.length > 0) {
+    tierLines.push(`  advisory (${byTier.advisory.length})       ${byTier.advisory.join(', ')}  ← drafts, edit before use`);
+  }
+
+  if (tierLines.length > 0) {
+    lines.push('');
+    lines.push(...tierLines);
+  }
+
+  if (byTier.advisory.length > 0) {
+    lines.push('');
+    lines.push('Advisory outputs require review. Filter with --tier deterministic to skip them.');
+  }
+
+  return lines.join('\n');
 }
 
 export { generateDeployDiagram } from './deploy-diagram';

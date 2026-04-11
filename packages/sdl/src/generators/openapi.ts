@@ -294,9 +294,22 @@ function buildSpec(doc: SDLDocument, backend: BackendProject | undefined, entiti
       type: ct.type,
       ...(ct.owner ? { owner: ct.owner } : {}),
     }));
-    // Add non-REST contracts as informational tags
+
+    // REST contracts: add as primary tags for endpoint grouping; use x-basePath if declared
     for (const ct of contractTags) {
-      if (ct.type !== 'rest') {
+      if (ct.type === 'rest') {
+        const rawContract = doc.contracts?.apis?.find((a) => a.name === ct.name);
+        const basePath = (rawContract as any)?.['x-basePath'];
+        spec.tags.push({
+          name: ct.name,
+          description: `REST API${ct.owner ? ` — owned by ${ct.owner}` : ''}${basePath ? ` — base path: ${basePath}` : ''}`,
+        });
+        // Annotate server with declared base path when available
+        if (basePath && spec.servers.length > 0) {
+          (spec.servers[1] as any)['x-basePath'] = basePath;
+        }
+      } else {
+        // Non-REST contracts: informational tags only
         spec.tags.push({
           name: ct.name,
           description: `${ct.type.toUpperCase()} API${ct.owner ? ` — owned by ${ct.owner}` : ''}`,
@@ -342,10 +355,11 @@ function buildSpec(doc: SDLDocument, backend: BackendProject | undefined, entiti
   };
   spec.tags.push({ name: 'System', description: 'System endpoints' });
 
-  // Entity CRUD endpoints
+  // Entity CRUD endpoints — tag with REST contract name when declared, else entity name
+  const restContractName = contractTags.find((ct) => ct.type === 'rest')?.name;
   for (const entity of entities) {
     if (entity.name === 'User') continue; // User endpoints handled by auth
-    addEntityCrud(spec, entity, doc);
+    addEntityCrud(spec, entity, doc, restContractName);
   }
 
   // Schemas
@@ -427,12 +441,15 @@ function addAuthPaths(spec: OpenApiSpec, doc: SDLDocument): void {
   };
 }
 
-function addEntityCrud(spec: OpenApiSpec, entity: InferredEntity, doc: SDLDocument): void {
+function addEntityCrud(spec: OpenApiSpec, entity: InferredEntity, doc: SDLDocument, contractTag?: string): void {
   const slug = pluralize(entity.name.toLowerCase());
   const basePath = `/${slug}`;
-  const tag = entity.name;
+  // When a REST contract is declared, use it as the primary tag; keep entity name as secondary tag
+  const tag = contractTag ?? entity.name;
 
-  spec.tags.push({ name: tag, description: `${entity.name} management` });
+  if (!contractTag) {
+    spec.tags.push({ name: tag, description: `${entity.name} management` });
+  }
 
   // List
   spec.paths[basePath] = {

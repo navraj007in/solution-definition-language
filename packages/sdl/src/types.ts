@@ -411,7 +411,8 @@ export type ArtifactType =
   | 'deployment-guide'
   | 'cost-estimate'
   | 'coding-rules'
-  | 'coding-rules-enforcement';
+  | 'coding-rules-enforcement'
+  | 'compliance-checklist';
 
 export interface ArtifactFormats extends ExtensionFields {
   diagrams?: 'mermaid' | 'plantuml' | 'structurizr';

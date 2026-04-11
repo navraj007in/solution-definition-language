@@ -1309,26 +1309,58 @@ function buildResilienceRules(doc: SDLDocument): Rule {
   const backends = doc.architecture.projects.backend || [];
   const hasIntegrations = !!doc.integrations;
   const hasQueues = !!doc.data.queues;
+  const resilience = doc.resilience;
 
-  // Timeouts (universal)
+  // Timeouts — use declared default when available
   rules.push('');
   rules.push('### Timeouts');
-  rules.push('Every external call (HTTP, database, cache, queue) MUST have an explicit timeout. Never rely on defaults or unlimited timeouts.');
-  rules.push('Timeout hierarchy: API gateway (30s) > request handler (25s) > external service call (5-10s) > database query (3-5s). Inner timeouts MUST be shorter than outer timeouts.');
+  if (resilience?.timeout?.default) {
+    rules.push(`Every external call MUST have an explicit timeout. Declared default: ${resilience.timeout.default}. Inner timeouts MUST be shorter than outer timeouts.`);
+  } else {
+    rules.push('Every external call (HTTP, database, cache, queue) MUST have an explicit timeout. Never rely on defaults or unlimited timeouts.');
+    rules.push('Timeout hierarchy: API gateway (30s) > request handler (25s) > external service call (5-10s) > database query (3-5s). Inner timeouts MUST be shorter than outer timeouts.');
+  }
   rules.push('When a timeout fires, return a meaningful error (504 or fallback). Never let requests hang silently.');
 
-  // Retries
+  // Retries — use declared policy when available
   rules.push('');
   rules.push('### Retries');
-  rules.push('Use exponential backoff with jitter for retries. Never use fixed-interval retries — they cause thundering herd problems.');
-  rules.push('Set a max retry count (typically 3). After max retries, fail gracefully — log the error, return a degraded response, or queue for later processing.');
+  if (resilience?.retryPolicy) {
+    const rp = resilience.retryPolicy;
+    const maxAttempts = rp.maxAttempts ?? 3;
+    const backoff = rp.backoff ?? 'exponential';
+    const initial = rp.initialInterval ?? '100ms';
+    rules.push(`Retry policy declared: max ${maxAttempts} attempts, ${backoff} backoff, initial interval ${initial}.`);
+    rules.push(`Enforce these values in all retry configurations. Do not hardcode different retry counts.`);
+  } else {
+    rules.push('Use exponential backoff with jitter for retries. Never use fixed-interval retries — they cause thundering herd problems.');
+    rules.push('Set a max retry count (typically 3). After max retries, fail gracefully — log the error, return a degraded response, or queue for later processing.');
+  }
   rules.push('Only retry idempotent operations (GET, PUT) or operations with idempotency keys. Never blindly retry POST/DELETE without ensuring idempotency.');
 
-  // Circuit breakers (microservices / integrations)
-  if (style === 'microservices' || hasIntegrations) {
+  // Rate limiting — use declared config when available
+  if (resilience?.rateLimit) {
+    rules.push('');
+    rules.push('### Rate Limiting');
+    const rpm = resilience.rateLimit.requestsPerMinute;
+    rules.push(`Rate limit declared: ${rpm ? `${rpm} requests/minute` : 'configured'}. Enforce at the API gateway or middleware layer.`);
+    rules.push('Return 429 Too Many Requests with a Retry-After header when the rate limit is exceeded.');
+    rules.push('Apply rate limiting per client identity (API key, org ID, user ID) — not globally only.');
+  }
+
+  // Circuit breakers — use declared config when available or infer from architecture
+  if (resilience?.circuitBreaker?.enabled || style === 'microservices' || hasIntegrations) {
     rules.push('');
     rules.push('### Circuit Breakers');
-    rules.push('Wrap calls to external services and other microservices in circuit breakers. When failure rate exceeds threshold (e.g., 50% in 10s), open the circuit and fail fast.');
+    if (resilience?.circuitBreaker) {
+      const cb = resilience.circuitBreaker;
+      const threshold = cb.threshold ?? 50;
+      const timeout = cb.timeout ?? '30s';
+      rules.push(`Circuit breaker declared: ${threshold}% failure threshold, ${timeout} open-circuit timeout.`);
+      rules.push(`Enforce these thresholds in circuit breaker configuration. Do not hardcode different values.`);
+    } else {
+      rules.push('Wrap calls to external services and other microservices in circuit breakers. When failure rate exceeds threshold (e.g., 50% in 10s), open the circuit and fail fast.');
+    }
     rules.push('Circuit states: CLOSED (normal) → OPEN (failing fast) → HALF-OPEN (testing recovery). Log state transitions.');
     rules.push('Provide fallback behavior when a circuit is open: cached data, default values, or graceful degradation. Never return raw errors to users from an open circuit.');
   }

@@ -117,9 +117,26 @@ function getBackendPort(framework: string): number {
 
 function renderAlertRules(doc: SDLDocument, backends: { name: string }[]): string {
   const lines: string[] = [];
-  const availTarget = doc.nonFunctional.availability.target;
-  const errorBudget = getErrorBudgetPercent(availTarget);
+
+  // Use slos.services[] availability when present, else fall back to nonFunctional.availability
+  const sloServices = doc.slos?.services ?? [];
+  const globalAvailTarget = doc.nonFunctional.availability.target;
+  const errorBudget = getErrorBudgetPercent(globalAvailTarget);
   const responseTimeMs = parseResponseTimeMs(doc.nonFunctional.performance?.apiResponseTime);
+
+  // If SLOs are declared, derive per-service latency thresholds
+  const sloLatencyMap: Record<string, number> = {};
+  const sloAvailMap: Record<string, number> = {};
+  for (const svc of sloServices) {
+    if (svc.latencyP95) {
+      sloLatencyMap[svc.name] = parseResponseTimeMs(svc.latencyP95);
+    }
+    if (svc.availability) {
+      sloAvailMap[svc.name] = parseFloat(svc.availability);
+    }
+  }
+
+  const availTarget = globalAvailTarget;
 
   lines.push(`# Prometheus alerting rules — ${doc.solution.name}`);
   lines.push(`# Availability target: ${availTarget}% (error budget: ${errorBudget}%)`);
@@ -152,6 +169,40 @@ function renderAlertRules(doc: SDLDocument, backends: { name: string }[]): strin
   lines.push('        annotations:');
   lines.push(`          summary: "P95 latency exceeds ${responseTimeMs}ms"`);
   lines.push(`          description: "P95 API response time is above ${responseTimeMs}ms for 5 minutes"`);
+
+  // Per-service SLO alerts derived from slos.services[]
+  for (const svc of sloServices) {
+    const name = slugify(svc.name);
+    if (svc.availability) {
+      const svcErrorBudget = getErrorBudgetPercent(svc.availability);
+      const svcErrorThreshold = svcErrorBudget > 1 ? 5 : svcErrorBudget > 0.1 ? 1 : 0.1;
+      lines.push('');
+      lines.push(`      # SLO: ${svc.name} availability (target: ${svc.availability}%)`);
+      lines.push(`      - alert: SloViolation_${name.replace(/-/g, '_')}_Availability`);
+      lines.push(`        expr: sum(rate(http_requests_total{job="${name}",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="${name}"}[5m])) > ${svcErrorThreshold / 100}`);
+      lines.push('        for: 5m');
+      lines.push('        labels:');
+      lines.push('          severity: critical');
+      lines.push('          slo: availability');
+      lines.push('        annotations:');
+      lines.push(`          summary: "${svc.name} SLO breach — availability below ${svc.availability}%"`);
+      lines.push(`          description: "Error rate for ${svc.name} exceeds SLO error budget"`);
+    }
+    if (svc.latencyP95) {
+      const latMs = parseResponseTimeMs(svc.latencyP95);
+      lines.push('');
+      lines.push(`      # SLO: ${svc.name} latency (P95 target: ${svc.latencyP95})`);
+      lines.push(`      - alert: SloViolation_${name.replace(/-/g, '_')}_Latency`);
+      lines.push(`        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="${name}"}[5m])) by (le)) > ${latMs / 1000}`);
+      lines.push('        for: 5m');
+      lines.push('        labels:');
+      lines.push('          severity: warning');
+      lines.push('          slo: latency');
+      lines.push('        annotations:');
+      lines.push(`          summary: "${svc.name} SLO breach — P95 latency above ${svc.latencyP95}"`);
+      lines.push(`          description: "P95 latency for ${svc.name} exceeds declared SLO of ${svc.latencyP95}"`);
+    }
+  }
 
   // Service down alerts per backend
   for (const be of backends) {

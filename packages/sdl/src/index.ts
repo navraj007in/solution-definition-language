@@ -10,8 +10,8 @@ export { parseWithImports, validatePerModule } from './resolver';
 export type { ResolvedSdl, SdlModule, ResolveWarning, ResolveError, FileReader } from './resolver';
 
 // Generators
-export { generate, generateAll, generateCiCd, generateDockerCompose, generateKubernetes, generateMonitoring, generateNginxConfig, generateCodingRules, generateCodingRulesEnforcement, generateDeployDiagram, getImplementedArtifactTypes } from './generators';
-export type { GeneratorFn, GeneratorResult, GenerateAllResult, GeneratedFile, DeployDiagramInput } from './generators';
+export { generate, generateAll, generateCiCd, generateDockerCompose, generateKubernetes, generateMonitoring, generateNginxConfig, generateCodingRules, generateCodingRulesEnforcement, generateComplianceChecklist, generateDeployDiagram, getImplementedArtifactTypes, getGeneratorTier, summarizeGenerationResults } from './generators';
+export type { GeneratorFn, GeneratorResult, GenerateAllResult, GeneratedFile, GeneratorTier, RawGeneratorResult, DeployDiagramInput } from './generators';
 export type { AITarget, CodingRulesOptions } from './generators/coding-rules';
 
 // ADR rules parser
@@ -26,6 +26,10 @@ export {
   buildPricingSummaryForPrompt,
 } from './pricing';
 export type { PlatformPricing, TierPricing, FreeTierInfo, ScaleProjection, ServicePricing } from './pricing';
+
+// Migration
+export { migrate } from './migrate';
+export type { MigrateResult, MigrationChange } from './migrate';
 
 // Diff
 export { diff } from './diff';
