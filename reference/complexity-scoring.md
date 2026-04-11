@@ -5,6 +5,8 @@
 **Status:** Released  
 **Author:** SDL Discovery Agent Research + Community Review  
 
+> 👉 **New to complexity scoring?** Start with the **[Complexity Scoring Guide](COMPLEXITY_GUIDE.md)** for a user-friendly introduction. This document covers the technical details, formulas, and thresholds.
+
 ---
 
 ## Executive Summary

@@ -132,11 +132,13 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 
 | Document | Description |
 |---|---|
+| **[Complexity Scoring Guide](reference/COMPLEXITY_GUIDE.md)** | **User-friendly guide to understanding system complexity scores, reduction plans, and improvement strategies** |
 | [AI Authoring Guide](reference/ai-authoring.md) | Compact machine-first reference: minimum valid document, all enums, normalization auto-fill, rejected legacy values, common mistakes |
 | [Canonical Contract](reference/canonical-contract.md) | Canonical enums, artifact types, root section shapes, and alias policy for active `v1.1` |
 | [Section Support Matrix](reference/section-support.md) | Per-section maturity, schema strictness, normalization, and generator consumption |
 | [Generators](reference/generators.md) | Generator tiers, what each produces, what SDL sections it consumes |
 | [Specification v1.1](spec/SDL-v1.1.md) | Active complete specification |
+| [Complexity Scoring Spec](reference/complexity-scoring.md) | Technical specification: formulas, thresholds, confidence model |
 | [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
 | [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
 | [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
