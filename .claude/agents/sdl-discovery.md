@@ -2,7 +2,7 @@
 id: sdl-discovery-agent
 name: SDL Discovery Agent
 description: Scan repositories and generate draft SDL specifications from observable architecture evidence. Includes complexity scoring (v1.0) for architectural and operational assessment. Phase 2 adds deep code-level dependency detection.
-version: 1.3.0
+version: 2.0.0
 ---
 
 # SDL Discovery Agent
@@ -64,557 +64,42 @@ When given repositories to scan, follow this workflow:
 - Classify primary language ecosystems
 - Apply ignore patterns
 
-### 2. Build Evidence Index
+### 2. Spawn Per-Service Scanners (Parallel)
 
-Extract structured evidence systematically. **Phase 1 (Highest Confidence)** focuses on manifests, docker-compose, k8s, env files, and CI/CD.
+After Step 1 identifies all service directories, delegate evidence extraction to `sdl-service-scanner` sub-agents running in parallel:
 
-#### 2a — Package Manifests
+1. **Build the known-services list** — collect all service/component names discovered in Step 1 (directory names, manifest `name` fields, docker-compose service keys)
+2. **Spawn one `sdl-service-scanner` agent per service** — invoke all in a single `Agent` tool message so they run in parallel:
+   - Pass `service_path` — absolute path to the service directory
+   - Pass `known_services` — comma-separated list of all service names (for URL cross-matching)
+   - Pass `output_dir` — base output directory
+3. **Each scanner writes** its result to `{output_dir}/scan/{service-name}.json`
+4. **Wait for all scanners to complete** before proceeding
 
-**Files to scan:** `package.json`, `go.mod`, `Cargo.toml`, `pom.xml`, `.csproj`, `build.gradle`, `Gemfile`, `mix.exs`
+Each `sdl-service-scanner` performs full Phase 1 (manifests, docker-compose, K8s, env files, CI/CD) and Phase 2 (HTTP client calls, API contracts, route registrations, event/topic names) extraction for its assigned service.
 
-For each manifest:
-- **Name & Type**: Extract `name` field → component name
-- **Deployable Service**: Present if:
-  - `main` or `bin` field exists (entry point)
-  - `scripts.start` exists
-  - No `private: true` or has explicit `main`
-  - Presence of Docker/container config nearby
-- **Shared Library**: Marked if:
-  - Referenced by other packages (imports/requires @org/*)
-  - No standalone entrypoint (`main` absent)
-  - Contains reusable code (utilities, types, SDKs)
-- **Dependencies**: Extract all packages → feed to heuristics.ts `scoreComponent()` to classify as service/frontend/worker/library
-- **Workspace References**: Monorepo markers:
-  - `@org/package-name` imports → internal dependencies
-  - `workspaces` array in root package.json → monorepo detected
+### 3. Run Correlator
 
-#### 2b — Docker Compose Files
+After all scanners complete, invoke the `sdl-correlator` sub-agent to build the cross-service dependency graph:
 
-**Files to scan:** `docker-compose.yml`, `docker-compose.*.yml`, `compose.yml`
+1. **Spawn the `sdl-correlator` agent** via the Agent tool
+2. Pass `output_dir` — it reads all `{output_dir}/scan/*.json` files
+3. The correlator applies all 10 correlation rules (Phase 1 Rules 1-6, Phase 2 Rules 7-10) across the full set of scanner results
+4. **Correlator writes** `{output_dir}/correlation.json`
+5. Proceed to Step 4
 
-For each service block, extract:
-```yaml
-service_name:
-  image                  # → component name + type hint (postgres/redis = infrastructure)
-  build                  # → has Dockerfile at path → local service
-  ports                  # → "3001:3001" → service listens on 3001
-  depends_on: [other]    # → explicit dependency signal (HIGH confidence)
-  environment:
-    DATABASE_URL         # → datastore connection (parse: postgres://host:port/dbname)
-    REDIS_URL            # → redis/cache connection
-    *_URL/*_HOST/*_SERVICE_URL  # → service name + address, e.g., API_URL=http://user-service:3001
-    PORT                 # → container listening port
-  networks               # → services sharing network can communicate
-  volumes: [named]       # → potential file/data sharing
-```
+### 4. Read Correlation Results
 
-**Dependency Signals from Compose:**
-- `depends_on: [service-b]` → service-a explicitly depends on service-b (HIGH)
-- `SERVICE_URL=http://service-name:3001` → service-a calls service-name (HIGH)
-- Shared named volumes → potential data sharing (MEDIUM)
+Read `{output_dir}/correlation.json` produced by the `sdl-correlator` agent in Step 3. This file contains the complete cross-service dependency graph:
 
-#### 2c — Kubernetes Manifests
+- `dependencies[]` — service-to-service dependencies with rule, confidence, and evidence
+- `datastores[]` — shared databases and caches with `usedBy` service lists
+- `externalIntegrations[]` — third-party services (Stripe, SendGrid, OpenAI, etc.)
+- `topicMappings[]` — queue/event producer-consumer pairings
+- `contractOwnership[]` — which service owns each API contract file
+- `reviewItems[]` — unmatched topics, unresolved URLs, low-confidence signals requiring human review
 
-**Files to scan:** `k8s/**/*.yaml`, `manifests/**/*.yaml`, `helm/**/templates/*.yaml`, `deploy/**/*.yaml`
-
-Extract from **Deployment** manifests:
-- `metadata.name` → service name
-- `spec.containers[].env` → environment variables (same parsing as docker-compose)
-- `spec.containers[].ports[].containerPort` → listening port
-
-Extract from **Service** manifests:
-- `metadata.name` → maps to Deployment
-- `spec.ports[].port` → exposed port
-- `spec.selector` → connects Service to Deployment via labels
-
-Extract from **Ingress** manifests:
-- `spec.rules[].host` → public domain
-- `spec.rules[].http.paths[].backend.service.name` → which service receives external traffic
-
-Extract from **ConfigMap/Secret** manifests:
-- `data.*_URL` / `data.*_HOST` → service dependency signals (same as env vars)
-
-#### 2d — Environment Files
-
-**Files to scan:** `.env`, `.env.*`, `.env.example`, `.env.local`, `config/*.env`
-
-Extract all key=value pairs and classify:
-- `*_DATABASE_URL` / `*_DB_URL` / `DATABASE_URL` → datastore connection
-  - Parse protocol: `postgres://host:port/dbname` → PostgreSQL
-  - Parse protocol: `mysql://...` → MySQL
-  - Parse protocol: `mongodb://...` → MongoDB
-  - Parse protocol: `redis://...` → Redis/cache
-- `*_SERVICE_URL` / `*_API_URL` / `*_HOST` / `*_ENDPOINT` → dependency on named service
-- `PORT` / `APP_PORT` → what port this service listens on
-- `REDIS_URL` / `REDIS_HOST` → Redis cache/queue dependency
-- `JWT_SECRET` / `AUTH_SECRET` → auth signals
-- External integrations: `STRIPE_*` / `SENDGRID_*` / `TWILIO_*` / `OPENAI_*`
-
-**Association**: Pair .env files with the service they live next to (same directory as package.json/Dockerfile).
-
-#### 2e — CI/CD Pipelines
-
-**Files to scan:** `.github/workflows/*.yml`, `.gitlab-ci.yml`, `azure-pipelines.yml`, `Jenkinsfile`, `.circleci/config.yml`
-
-From **GitHub Actions** workflows:
-- Job names with `deploy`, `build`, `test` → deployment topology
-- `needs: [job-a]` → job-a must complete first → deployment order dependency
-- `environment: production | staging | dev` → environment names
-- Docker build steps → which services have containers
-- `working-directory: path/to/service` → maps job to specific service
-
-Extract: CI/CD provider (github-actions/gitlab-ci/etc.), environment names, deployment order between services.
-
-#### 2f — Documentation (Lower Priority / Corroboration)
-
-**Files to scan:** `README.md`, `docs/architecture.md`, `docs/ARCHITECTURE.md`, `ADR/**/*.md`
-
-Look for:
-- Explicit architecture sections
-- Documented dependencies ("Service A calls Service B")
-- Technology stack sections
-- Deployment notes
-
-**Confidence:** LOW — use only for corroboration, never as primary source for dependencies.
-
----
-
-#### Phase 1 Completeness Checklist
-
-Before moving to Phase 2, ensure you have:
-- ✅ Scanned all manifests in all repos
-- ✅ Extracted docker-compose service definitions and env vars
-- ✅ Extracted K8s Deployment/Service/ConfigMap/Secret definitions
-- ✅ Extracted all .env files and classified key=value pairs
-- ✅ Extracted CI/CD workflows and deployment order
-- ✅ Noted all evidence sources (file paths, line references)
-
----
-
-## Phase 2: Deep Code-Level Detection
-
-### 2g — HTTP Client Call Detection
-
-**Agent-Driven Approach:** From Step 2a evidence, detect primary languages in the repos, then apply matching patterns only for those languages.
-
-**Primary language detection (in order of prevalence):**
-- **JavaScript/TypeScript:** presence of `package.json` + `*.ts`/`*.js` files
-- **Python:** presence of `requirements.txt`, `pyproject.toml`, or `*.py` files
-- **Go:** presence of `go.mod` or `*.go` files
-- **C#:** presence of `.csproj` or `*.cs` files
-- **Java:** presence of `pom.xml`, `build.gradle`, or `*.java` files
-- **Ruby:** presence of `Gemfile` or `*.rb` files
-- **Other languages:** skip source scanning; rely on API contract files (2h) only
-
-**Files to scan (per detected language):**
-- JavaScript/TypeScript: `**/*.ts`, `**/*.js` (exclude: `node_modules/`, `dist/`, `build/`, `*.test.*`, `*.spec.*`)
-- Python: `**/*.py` (exclude: `venv/`, `__pycache__/`, `*.test.py`)
-- Go: `**/*.go` (exclude: `vendor/`, `*_test.go`)
-- C#: `**/*.cs` (exclude: `bin/`, `obj/`, `*.Tests.cs`)
-- Java: `**/*.java` (exclude: `target/`, `*Test.java`)
-- Ruby: `**/*.rb` (exclude: `spec/`, `test/`)
-
-**For each detected language, scan for HTTP client instantiation and calls:**
-
-**JavaScript/TypeScript patterns:**
-```
-axios.create({ baseURL: '<URL>' })         → extract baseURL
-axios.post('<URL>', ...)                    → extract URL + method
-fetch('<URL>', { method: 'POST' })         → extract URL + method
-new HttpClient('<URL>')                    → extract URL
-got.post('<URL>', ...)                     → extract URL + method
-superagent.post('<URL>')                   → extract URL + method
-```
-
-**Python patterns:**
-```
-requests.get('<URL>', ...)                 → extract URL + method
-requests.post('<URL>', ...)                → extract URL + method
-httpx.post('<URL>', ...)                   → extract URL + method
-aiohttp.ClientSession().get('<URL>')       → extract URL + method
-```
-
-**Go patterns:**
-```
-http.Get("<URL>")                          → extract URL
-http.Post("<URL>", ...)                    → extract URL + method
-http.NewRequest("POST", "<URL>", ...)      → extract URL + method
-```
-
-**C# patterns:**
-```
-new HttpClient().GetAsync("<URL>")         → extract URL
-_httpClient.PostAsync("<URL>", ...)        → extract URL + method
-```
-
-**Java/Spring patterns:**
-```
-restTemplate.postForEntity("<URL>", ...)   → extract URL + method
-webClient.post().uri("<URL>")             → extract URL + method
-```
-
-**For each HTTP call found, record:**
-- Source file path + line number
-- HTTP method (GET, POST, PUT, DELETE, PATCH)
-- URL or URL template
-- Whether URL is hardcoded, from env var reference, or from config var
-- Confidence: HIGH if hardcoded URL; MEDIUM if env var reference; LOW if fully dynamic
-
-**URL Classification (to link to services):**
-- URL contains known service name from Step 2a/2b/2c → map to that service (HIGH)
-- URL contains `localhost:port` → map to service with matching PORT from Phase 1 (Rule 6) → MEDIUM
-- URL contains `process.env.X` or `os.environ['X']` → look up X in .env files from 2d → resolve and classify
-- URL is external (api.stripe.com, api.openai.com, etc.) → external integration, goes to integrations.sdl.yaml → HIGH
-
-### 2h — API Contract File Detection and Parsing
-
-**Files to scan:**
-- OpenAPI/Swagger: `openapi.yaml`, `openapi.json`, `swagger.yaml`, `swagger.json`, `**/openapi.yaml`, `api-spec.yaml`
-- GraphQL: `schema.graphql`, `schema.gql`, `**/*.graphql`
-- gRPC: `**/*.proto`
-- AsyncAPI: `asyncapi.yaml`, `asyncapi.json`
-
-**For each API contract file found:**
-
-**OpenAPI/Swagger files:**
-- Extract `info.title` → API name
-- Extract `info.version` → API version
-- Count `paths:` entries → endpoint count
-- Extract `servers[0].url` → base URL
-- Extract top-level `tags` names → service areas/modules
-- Determine owning service: look for contract file in service's directory, or check `x-service` annotation
-
-**GraphQL schema files:**
-- Extract type names from schema → domain entities
-- Count Query + Mutation + Subscription definitions → endpoint count
-- Note: GraphQL has no explicit versioning standard; mark as `x-version: "schema"` 
-
-**gRPC (.proto) files:**
-- Extract `service` block names → API/service name
-- Extract `rpc` method definitions → endpoints
-- Extract `package` name → namespace/service identifier
-- Note: Proto files typically map 1:1 to a backend service
-
-**AsyncAPI files:**
-- Extract channel names → queue/event topic names
-- Extract `publish` operations → producer roles
-- Extract `subscribe` operations → consumer roles
-- This evidence feeds directly into Step 4 Rule 9 (Topic Name Matching)
-
-**For each contract file, record:**
-- File path (relative to repo root)
-- Contract type: `rest` (OpenAPI), `graphql`, `grpc`, `asyncapi`
-- API version (if discoverable)
-- Endpoint count
-- Base URL (if discoverable)
-- Owning service (which service's code directory contains this file)
-
-### 2i — Route/Endpoint Registration Detection
-
-**Goal:** Discover what endpoints a service *exposes* (complements 2g which finds what it *calls*).
-
-**Files to scan:** Entry point files and route handlers in each service: `src/`, `app/`, `lib/`, `server/`, `main.go`, `Program.cs`, `app.py`, etc.
-
-**JavaScript/TypeScript (Express, Fastify, Hapi, NestJS, Koa):**
-```
-app.get('/path', ...)          → GET /path endpoint
-app.post('/path', ...)         → POST /path endpoint
-router.get('/path', ...)       → GET /path endpoint
-@Controller('/path')           → NestJS controller prefix
-@Get('/endpoint')              → NestJS GET handler
-@app.route('/path')            → Flask-compatible route
-```
-
-**Python (FastAPI, Flask, Django):**
-```
-@app.get('/path')              → GET /path
-@router.post('/path')          → POST /path
-path('path/', view.as_view())  → Django URL pattern
-```
-
-**Go (chi, gin, echo, gorilla):**
-```
-r.GET('/path', handler)        → GET /path
-r.POST('/path', handler)       → POST /path
-router.HandleFunc('/path', ...) → endpoint
-```
-
-**For each route found, record:**
-- HTTP method + path
-- Handler function name (for documentation)
-- File path + line number
-- Special endpoints: presence of `/health`, `/healthz`, `/ready`, `/alive` → marks service as health-checked
-
-**Purpose:** If no contract file exists (2h), synthesize a minimal entry in contracts.sdl.yaml from detected routes.
-
-### 2j — Event/Topic Names in Source Code
-
-**Goal:** Find producer/consumer relationships not visible from env vars alone (queue names hardcoded in code, not in config).
-
-**Files to scan:** Same source files as 2g — all language-specific source files
-
-**JavaScript/TypeScript publisher patterns:**
-```
-channel.publish('order-created', data)      → publishes to 'order-created'
-queue.add('send-email', data)               → adds to 'send-email' queue
-producer.send({ topic: 'user-signup', ... }) → publishes to 'user-signup'
-redis.lpush('job-queue', ...)               → pushes to 'job-queue'
-EventEmitter.emit('order.completed', ...)   → emits 'order.completed'
-```
-
-**JavaScript/TypeScript consumer patterns:**
-```
-queue.process('send-email', handler)        → consumes from 'send-email'
-consumer.subscribe('user-signup', handler)  → subscribes to 'user-signup'
-channel.consume('order-created', callback)  → consumes from 'order-created'
-redis.brpop('job-queue', ...)               → consumes from 'job-queue'
-EventEmitter.on('order.completed', handler) → listens for 'order.completed'
-```
-
-**Similar patterns for Python (celery, kafka), Go (channels), Java (Spring events):**
-- Publisher: event name in `publish()`, `send()`, `emit()`, `lpush()`, etc.
-- Consumer: event name in `subscribe()`, `on()`, `process()`, `brpop()`, etc.
-
-**For each topic/queue name found, record:**
-- Role: `publisher` or `consumer`
-- Topic/queue name (exact string literal if available; variable name if dynamic)
-- File path + line number
-- Service that owns this file
-- Confidence: HIGH (string literal), MEDIUM (constant reference), LOW (fully dynamic variable)
-
----
-
-#### Phase 2 Completeness Checklist
-
-Before moving to Step 3, ensure you have:
-- ✅ Detected primary languages present in the repos
-- ✅ Scanned all source files in detected languages for HTTP client calls (2g)
-- ✅ Located and parsed all API contract files: OpenAPI, GraphQL, proto, AsyncAPI (2h)
-- ✅ Scanned entry points and route files for route registrations (2i)
-- ✅ Scanned source files for event/queue topic publisher and consumer patterns (2j)
-- ✅ Recorded all evidence with file paths and line numbers
-
-### 3. Detect Candidate Components
-Classify discovered units into:
-- **Service** — a deployable application/API
-- **Frontend** — web/mobile UI
-- **Worker** — background job, queue consumer, cron job
-- **Library** — reusable shared code (no standalone runtime)
-- **Infra Module** — infrastructure as code package
-- **Contract Package** — API specs, data models, shared types
-
-### 4. Correlate Across Repos
-
-Use the evidence extracted in Step 2 to build the dependency graph. Apply rules below in priority order (stop at first match).
-
-#### Rule 1: Explicit Config Dependencies (HIGH confidence → Add to `x-dependsOn`)
-
-- **docker-compose `depends_on`:** Service-A has `depends_on: [service-b]` → Service-A depends on Service-B
-  - Evidence: `docker-compose.yml:line-X`
-  - Confidence: HIGH
-
-- **Environment Variable Service Address:** Service-A has env var matching pattern `<SERVICE_NAME>_URL=http://<service-b>:port`
-  - Example: `API_URL=http://user-service:3001` → Service-A calls user-service
-  - Example: `AUTH_SERVICE_HOST=auth-service` → Service-A calls auth-service
-  - Evidence: `.env` or docker-compose environment section
-  - Confidence: HIGH
-
-- **Kubernetes ConfigMap Service Reference:** Service-A ConfigMap has env var pointing to a known Service name
-  - Example: `apiVersion: v1` spec.data: `API_SERVICE: user-service` → depends on user-service
-  - Evidence: `k8s/configmap.yaml`
-  - Confidence: HIGH
-
-#### Rule 2: Shared Datastore Detection (MEDIUM confidence → Add to `data` section, NOT services)
-
-- **Same DATABASE_URL Host:** Two or more services have identical `DATABASE_URL` pointing to same host:port
-  - Shared datastore detected → add to `sdl/data.sdl.yaml` with multiple services referencing it
-  - Evidence: `.env` + env vars + k8s ConfigMaps
-  - Confidence: MEDIUM
-  - **Caveat:** If same host but different database names → separate logical databases on same server (note both in data section)
-
-- **Same REDIS_URL:** Multiple services point to same Redis instance
-  - Shared cache or queue infrastructure
-  - Evidence: `.env` or env vars
-  - Confidence: MEDIUM
-
-#### Rule 3: Monorepo Internal Dependencies (HIGH confidence → Add to `x-dependsOn`)
-
-- **Workspace Package Import:** Service-A's `package.json` lists `@org/shared-lib` in dependencies AND `@org/shared-lib` is a workspace package (has its own package.json in monorepo)
-  - Service-A depends on SharedLib (internal)
-  - Evidence: `service-a/package.json` + `shared-lib/package.json`
-  - Confidence: HIGH
-
-#### Rule 4: Queue/Worker Pattern (MEDIUM confidence → Add to deployment + assumptions)
-
-- **Worker Heuristics + Shared Queue:** Service has worker heuristics (bull, bullmq, celery, sidekiq, kafka-consumer, rabbitmq) AND env var points to queue (REDIS_URL, KAFKA_BROKERS, RABBITMQ_URL)
-  - Service consumes from queue
-  - Another service publishes to same queue → producer → consumer relationship
-  - Evidence: package.json + REDIS_URL env var
-  - Confidence: MEDIUM
-  - **Note:** If queue names visible in code/config, match producer/consumer by queue name
-
-#### Rule 5: Deployment Order from CI/CD (LOW confidence → Use for corroboration only)
-
-- **CI/CD `needs` Chain:** GitHub Actions job "deploy-frontend" has `needs: [deploy-backend]`
-  - Frontend likely depends on backend being healthy/deployed first
-  - Evidence: `.github/workflows/deploy.yml`
-  - Confidence: LOW (deployment order != runtime dependency, but corroborates HTTP calls)
-  - **Do NOT add as primary dependency signal** — only use if other evidence aligns
-
-#### Rule 6: Port Matching (MEDIUM confidence → Use when service name not explicitly in URL)
-
-- **Port Number Match:** Service-B exposes `PORT=3001` and Service-A has env var `API_URL=http://localhost:3001` or `API_URL=http://service-b:3001`
-  - Port number matches → A likely calls B
-  - Evidence: docker-compose ports + env var
-  - Confidence: MEDIUM
-
----
-
-## Phase 2: Deep Correlation Rules
-
-### Rule 7: HTTP Client URL → Service Dependency (HIGH/MEDIUM confidence → Add to `x-dependsOn`)
-
-**Input from:** Step 2g HTTP call scan
-
-Apply in order:
-
-1. **URL contains exact service name** from discovered component list:
-   - `http://user-service:3001/verify` → depends on `user-service` at `/verify`
-   - Evidence: `src/api/auth.ts:47`
-   - Confidence: HIGH
-
-2. **URL contains env var reference** resolved from Phase 1 (2d):
-   - `process.env.AUTH_SERVICE_URL + '/verify'` where `AUTH_SERVICE_URL=http://auth-service:3002` → depends on `auth-service`
-   - Evidence: `src/client.ts:12` + `.env:AUTH_SERVICE_URL`
-   - Confidence: HIGH (URL resolved) / MEDIUM (env var not resolved)
-
-3. **URL matches port** of known service (Phase 1 Rule 6):
-   - `http://localhost:3001` + known service exposes PORT=3001 → depends on that service
-   - Evidence: `src/api.ts:89` + `docker-compose.yml ports`
-   - Confidence: MEDIUM
-
-4. **URL is external** (non-localhost, non-service-name):
-   - `https://api.stripe.com/v1/charges` → Stripe external integration
-   - `https://api.openai.com/v1/chat` → OpenAI external integration
-   - Do NOT add to `x-dependsOn`; add to `integrations.sdl.yaml` instead
-   - Confidence: HIGH (explicit SDK call)
-
-**Output:** Adds to `x-dependsOn` on the calling service in `sdl/services.sdl.yaml` with:
-```yaml
-x-dependsOn:
-  - service: user-service
-    protocol: http
-    method: POST
-    endpoint: /api/verify
-    x-evidence: "src/api/auth.ts:47"
-    x-confidence: high
-```
-
-### Rule 8: API Contract File → Service Ownership (HIGH confidence → Populates contracts.sdl.yaml)
-
-**Input from:** Step 2h contract file scan
-
-- Contract file found at `services/user-service/openapi.yaml` → `user-service` exposes this API
-- Contract file at repo root or `docs/api/` → check if single service repo; if ambiguous, add as review item
-- Service's `x-dependsOn` includes service B AND service B has a contract file → document the specific contract version used
-
-**Output:** Populates `sdl/contracts.sdl.yaml` with entries like:
-```yaml
-contracts:
-  apis:
-    - name: user-service
-      type: rest
-      x-version: "2.1.0"
-      x-path: services/user-service/openapi.yaml
-      x-endpoints:
-        count: 24
-        baseUrl: "https://api.example.com/users"
-      x-confidence: high
-      x-evidence: "services/user-service/openapi.yaml"
-```
-
-If no OpenAPI file exists but routes were detected (Step 2i), synthesize a minimal entry:
-```yaml
-    - name: api-backend
-      type: rest
-      x-confidence: medium
-      x-evidence: "src/routes/index.ts (routes detected, no OpenAPI spec found)"
-      x-endpoints:
-        count: 12
-      x-review: "No OpenAPI spec found — routes detected from source, manual spec creation recommended"
-```
-
-### Rule 9: Topic Name Matching → Producer/Consumer (HIGH/MEDIUM confidence → Add to `x-dependsOn`)
-
-**Input from:** Step 2j topic name scan AND Step 2h AsyncAPI parsing
-
-- Service A publishes `'order-created'` AND Service B consumes `'order-created'` → async dependency
-  - Evidence: `order-service/src/index.ts:45` + `notification-service/src/worker.ts:12`
-  - Confidence: HIGH (exact string match)
-
-- Service A publishes to env var `process.env.ORDER_TOPIC` AND Service B consumes `process.env.ORDER_TOPIC` where both resolve to same value → async dependency
-  - Evidence: resolved env var values
-  - Confidence: MEDIUM (env var match)
-
-**Output:** Adds to `x-dependsOn` on the consuming service:
-```yaml
-x-dependsOn:
-  - service: order-service
-    protocol: queue
-    topic: order-created
-    role: consumer
-    x-evidence: "notification-service/src/worker.ts:12"
-    x-confidence: high
-```
-
-Also adds a note in `sdl/assumptions.sdl.yaml` if the publish/consume pairing is confirmed vs. inferred.
-
-### Rule 10: Import-Based Internal Dependency (MEDIUM confidence → Add to `x-dependsOn`)
-
-**Input from:** Step 2g source scanning for import/require statements
-
-**When source code imports a package that is a known internal service (not a shared library):**
-- `import { UserClient } from '@org/user-service-client'` AND `@org/user-service-client` is NOT a workspace package but a published SDK
-  → Service A depends on user-service (via generated client)
-  - Evidence: `src/app.ts:3` + `package.json dependency`
-  - Confidence: MEDIUM (client dependency implies runtime dependency)
-
-**Distinguish from Phase 1 Rule 3 (workspace package import):**
-- Phase 1 Rule 3: `@org/shared-types` in `package.json` AND it's a workspace package → HIGH confidence internal library
-- Phase 2 Rule 10: `@org/user-service-client` is an npm package → MEDIUM confidence service dependency
-
----
-
-#### Phase 2 Correlation Checklist
-
-Before moving to Step 5, ensure you have:
-- ✅ Applied all Phase 2 Rules 7–10 to all evidence collected in Phase 2 (2g–2j)
-- ✅ HTTP call URLs resolved to service names where possible
-- ✅ External URLs classified as integrations (not service dependencies)
-- ✅ Topic name matches recorded with producer + consumer service
-- ✅ API contract files located and mapped to owning services
-- ✅ contracts.sdl.yaml populated from discovered API contract files
-
-#### Correlation Output
-
-For each inferred dependency, record:
-```
-source_service: api-backend
-target_service: user-service
-type: http-sync (or: queue-async, datastore-shared, etc.)
-rule_matched: Rule 1 (Explicit Config)
-evidence: "docker-compose.yml line 42: depends_on: [user-service]"
-confidence: high
-```
-
-#### Non-Dependencies to Avoid
-
-Do NOT infer a dependency if:
-- Service-B is clearly infrastructure (postgres, redis, nginx) — put in `data` section instead
-- URL references are in comments or dead code
-- Port collision but services not actually connected
-- Workspace package is just imported types (zero runtime dependency)
-- CI/CD dependency is just ordering (doesn't mean runtime dependency)
+Use this data as the authoritative dependency graph input for SDL generation (Step 6).
 
 ### 5. Score Confidence
 
@@ -633,19 +118,19 @@ Each SDL section includes:
 - `review_required: boolean` (if applicable)
 - Comments explaining inferred relationships
 
-#### Specific Rules for `sdl/contracts.sdl.yaml` (Phase 2)
+#### Specific Rules for `sdl/contracts.sdl.yaml`
 
 **When to generate contracts.sdl.yaml:**
-- If any service has: OpenAPI/Swagger file found (2h), GraphQL schema found (2h), .proto file found (2h), AsyncAPI file found (2h), OR routes detected in source (2i)
+- If `contractOwnership[]` in `correlation.json` is non-empty, or any service scanner reported contracts or routes
 
 **How to populate each entry:**
 
-1. **One entry per service** that has an API contract or detected routes
+1. **One entry per service** that has an API contract or detected routes (from `contractOwnership[]` or scanner `contracts[]`)
 
 2. **Entry structure:**
-   - `name`: service name (from component list, Step 3)
+   - `name`: service name
    - `type`: enum — `rest` (OpenAPI), `graphql`, `grpc`, `asyncapi`
-   - `x-path`: relative path to contract file (from Step 2h); omit if synthesized from routes
+   - `x-path`: relative path to contract file; omit if synthesized from routes
    - `x-version`: extracted from `info.version` (OpenAPI), `schema` (GraphQL), `package` (proto), or `asyncapi.info.version`; `"unknown"` if not found
    - `x-endpoints`:
      - `count`: number of paths (OpenAPI), Query/Mutation/Subscription definitions (GraphQL), rpc methods (proto), or routes detected (2i)
