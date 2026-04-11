@@ -172,6 +172,36 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 - [JSON Schema (v1.1)](schema/sdl-v1.1.schema.json) — active machine-readable validation schema for SDL v1.1
 - [TypeScript Types (v1.1)](schema/sdl-v1.1.d.ts) — active TypeScript declaration file for SDL v1.1
 
+## SDL Discovery Agent
+
+The **SDL Discovery Agent** reverse-engineers software architecture from code repositories and generates draft SDL specifications automatically.
+
+Instead of writing SDL from scratch, run the agent on your codebase:
+
+```bash
+claude-code --agent sdl-discovery-agent --repos ./repo --output ./sdl-output
+```
+
+The agent produces:
+- **Draft SDL** — modular YAML files (services, data, auth, integrations, deployment, contracts, etc.)
+- **Complexity Assessment** — Architecture Complexity Index + Delivery Burden Index across 6 dimensions
+- **Complexity Report** — prioritized reduction plan, risk assessment, confidence scores
+- **Review Checklist** — human decision items (ambiguities, conflicts, unknowns)
+
+**Features:**
+- Evidence-based inference from code, config, and infrastructure
+- Confidence scoring (HIGH/MEDIUM/LOW per component)
+- Automatic complexity scoring (no configuration needed)
+- Support for monorepos and polyrepos
+- 6+ programming language support
+
+**Implementation Status:**
+- Phase 1 ✅ Complexity types and heuristics
+- Phase 2 ✅ Complexity calculation (all 6 dimensions + report generation)
+- Phase 3 (Planned) Full discovery orchestration
+
+See [ROADMAP.md](ROADMAP.md) and [packages/agents/sdl-discovery/README.md](packages/agents/sdl-discovery/README.md) for details.
+
 ## Reference Implementation
 
 The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
@@ -185,6 +215,12 @@ The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
 - **Progress Tracker** — Verification spec derivation for build progress
 
 ## Roadmap
+
+- **[SDL Discovery & Complexity Roadmap](ROADMAP.md)** — SDL Discovery Agent (Steps 1-6), complexity scoring implementation, validation, and user experience
+  - **Phase 1** ✅ Foundation — types, heuristics, v1.0 spec
+  - **Phase 2** ✅ Complexity Calculation — all 6 dimensions, report generation
+  - **Phase 3** (Next) — Discovery orchestration and orchestration
+  - **Phase 4+** — Validation, UI integration, API service, advanced features
 
 - [SDL Language Roadmap](spec/ROADMAP.md) — planned spec evolution: section formalization, v1.2 additions, migration policy
 - [Package Implementation Roadmap](packages/sdl/ROADMAP.md) — generator wiring, CLI, test coverage, `sdl migrate`
