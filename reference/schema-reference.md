@@ -5,8 +5,8 @@ Solution Design Language (SDL) is a YAML-based specification for capturing compl
 ## Status
 
 - `v1.1` is the active SDL version.
-- `v0.1` is deprecated and should only be used to interpret legacy documents.
 - The normative source for `v1.1` is [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md).
+- The canonical naming and shape reference for the active contract is [`canonical-contract.md`](canonical-contract.md).
 
 ## Required Root Fields
 
@@ -91,24 +91,34 @@ data: {}
 product: {}
 auth: {}
 deployment: {}
-environments: []
 nonFunctional: {}
 observability: {}
-integrations: []
+integrations: {}
 constraints: {}
 testing: {}
 techDebt: []
 
-contracts: {}
+contracts:
+  apis: []
 domain: {}
-features: {}
+features: []
 compliance: {}
-slos: []
+slos: {}
 resilience: {}
 costs: {}
 backupDr: {}
 design: {}
 ```
+
+## Shape Notes
+
+The current implementation surface is narrower than some narrative examples in the full spec. In particular:
+
+- `contracts` is currently modeled as an object containing `apis`
+- `features` is currently modeled as an array in the active schema and exported types
+- `slos` is currently modeled as an object in the active schema and exported types
+
+When in doubt, follow [`canonical-contract.md`](canonical-contract.md), then the active schema and exported types in `packages/sdl/src/schema/sdl-v1.1.schema.json` and `packages/sdl/src/types.ts`.
 
 ## Validation
 
@@ -121,7 +131,3 @@ The authoritative v1.1 validation rules are defined in [`spec/SDL-v1.1.md`](../s
 - configuration completeness checks
 - resilience and performance checks
 - security and PII checks
-
-## Deprecation Note
-
-If you are documenting or validating a legacy `v0.1` file, use [`spec/SDL-v0.1.md`](../spec/SDL-v0.1.md) only as a migration reference. New SDL documents should be authored as `v1.1`.

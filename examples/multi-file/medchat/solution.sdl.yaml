@@ -10,8 +10,9 @@ imports:
 
 solution:
   name: MedChat
-  description: >
-    HIPAA-compliant real-time messaging platform for healthcare providers.
+  description: "HIPAA-compliant real-time messaging platform for healthcare providers."
+  stage: MVP
+  x-longDescription: >
     Enables secure messaging, patient file sharing, and care coordination
     across departments and hospitals. Targets mid-market hospitals (100-500 beds)
     underserved by enterprise CC&C platforms.
@@ -21,55 +22,64 @@ solution:
 product:
   personas:
     - name: ED Physician (Dr. Moreno)
-      role: Emergency medicine attending
-      primaryNeed: Fast specialist consults with image sharing
-      adoptionDriver: Must be faster than paging/iMessage
+      goals:
+        - Fast specialist consults with image sharing
+        - Faster communication than paging or iMessage
+      x-role: Emergency medicine attending
     - name: Med-Surg Nurse (Maria Santos)
-      role: Night shift floor nurse
-      primaryNeed: Reach correct on-call provider without being tethered to desk phone
-      adoptionDriver: Must be simpler than calling
+      goals:
+        - Reach the correct on-call provider from mobile
+        - Use a workflow simpler than phone-based escalation
+      x-role: Night shift floor nurse
     - name: CMIO (Dr. Chakrabarti)
-      role: Chief Medical Information Officer / buyer
-      primaryNeed: System-wide adoption metrics and HIPAA compliance audit trail
-      adoptionDriver: Must prove ROI with data
+      goals:
+        - Review adoption metrics and compliance audit trails
+        - Prove ROI with system-wide usage data
+      accessLevel: admin
+      x-role: Chief Medical Information Officer / buyer
     - name: Overnight Pharmacist (James Okafor)
-      role: Solo overnight clinical pharmacist
-      primaryNeed: Async medication clarifications and broadcast alerts
-      adoptionDriver: Must reduce phone interruptions
+      goals:
+        - Handle async medication clarifications
+        - Reduce phone interruptions with message-based alerts
+      x-role: Solo overnight clinical pharmacist
 
   coreFlows:
     - name: Urgent Specialist Consult
-      trigger: Clinician identifies need for specialist input
       steps:
         - Search provider directory for on-call specialist
         - Compose message with priority level and image attachment
         - Send to auto-resolved on-call provider
         - Receive response with clinical guidance
-      targetTime: "<5 minutes end-to-end"
+      priority: critical
+      x-trigger: Clinician identifies need for specialist input
+      x-targetTime: "<5 minutes end-to-end"
 
     - name: Deteriorating Patient Escalation
-      trigger: Nurse observes concerning vital sign changes
       steps:
         - Search for covering physician via on-call directory
         - Send urgent message with vitals and clinical concern
         - Continue patient care while awaiting mobile response
         - Receive orders and act
-      targetTime: "<6 minutes to physician orders"
+      priority: critical
+      x-trigger: Nurse observes concerning vital sign changes
+      x-targetTime: "<6 minutes to physician orders"
 
     - name: Multi-Party Care Coordination
-      trigger: Clinical issue requires physician + pharmacy + nursing alignment
       steps:
         - Create group message with relevant care team members
         - State the clinical question with clear asks for each role
         - Async discussion with all parties in one thread
         - Resolution documented in persistent thread
-      targetTime: "<10 minutes to resolution"
+      priority: high
+      x-trigger: Clinical issue requires physician + pharmacy + nursing alignment
+      x-targetTime: "<10 minutes to resolution"
 
     - name: HIPAA Compliance Investigation
-      trigger: Compliance officer receives patient complaint about information sharing
       steps:
         - Admin searches audit trail by patient/room, date range
         - Reviews message content, attachments, and read receipts
         - Exports timestamped evidence trail
         - Prepares compliance response with definitive documentation
-      targetTime: "<1 hour for complete investigation"
+      priority: high
+      x-trigger: Compliance officer receives patient complaint about information sharing
+      x-targetTime: "<1 hour for complete investigation"

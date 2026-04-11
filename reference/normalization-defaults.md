@@ -12,80 +12,47 @@ The normalizer runs AFTER validation. It only fills in fields that are:
 1. Not explicitly set in the input
 2. Can be deterministically inferred from other fields
 
-## Runtime → Language Mapping
+The current implementation is defined by `packages/sdl/src/normalizer.ts`. This reference summarizes the implemented defaults rather than earlier aspirational mappings.
 
-| Runtime | Inferred Language |
-|---|---|
-| `node` | `typescript` |
-| `python` | `python` |
-| `go` | `go` |
-| `java` | `java` |
-| `dotnet` | `csharp` |
-| `rust` | `rust` |
-| `ruby` | `ruby` |
-| `php` | `php` |
+## Implemented Defaults
 
-## Framework → Runtime Mapping
-
-| Framework | Inferred Runtime |
-|---|---|
-| `express`, `fastify`, `nest`, `koa`, `hapi` | `node` |
-| `fastapi`, `django`, `flask`, `starlette` | `python` |
-| `gin`, `echo`, `fiber`, `chi` | `go` |
-| `spring`, `quarkus`, `micronaut` | `java` |
-| `aspnet`, `dotnet-minimal` | `dotnet` |
-| `actix`, `axum`, `rocket` | `rust` |
-| `rails`, `sinatra` | `ruby` |
-| `laravel`, `symfony` | `php` |
-
-## Runtime + Database → ORM Mapping
-
-| Runtime | Database | Inferred ORM |
+| Field | Inferred From | Default |
 |---|---|---|
-| `node` | `postgres` | `prisma` |
-| `node` | `mysql` | `prisma` |
-| `node` | `mongodb` | `mongoose` |
-| `python` | `postgres` | `sqlalchemy` |
-| `python` | `mysql` | `sqlalchemy` |
-| `python` | `mongodb` | `mongoengine` |
-| `go` | any | `none` (raw SQL or GORM) |
-| `java` | any | `hibernate` |
-| `dotnet` | any | `efcore` |
-
-## Cloud Provider Inference
-
-| Signal | Inferred Cloud |
-|---|---|
-| Default | `aws` |
-| AI-heavy project (agent components) | `gcp` |
-| Enterprise features (SAML, AD auth) | `azure` |
-| `constraints.budget: free` | `aws` (best free tier) |
-
-## Stage → Availability Mapping
-
-| Stage | Default Availability |
-|---|---|
-| `mvp` | `99%` |
-| `growth` | `99.9%` |
-| `production` | `99.95%` |
-| `enterprise` | `99.99%` |
-
-## Stage → Budget Mapping
-
-| Stage | Default Budget Ceiling |
-|---|---|
-| `mvp` | `$500/month` |
-| `growth` | `$5,000/month` |
-| `production` | `$50,000/month` |
-| `enterprise` | No ceiling |
+| `product.personas` | missing `product` section | `[]` |
+| `product.coreFlows` | missing `product` section | `[]` |
+| `deployment.cloud` | project mix | `railway` when backend or mobile exists, otherwise `vercel` |
+| `nonFunctional.availability.target` | `solution.stage` | `99.9` for `MVP`, `99.95` for `Growth`, `99.99` for `Enterprise` |
+| `nonFunctional.scaling` | `solution.stage` | stage-based user estimates |
+| `artifacts.generate` | missing `artifacts` section | `[]` |
+| `solution.regions.primary` | missing `solution.regions` | `us-east-1` |
+| `data.primaryDatabase.name` | `solution.name` | slugified solution name plus `_db` |
+| `architecture.projects.frontend[].type` | frontend project present | `web` |
+| `architecture.projects.backend[].type` | backend project present | `backend` |
+| `deployment.runtime.frontend/backend` | `deployment.cloud` | cloud-specific runtime mapping |
+| `deployment.networking.publicApi` | missing networking section | `true` |
+| `deployment.ciCd.provider` | missing CI/CD section | `github-actions` |
+| `nonFunctional.security.encryptionAtRest` | `security.pii: true` | `true` |
+| `nonFunctional.security.encryptionInTransit` | missing explicit value | `true` |
+| `architecture.projects.backend[].orm` | backend framework plus primary database | framework/database mapping |
+| `testing.unit.framework` | first backend framework | framework-specific test runner |
+| `observability.logging.structured` | missing explicit value | `true` when logging section exists |
 
 ## Frontend Defaults
 
 | Framework | Rendering | Styling | State Management |
 |---|---|---|---|
-| `next` | `ssr` | `tailwind` | `zustand` |
-| `react` | `spa` | `tailwind` | `zustand` |
-| `vue` | `spa` | `tailwind` | `pinia` |
-| `angular` | `spa` | `scss` | `ngrx` |
-| `svelte` | `spa` | `tailwind` | built-in stores |
-| `nuxt` | `ssr` | `tailwind` | `pinia` |
+| `nextjs` | no implemented rendering inference | no implemented styling inference | no implemented state inference |
+| `react` | no implemented rendering inference | no implemented styling inference | no implemented state inference |
+| `vue` | no implemented rendering inference | no implemented styling inference | no implemented state inference |
+| `angular` | no implemented rendering inference | no implemented styling inference | no implemented state inference |
+| `svelte` | no implemented rendering inference | no implemented styling inference | no implemented state inference |
+
+## Backend ORM Mapping
+
+| Backend Framework | Database | Inferred ORM |
+|---|---|---|
+| `nodejs` | `postgres`, `mysql` | `prisma` |
+| `nodejs` | `mongodb` | `mongoose` |
+| `python-fastapi` | `postgres`, `mysql` | `sqlalchemy` |
+| `go` | supported databases | `gorm` when mapped |
+| `dotnet-8` | supported databases | `ef-core` when mapped |

@@ -6,7 +6,7 @@ sdlVersion: "1.1"
 solution:
   name: nexper-crm
   description: "Multi-tenant AI-powered CRM for SMB sales teams — contact management, deal tracking, and AI-driven insights"
-  stage: growth
+  stage: Growth
   domain: app.nexpercrm.com
   regions:
     primary: us-east-1
@@ -24,8 +24,8 @@ architecture:
         rendering: ssr
         styling: tailwind
         stateManagement: zustand
-        deployable: true
-        dependsOn: [api-server, clerk]
+        x-deployable: true
+        x-dependsOn: [api-server, clerk]
         x-port: 3000
 
     backend:
@@ -33,22 +33,22 @@ architecture:
         framework: nodejs
         apiStyle: rest
         orm: prisma
-        deployable: true
-        dependsOn: [web-app, ai-worker, stripe, sendgrid, clerk, sentry]
+        x-deployable: true
+        x-dependsOn: [web-app, ai-worker, stripe, sendgrid, clerk, sentry]
         x-port: 4000
 
       - name: ai-worker
         framework: python-fastapi
         apiStyle: rest
-        deployable: true
-        dependsOn: [openai, sentry]
+        x-deployable: true
+        x-dependsOn: [openai, sentry]
         x-port: 8000
 
       - name: notification-worker
         framework: nodejs
         apiStyle: rest
-        deployable: true
-        dependsOn: [sendgrid, sentry]
+        x-deployable: true
+        x-dependsOn: [sendgrid, sentry]
         x-port: 4001
 
   services:
@@ -77,8 +77,8 @@ architecture:
   sharedLibraries:
     - name: "@nexper/shared-types"
       language: typescript
-      deployable: false
-      dependsOn: []
+      x-deployable: false
+      x-dependsOn: []
 
 data:
   primaryDatabase:

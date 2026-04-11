@@ -12,11 +12,11 @@ nonFunctional:
   performance:
     apiResponseTime: "<200ms p95"
     pageLoadTime: "<2s LCP"
-    targetRps: 2000
-    p95LatencyMs: 200
-    p99LatencyMs: 500
+    x-targetRps: 2000
+    x-p95LatencyMs: 200
+    x-p99LatencyMs: 500
 
-  caching:
+  x-caching:
     enabled: true
 
   security:
@@ -33,7 +33,7 @@ nonFunctional:
       - gdpr
       - soc2
 
-  multiTenancy:
+  x-multiTenancy:
     enabled: true
     isolationModel: row-level-security
     tenantIdField: organization_id
@@ -52,7 +52,7 @@ observability:
     provider: pino
     structured: true
     level: info
-    correlationId: true
+    x-correlationId: true
 
   tracing:
     provider: opentelemetry
@@ -61,7 +61,7 @@ observability:
   metrics:
     provider: prometheus
 
-  healthChecks:
+  x-healthChecks:
     liveness: "/health"
     readiness: "/health/ready"
     dbCheck: true
@@ -92,7 +92,7 @@ testing:
     target: 80
     enforce: true
 
-interServiceCommunication:  # plugin extension
+x-interServiceCommunication:  # plugin extension
   - pattern: http
     description: "web-app → api-server REST calls via Axios with Bearer JWT"
     from: web-app
@@ -114,13 +114,13 @@ interServiceCommunication:  # plugin extension
     protocol: "Bull queue over Redis"
     async: true
 
-configuration:  # plugin extension
+x-configuration:  # plugin extension
   strategy: env-vars
   provider: "AWS SSM Parameter Store"
   secretsManagement: "AWS Secrets Manager for production; .env.local for development"
   perEnvironment: true
 
-errorHandling:  # plugin extension
+x-errorHandling:  # plugin extension
   strategy: centralized
   errorFormat: "RFC 7807 Problem Details JSON"
   globalHandler: true
@@ -155,7 +155,7 @@ evolution:
       action: "Deploy eu-west-1 stack for data residency"
       estimatedEffort: "3 weeks"
   roadmap:
-    - stage: growth
+    - stage: Growth
       targetDate: "2026-12-31"
       architectureChanges:
         - "Add read-replica for analytics queries"
@@ -163,7 +163,7 @@ evolution:
       newCapabilities:
         - "Email sync (Gmail/Outlook OAuth)"
         - "Mobile app (React Native)"
-    - stage: enterprise
+    - stage: Enterprise
       targetDate: "2027-06-30"
       architectureChanges:
         - "Add eu-west-1 region for GDPR data residency"

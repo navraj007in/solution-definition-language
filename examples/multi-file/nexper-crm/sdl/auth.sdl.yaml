@@ -1,7 +1,6 @@
 auth:
   strategy: oidc
-  identityProvider: clerk
-  serviceTokenModel: jwt
+  provider: clerk
 
   roles:
     - org_admin
@@ -23,5 +22,7 @@ auth:
     - google
     - microsoft
 
+  x-identityProvider: clerk
+  x-serviceTokenModel: jwt
   x-tokenInterceptor: true
   x-notes: "Clerk issues JWTs; api-server validates them via JWKS endpoint. org_id claim enforces RLS at DB layer."

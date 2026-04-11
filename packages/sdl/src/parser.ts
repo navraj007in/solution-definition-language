@@ -44,7 +44,7 @@ export function parse(yamlString: string): ParseResult {
           code: 'INVALID_YAML',
           path: '',
           message: `SDL must be a YAML mapping (object), got ${Array.isArray(data) ? 'array' : typeof data}`,
-          fix: 'Ensure your SDL file starts with valid YAML key-value pairs like "sdlVersion: \\"0.1\\""',
+          fix: 'Ensure your SDL file starts with valid YAML key-value pairs like "sdlVersion: \\"1.1\\""',
         }],
       };
     }

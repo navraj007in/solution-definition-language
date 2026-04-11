@@ -12,7 +12,6 @@ You understand the Solution Design Language (SDL) — a YAML-based architecture 
 ## Version Policy
 
 - `v1.1` is the active SDL version.
-- `v0.1` is deprecated and should only be referenced when migrating older documents.
 - For new SDL generation, always set `sdlVersion: "1.1"`.
 
 ## Core Principle
@@ -43,10 +42,11 @@ SDL v1.1 captures:
 
 Use these files in order of authority:
 
-1. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative v1.1 spec
-2. [`reference/schema-reference.md`](schema-reference.md) — quick v1.1 section reference
-3. [`reference/normalization-defaults.md`](normalization-defaults.md) — normalization rules and mappings
-4. [`reference/error-codes.md`](error-codes.md) — validation error vocabulary
+1. [`reference/canonical-contract.md`](canonical-contract.md) — canonical enums, artifact types, root section shapes, and alias policy
+2. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative v1.1 spec
+3. [`reference/schema-reference.md`](schema-reference.md) — quick v1.1 section reference
+4. [`reference/normalization-defaults.md`](normalization-defaults.md) — normalization rules and mappings
+5. [`reference/error-codes.md`](error-codes.md) — validation error vocabulary
 
 ## Required Root Sections
 
@@ -88,11 +88,12 @@ Use these when the architecture requires them:
 When generating SDL:
 
 1. Always write `sdlVersion: "1.1"`.
-2. Use `solution`, `architecture`, and `data` as the required base.
-3. Add only the additional sections supported by known architecture facts.
-4. Follow the v1.1 validation rules in [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md).
-5. Prefer `solution.sdl.yaml` as the canonical root filename.
-6. Treat `v0.1` inputs as migration sources, not generation targets.
+2. Use the canonical names and shapes in [`reference/canonical-contract.md`](canonical-contract.md).
+3. Use `solution`, `architecture`, and `data` as the required base.
+4. Add only the additional sections supported by known architecture facts.
+5. Follow the v1.1 validation rules in [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md).
+6. Prefer `solution.sdl.yaml` as the canonical root filename.
+7. Put richer unsupported metadata under `x-` fields rather than inventing new top-level shapes.
 
 ## Validation Guidance
 
@@ -105,15 +106,6 @@ When validating v1.1 SDL, check:
 - deployment and runtime choices are compatible
 - resilience and SLO sections reference real components
 - compliance and security assumptions are internally consistent
-
-## Migration Guidance
-
-If you encounter `v0.1` SDL:
-
-- preserve the original for auditability
-- migrate the document to `v1.1`
-- add v1.1 sections incrementally where architecture detail exists
-- stop treating `v0.1` as the final output format
 
 ## Output Expectation
 

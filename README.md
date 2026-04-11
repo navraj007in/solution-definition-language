@@ -5,8 +5,7 @@ SDL is a structured YAML specification for capturing complete software architect
 ## Status
 
 **SDL v1.1 is the active standard.**
-
-SDL v0.1 is retained only as deprecated reference material for older documents and migration work. New SDL documents, examples, generators, and integrations should target `sdlVersion: "1.1"`.
+New SDL documents, examples, generators, and integrations should target `sdlVersion: "1.1"`.
 
 ## Why SDL?
 
@@ -27,24 +26,18 @@ sdlVersion: "1.1"
 solution:
   name: TaskFlow
   description: A task management SaaS for small teams
-  stage: mvp
+  stage: MVP
 
 architecture:
   style: modular-monolith
   projects:
     backend:
       - name: api
-        type: api
-        path: "."
-        runtime: node
-        language: typescript
-        framework: express
+        framework: nodejs
         orm: prisma
     frontend:
       - name: web
-        type: web
-        path: apps/web
-        framework: next
+        framework: nextjs
         rendering: ssr
 
 data:
@@ -55,8 +48,10 @@ data:
     type: redis
 
 auth:
-  strategy: jwt
+  strategy: oidc
   provider: custom
+  sessions:
+    accessToken: jwt
 
 deployment:
   cloud: aws
@@ -64,22 +59,20 @@ deployment:
     provider: github-actions
 
 contracts:
-  - name: api
-    type: openapi
-    version: "3.1.0"
-    path: sdl/contracts/api.openapi.yaml
+  apis:
+    - name: api
+      type: rest
+      owner: api
 
 domain:
   entities:
     - name: Task
-      table: tasks
       fields:
         - name: id
           type: uuid
-          primaryKey: true
         - name: title
           type: string
-          nullable: false
+          required: true
 ```
 
 ## Multi-File SDL
@@ -107,22 +100,19 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## What SDL Generates
 
-| Artifact | Description |
+| Output | Access |
 |---|---|
-| Docker Compose | Multi-container local dev setup |
-| Kubernetes | K8s manifests (dev/staging/prod) |
-| Terraform | Modular IaC (AWS/GCP/Azure) |
-| Nginx | Reverse proxy config |
-| CI/CD | GitHub Actions, GitLab CI, Jenkins |
-| Coding Rules | CLAUDE.md, .cursorrules, copilot-instructions.md, .aider/conventions.md |
-| Coding Rules Enforcement | ESLint, Ruff, golangci-lint, architecture tests, CI gates |
-| OpenAPI | REST API specification |
-| Data Model | ORM schemas (Prisma, Drizzle, SQLAlchemy, Mongoose) |
-| Deployment Diagram | Visual deployment architecture |
-| Monitoring | Observability configuration |
-| ADR Rules | Architecture decision enforcement |
-| Cost Estimate | Infrastructure cost projections |
-| Backlog | Sprint planning from architecture |
+| `architecture-diagram` | Registry-backed artifact type |
+| `repo-scaffold` | Registry-backed artifact type |
+| `iac-skeleton` | Registry-backed artifact type |
+| `adr` | Registry-backed artifact type |
+| `openapi` | Registry-backed artifact type |
+| `data-model` | Registry-backed artifact type |
+| `sequence-diagrams` | Registry-backed artifact type |
+| `backlog` | Registry-backed artifact type |
+| `deployment-guide` | Registry-backed artifact type |
+| `cost-estimate` | Registry-backed artifact type |
+| Docker Compose, Kubernetes, Monitoring, Nginx, Coding Rules | Available as direct generator APIs |
 
 ## Versions
 
@@ -138,22 +128,17 @@ Each imported file contains one or more SDL sections. The system resolves and me
   - Design system (tokens, theming, component library)
   - Spec: [SDL-v1.1.md](spec/SDL-v1.1.md)
 
-- **v0.1** — Deprecated
-  - Retained only for legacy documents and migration reference
-  - Do not use for new SDL generation
-  - Spec: [SDL-v0.1.md](spec/SDL-v0.1.md)
-
 ## Documentation
 
 | Document | Description |
 |---|---|
+| [Canonical Contract](reference/canonical-contract.md) | Canonical enums, artifact types, root section shapes, and alias policy for active `v1.1` |
 | [Specification v1.1](spec/SDL-v1.1.md) | Active complete specification |
 | [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
 | [Generators](reference/generators.md) | What each generator produces and what SDL sections it consumes |
 | [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
 | [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
 | [SDL Knowledge](reference/sdl-knowledge.md) | SDL generation and validation guidance |
-| [Specification v0.1](spec/SDL-v0.1.md) | Deprecated legacy reference |
 
 ## Templates
 
@@ -183,8 +168,6 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 - [JSON Schema (v1.1)](schema/sdl-v1.1.schema.json) — active machine-readable validation schema for SDL v1.1
 - [TypeScript Types (v1.1)](schema/sdl-v1.1.d.ts) — active TypeScript declaration file for SDL v1.1
-- [JSON Schema (v0.1)](schema/sdl-v0.1.schema.json) — deprecated machine-readable validation schema for legacy SDL
-- [TypeScript Types (v0.1)](schema/sdl-v0.1.d.ts) — deprecated legacy type definitions
 
 ## Reference Implementation
 

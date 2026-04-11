@@ -1,4 +1,4 @@
-environments:
+x-environments:
   - name: development
     description: Local development with Docker Compose
     components:

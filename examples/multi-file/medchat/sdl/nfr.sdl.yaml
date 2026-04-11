@@ -1,87 +1,72 @@
 nonFunctional:
   performance:
-    messageDelivery: "<1 second end-to-end (p99)"
-    apiLatency: "<200ms (p95)"
-    searchLatency: "<500ms"
-    concurrentUsers: 10000
-    concurrentWebSockets: 10000
-    messagesThroughput: "1,000 messages/second sustained"
-    x-confidence: medium
-    x-evidence: "10K concurrent from project requirements; throughput estimated from TigerConnect benchmarks (3B messages/year across 7K facilities)"
+    apiResponseTime: "<200ms (p95)"
+    x-messageDelivery: "<1 second end-to-end (p99)"
+    x-searchLatency: "<500ms"
+    x-concurrentWebSockets: 10000
+    x-messagesThroughput: "1,000 messages/second sustained"
 
   availability:
-    uptimeSLA: "99.95%"
-    plannedDowntime: "Zero (rolling deployments)"
-    x-confidence: high
-    x-evidence: "99.95% is standard for healthcare SaaS; AWS multi-AZ provides infrastructure basis"
+    target: "99.95"
+    x-plannedDowntime: "Zero (rolling deployments)"
 
-  disasterRecovery:
+  scaling:
+    expectedUsersMonth1: 1000
+    expectedUsersYear1: 10000
+    peakConcurrentUsers: 10000
+
+  backup:
+    frequency: daily
+    retention: "35 days"
+    pointInTimeRecovery: true
+
+  security:
+    pii: true
+    phi: true
+    encryptionAtRest: true
+    encryptionInTransit: true
+    auditLogging: compliance
+    penetrationTesting: true
+    x-messageContentEncryption: "Application-level encryption before database storage"
+
+  x-disasterRecovery:
     rpo: "1 hour"
     rto: "4 hours"
     strategy: "Multi-AZ primary with cross-region DB replication; manual failover to us-west-2"
-    x-confidence: medium
-    x-evidence: "RPO/RTO targets based on healthcare industry norms; automatic failover deferred to post-MVP"
-
-  security:
-    encryption:
-      atRest: "AES-256 (AWS KMS, per-organization keys)"
-      inTransit: "TLS 1.3 (minimum TLS 1.2)"
-      messageContent: "Application-level encryption before database storage"
-    compliance:
-      - standard: HIPAA
-        status: "Required for MVP launch"
-        controls: "BAA with AWS, access controls, audit trail, encryption, session management"
-      - standard: "SOC 2 Type II"
-        status: "Target within 6 months of launch"
-      - standard: HITRUST
-        status: "Target within 12 months of launch"
-        cost: "$50,000-$200,000"
-    penetrationTesting:
-      frequency: annual
-      provider: "Third-party firm (report shared with customers)"
-    vulnerabilityScanning:
-      frequency: continuous
-      tools: ["Snyk", "Trivy", "GitHub Dependabot"]
-
-  dataResidency:
+  x-dataResidency:
     requirement: "All data stored in US-based AWS regions"
-    x-confidence: high
-    x-evidence: "HIPAA requires US data residency for ePHI; MVP scope M13 specifies US-only data centers"
+  x-complianceTargets:
+    - standard: HIPAA
+      status: "Required for MVP launch"
+    - standard: "SOC 2 Type II"
+      status: "Target within 6 months of launch"
+    - standard: HITRUST
+      status: "Target within 12 months of launch"
 
 testing:
   unit:
     framework: vitest
-    x-confidence: medium
-    x-evidence: "Vitest is the modern standard for TypeScript; Jest is the alternative"
-    coverage:
-      target: "80% line coverage for core modules (messaging, auth, audit)"
-      critical: "100% coverage for encryption and authentication logic"
+  e2e:
+    framework: playwright
+  coverage:
+    target: 80
+    enforce: true
 
-  integration:
+  x-integration:
     framework: vitest
     database: "Testcontainers (PostgreSQL + Redis)"
     strategy: "Test against real database; no mocking for data layer"
 
-  e2e:
-    framework: playwright
-    x-confidence: medium
-    x-evidence: "Playwright is the modern standard for E2E testing with good mobile emulation"
-    coverage: "Core user journeys: login, send message, receive notification, search directory, admin audit trail"
-
-  mobile:
+  x-mobile:
     framework: detox
-    x-confidence: medium
-    x-evidence: "Detox is the standard E2E framework for React Native"
     coverage: "Critical flows: biometric login, send message, receive push notification, image capture"
 
-  security:
+  x-security:
     tools: ["Snyk (dependency scanning)", "Trivy (container scanning)", "OWASP ZAP (DAST)"]
     frequency: "Every CI run (Snyk/Trivy); weekly (ZAP)"
 
-  load:
+  x-load:
     tool: k6
-    x-confidence: medium
-    x-evidence: "k6 supports WebSocket load testing natively"
     scenarios:
       - name: "Sustained messaging"
         vus: 10000
@@ -94,18 +79,20 @@ testing:
 
 observability:
   logging:
-    format: structured-json
-    provider: "AWS CloudWatch Logs"
-    retention: "90 days in CloudWatch; archived to S3 for 6 years (HIPAA)"
-    rules:
+    provider: structured
+    structured: true
+    level: info
+    x-format: structured-json
+    x-retention: "90 days in CloudWatch; archived to S3 for 6 years (HIPAA)"
+    x-rules:
       - "NEVER log message content or PHI"
       - "Log request metadata: user ID, endpoint, status, latency, correlation ID"
       - "Log all authentication events"
       - "Log all admin actions"
 
   metrics:
-    provider: "AWS CloudWatch Metrics + custom dashboards"
-    custom:
+    provider: cloudwatch
+    x-custom:
       - name: message_delivery_latency_ms
         type: histogram
         description: "Time from send to delivery confirmation"
@@ -124,7 +111,7 @@ observability:
         labels: [reason]
         description: "Authentication failure count by reason"
 
-  alerting:
+  x-alerting:
     provider: "AWS CloudWatch Alarms → SNS → PagerDuty"
     rules:
       - name: high_error_rate
@@ -147,7 +134,5 @@ observability:
         severity: medium
 
   tracing:
-    provider: "AWS X-Ray"
-    x-confidence: medium
-    x-evidence: "X-Ray integrates natively with ECS/ALB; OpenTelemetry is the vendor-neutral alternative"
-    sampleRate: "5% of requests (100% for errors)"
+    provider: xray
+    x-sampleRate: "5% of requests (100% for errors)"

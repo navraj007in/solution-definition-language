@@ -1,4 +1,4 @@
-navigationPatterns:
+x-navigationPatterns:
   guards:
     - type: authentication
       description: "All routes except /login, /signup, /pricing require an authenticated Clerk session"

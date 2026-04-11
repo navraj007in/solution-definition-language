@@ -2,58 +2,84 @@
 
 SDL generators produce deterministic output files from an SDL document. Same input always produces identical output.
 
-## Generator List
+This reference distinguishes between:
+
+- registry-backed artifact types usable via `generate()` and `generateAll()`
+- direct generator APIs exported by the package but not part of the `ArtifactType` registry
+
+For the canonical artifact naming table, see [`canonical-contract.md`](canonical-contract.md).
+
+## Registry-Backed Artifact Types
 
 | Generator | Artifact Type | Output Files | SDL Sections Consumed |
 |---|---|---|---|
-| Docker Compose | `docker-compose` | `docker-compose.yml`, `docker-compose.dev.yml` | architecture.projects, data, deployment |
-| Kubernetes | `kubernetes` | Deployments, Services, Ingress, ConfigMaps per environment | architecture.projects, data, deployment, nonFunctional |
-| Terraform | `terraform` | Modular `.tf` files (compute, database, networking, IAM) | architecture.projects, data, deployment, auth |
-| Nginx | `nginx` | `nginx.conf` with reverse proxy and upstream configs | architecture.projects |
-| CI/CD | `ci-cd` | GitHub Actions, GitLab CI, or Jenkins pipeline files | deployment.ciCd, architecture.projects, testing |
-| Coding Rules | `coding-rules` | CLAUDE.md, .cursor/rules/architecture.mdc, .github/copilot-instructions.md, .aider/conventions.md | All sections |
-| Coding Rules Enforcement | `coding-rules-enforcement` | ESLint, Ruff, golangci-lint configs, architecture tests, CI gate | architecture, data, auth, testing |
-| OpenAPI | `openapi` | OpenAPI 3.1 YAML spec | architecture.projects (endpoints) |
-| Data Model | `data-model` | ORM schemas (Prisma, Drizzle, SQLAlchemy, Mongoose) | data, architecture.projects (ORM choice) |
-| Deployment Diagram | `deploy-diagram` | Mermaid deployment diagram | deployment, architecture.projects |
-| Monitoring | `monitoring` | Observability config (Prometheus, Grafana, alerts) | observability, architecture.projects |
-| ADR Rules | `adr-rules` | Architecture decision enforcement rules | ADR files (MADR format) |
+| Architecture Diagram | `architecture-diagram` | Mermaid architecture diagram | architecture, data, auth |
+| Repo Scaffold | `repo-scaffold` | Starter app structure and config files | architecture, data, auth, deployment |
+| IaC Skeleton | `iac-skeleton` | CI/CD pipeline plus infrastructure skeleton files | deployment, architecture.projects, testing |
+| ADR | `adr` | Architecture decision records in Markdown | architecture, data, auth, deployment |
+| OpenAPI | `openapi` | OpenAPI 3.1 YAML spec | architecture.projects, auth, product, domain |
+| Data Model | `data-model` | ORM schemas and ERD output | data, domain, architecture.projects |
+| Sequence Diagrams | `sequence-diagrams` | Mermaid sequence diagrams | product, architecture, auth |
+| Backlog | `backlog` | Markdown backlog and stories | product, architecture, auth, integrations |
+| Deployment Guide | `deployment-guide` | Step-by-step deployment instructions | deployment, architecture.projects, data |
 | Cost Estimate | `cost-estimate` | Infrastructure cost breakdown | data, deployment, integrations, auth |
-| Backlog | `backlog` | Sprint plan with user stories | architecture.projects, product.features |
-| Deployment Guide | `deployment-guide` | Step-by-step deployment instructions | deployment, architecture.projects |
-| Sequence Diagrams | `sequence-diagrams` | Mermaid sequence diagrams per API endpoint | architecture.projects (endpoints) |
+| Coding Rules | `coding-rules` | CLAUDE.md, Cursor, Copilot, Aider rules | Most SDL sections |
+| Coding Rules Enforcement | `coding-rules-enforcement` | Lint, architecture test, and CI enforcement files | architecture, data, auth, testing |
+
+## Direct Generator APIs
+
+These generators are exported directly by the package and are not currently addressable through the `ArtifactType` registry:
+
+| Generator API | Typical Output Files | SDL Sections Consumed |
+|---|---|---|
+| `generateDockerCompose()` | `artifacts/docker/docker-compose.yml` | architecture.projects, data, deployment |
+| `generateKubernetes()` | Kubernetes manifest files | architecture.projects, data, deployment, nonFunctional |
+| `generateMonitoring()` | Prometheus, alert rules, Grafana dashboard | observability, architecture.projects |
+| `generateNginxConfig()` | `artifacts/nginx/nginx.conf` | architecture.projects |
+| `generateDeployDiagram()` | deployment diagram file | deployment, architecture.projects |
 
 ## Usage
 
 ### Via npm package
 
 ```typescript
-import { parse, validate, normalize, generate, generateAll } from '@arch0/sdl';
+import {
+  parse,
+  validate,
+  normalize,
+  generate,
+  generateAll,
+  generateDockerCompose,
+} from '@arch0/sdl';
 
 const { data } = parse(yamlString);
 const { valid } = validate(data);
 const normalized = normalize(data);
 
-// Single generator
-const result = generate(normalized, 'docker-compose');
-// result.files = [{ path: 'docker-compose.yml', content: '...' }, ...]
+// Registry-backed artifact
+const result = generate(normalized, 'architecture-diagram');
+// result.files = [{ path: 'artifacts/architecture/architecture.mmd', content: '...' }, ...]
 
-// All generators
+// All registry-backed artifacts listed in doc.artifacts.generate
 const all = generateAll(normalized);
-// all = [{ artifactType: 'docker-compose', files: [...] }, ...]
+// all = { results: [...], skipped: [...] }
+
+// Direct generator API
+const compose = generateDockerCompose(normalized);
+// compose.files = [{ path: 'artifacts/docker/docker-compose.yml', content: '...' }, ...]
 ```
 
 ### Via API
 
 ```
 POST /api/sdl/generate
-Body: { sdl: "<yaml string>", artifactType?: "docker-compose" }
+Body: { sdl: "<yaml string>", artifactType?: "architecture-diagram" }
 ```
 
 ### Via CLI
 
 ```bash
-arch0 generate solution.sdl.yaml --artifact docker-compose --output ./infra/
+arch0 generate solution.sdl.yaml --artifact architecture-diagram --output ./artifacts/
 ```
 
 ## Coding Rules Detail

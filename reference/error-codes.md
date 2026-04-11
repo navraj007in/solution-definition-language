@@ -14,46 +14,41 @@ Schema errors are produced by Ajv validation against the JSON Schema. They follo
 
 | Code | Message | Example |
 |---|---|---|
-| `REQUIRED_FIELD` | `{field}` is required | `solution.name is required` |
+| `MISSING_REQUIRED` | `{field}` is required | `solution.name is required` |
 | `INVALID_TYPE` | `{field}` must be {type} | `solution.stage must be string` |
-| `INVALID_ENUM` | `{field}` must be one of: {values} | `architecture.style must be one of: monolith, modular-monolith, microservices, serverless, hybrid` |
-| `ADDITIONAL_PROPERTY` | Unknown property `{field}` | `solution.foo is not a recognized field` |
+| `INVALID_ENUM` | `{field}` must be one of: {values} | `architecture.style must be one of: modular-monolith, microservices, serverless` |
+| `UNKNOWN_FIELD` | Unknown property `{field}` | `solution.foo is not a recognized field` |
 | `MIN_LENGTH` | `{field}` must not be empty | `solution.name must not be empty` |
 | `MIN_ITEMS` | `{field}` must have at least {n} items | `architecture.projects.backend must have at least 1 item` |
 
 ## Conditional Validation Rules
 
-These rules catch logical inconsistencies that JSON Schema alone cannot detect:
+The current implementation includes compatibility and policy checks expressed through schema conditionals and validator-side warnings. Representative examples:
 
 | Rule | Condition | Error |
 |---|---|---|
-| **Serverless + WebSocket** | `deployment.serverless: true` AND any endpoint uses WebSocket | Serverless cannot host persistent WebSocket connections. Use a managed WebSocket service or switch to container deployment. |
-| **Free tier + production stage** | `solution.stage: production` AND `constraints.budget: free` | Production stage requires paid infrastructure. Specify a budget or change stage to MVP. |
-| **Multi-region without database replication** | `deployment.regions.length > 1` AND `data.primaryDatabase.replication` is not set | Multi-region deployment requires database replication strategy. |
-| **Agent without LLM** | Any component with `type: agent` AND no `llm` section in integrations | Agent components require an LLM integration. |
-| **Auth provider mismatch** | `auth.provider` set to a specific provider AND no matching integration in `integrations` | Auth provider declared but not listed in integrations. |
+| **Cloud + IaC mismatch** | incompatible `deployment.cloud` and `deployment.infrastructure.iac` combination | `INCOMPATIBLE_CLOUD_IAC` |
+| **Database + ORM mismatch** | incompatible `data.primaryDatabase.type` and backend `orm` combination | `INCOMPATIBLE_DATABASE_ORM` |
+| **PII without encryption** | `nonFunctional.security.pii: true` without `encryptionAtRest: true` | `PII_REQUIRES_ENCRYPTION` |
 
 ## Normalization Rules
 
-The normalizer auto-infers defaults when fields are omitted:
+The normalizer auto-infers defaults when fields are omitted. The implemented rules in `packages/sdl/src/normalizer.ts` include:
 
 | # | If Missing | Inferred From | Default Value |
 |---|---|---|---|
-| 1 | `solution.stage` | — | `mvp` |
-| 2 | `architecture.style` | Backend count, team size | `monolith` (1 backend), `modular-monolith` (2-3), `microservices` (4+) |
-| 3 | Backend `runtime` | `framework` | Express/Fastify→`node`, FastAPI/Django→`python`, Gin/Echo→`go`, Spring→`java`, ASP.NET→`dotnet` |
-| 4 | Backend `language` | `runtime` | node→`typescript`, python→`python`, go→`go`, java→`java`, dotnet→`csharp` |
-| 5 | Backend `orm` | `runtime` + `data.primaryDatabase.type` | node+postgres→`prisma`, python+postgres→`sqlalchemy`, go→`none` |
-| 6 | `deployment.cloud` | `constraints.budget`, team familiarity | `aws` (default), `gcp` (AI-heavy), `azure` (enterprise) |
-| 7 | `deployment.ciCd.provider` | `deployment.cloud`, repo host | `github-actions` (default) |
-| 8 | `data.primaryDatabase.type` | Backend framework | `postgres` (default), `mongodb` (MEAN/MERN stack) |
-| 9 | `auth.strategy` | `solution.stage`, `auth.provider` | `jwt` (API), `session` (web app) |
-| 10 | `nonFunctional.availability` | `solution.stage` | mvp→`99%`, growth→`99.9%`, production→`99.95%` |
-| 11 | `constraints.budget` | `solution.stage` | mvp→`low`, growth→`medium`, production→`high` |
-| 12 | `testing.strategy` | `solution.stage` | mvp→`unit`, growth→`integration`, production→`e2e` |
-| 13 | Frontend `rendering` | `framework` | next→`ssr`, react→`spa`, vue→`spa` |
-| 14 | Frontend `styling` | `framework` | next/react→`tailwind`, vue→`tailwind`, angular→`scss` |
-| 15 | Frontend `stateManagement` | `framework` | react→`zustand`, vue→`pinia`, angular→`ngrx` |
+| 1 | `product.personas`, `product.coreFlows` | missing `product` section | empty arrays |
+| 2 | `deployment.cloud` | project mix | `railway` or `vercel` |
+| 3 | `solution.regions.primary` | missing region config | `us-east-1` |
+| 4 | `data.primaryDatabase.name` | `solution.name` | slugified name plus `_db` |
+| 5 | frontend/backend project `type` | project kind | `web` or `backend` |
+| 6 | `deployment.runtime` | `deployment.cloud` | cloud-specific runtime values |
+| 7 | `deployment.networking.publicApi` | missing networking config | `true` |
+| 8 | `deployment.ciCd.provider` | missing CI/CD config | `github-actions` |
+| 9 | security encryption flags | security settings | `true` when implied |
+| 10 | backend `orm` | backend framework plus database type | framework/database mapping |
+| 11 | `testing.unit.framework` | first backend framework | framework-specific default |
+| 12 | `nonFunctional.availability.target` | `solution.stage` | `99.9`, `99.95`, `99.99` |
 
 ## Warning Rules
 
@@ -61,7 +56,5 @@ Warnings don't block validation but flag potential issues:
 
 | Warning | Condition | Suggestion |
 |---|---|---|
-| `NO_AUTH` | No `auth` section defined | Consider adding authentication — most apps need it |
-| `NO_TESTING` | No `testing` section defined | Consider adding a testing strategy |
-| `HIGH_COMPLEXITY` | More than 5 backend services with different runtimes | High operational complexity — consider reducing runtime diversity |
-| `MISSING_OBSERVABILITY` | No `observability` section for production-stage projects | Production projects should have logging, monitoring, and alerting |
+| `COMPLEXITY_EXCEEDS_TEAM_CAPACITY` | microservices selected with a very small team | Consider simplifying architecture or increasing team capacity |
+| `ADMIN_ROLE_REQUIRES_AUTH` | admin-like personas exist without auth | Add an auth strategy and access control model |

@@ -1,12 +1,14 @@
 data:
   primaryDatabase:
-    engine: postgresql
-    version: "16"
+    type: postgres
+    hosting: managed
+    name: medchat_db
     x-confidence: high
     x-evidence: "PostgreSQL is the standard for HIPAA-compliant applications on AWS (RDS); supports row-level security, encryption, and JSON for flexible message metadata"
-    hosting: "AWS RDS (Multi-AZ)"
-    encryption: "AES-256 at rest via AWS KMS"
-    tables:
+    x-version: "16"
+    x-hostingDetails: "AWS RDS (Multi-AZ)"
+    x-encryption: "AES-256 at rest via AWS KMS"
+    x-tables:
       - name: organizations
         description: "Hospital/health system tenants"
         columns:
@@ -154,29 +156,28 @@ data:
           - { name: expires_at, type: timestamptz }
           - { name: created_at, type: timestamptz }
 
-  caching:
-    engine: redis
-    version: "7"
-    x-confidence: high
-    x-evidence: "Redis required for WebSocket pub/sub fanout across multiple API nodes, session caching, and on-call schedule caching"
-    hosting: "AWS ElastiCache (Multi-AZ)"
-    useCases:
+  cache:
+    type: redis
+    required: true
+    x-version: "7"
+    x-hostingDetails: "AWS ElastiCache (Multi-AZ)"
+    x-useCases:
       - "WebSocket message fanout across API nodes (pub/sub)"
       - "On-call schedule cache (invalidated on CSV upload)"
       - "User session store"
       - "Presence/online status tracking"
       - "Rate limiting"
 
-  fileStorage:
-    provider: "AWS S3"
-    x-confidence: high
-    x-evidence: "S3 is the standard for encrypted file storage on AWS HIPAA-eligible services"
+  storage:
+    blobs:
+      provider: s3
+      public: false
+
+  x-fileStorage:
     encryption: "SSE-KMS with per-organization keys"
     bucket: "medchat-attachments-{env}"
     lifecycle: "Matches message retention policy per organization"
 
-  migrations:
+  x-migrations:
     tool: prisma
-    x-confidence: medium
-    x-evidence: "Prisma is the most popular TypeScript ORM with strong migration tooling; Drizzle is an alternative"
     strategy: "Forward-only migrations; no destructive changes without explicit admin approval"

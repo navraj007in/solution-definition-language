@@ -4,22 +4,47 @@ architecture:
   x-evidence: "MVP scope specifies 20-week build with 3-4 engineers; modular monolith is appropriate for team size and initial scale. Microservices deferred post-PMF."
 
   projects:
+    frontend:
+      - name: medchat-web
+        type: web
+        framework: react
+        x-path: "apps/web"
+        x-runtime: node
+        x-language: typescript
+        x-confidence: high
+        x-evidence: "MVP scope requires web app for desktop; React is specified in intent.json"
+        x-description: >
+          Web application for desktop browser use (pharmacists, admins).
+          Responsive layout supporting side-by-side use with EHR systems.
+        x-screens:
+          - ConversationList
+          - ConversationThread
+          - NewMessage
+          - ProviderDirectory
+          - AdminDashboard
+          - AdminUserManagement
+          - AdminScheduleManagement
+          - AdminAuditTrail
+          - AdminSettings
+
     backend:
       - name: medchat-api
-        type: api
-        path: "server"
-        runtime: node
-        x-confidence: high
-        x-evidence: "server/package.json defines @medchat/api; server/src/app.ts is the entry point"
-        language: typescript
-        framework: express
-        x-confidence: high
-        x-evidence: "express 4.19 imported in server/src/app.ts; confirmed in server/package.json dependencies"
-        description: >
+        type: backend
+        framework: nodejs
+        apiStyle: rest
+        orm: prisma
+        x-path: "server"
+        x-runtime: node
+        x-language: typescript
+        x-projectConfidence: high
+        x-projectEvidence: "server/package.json defines @medchat/api; server/src/app.ts is the entry point"
+        x-frameworkConfidence: high
+        x-frameworkEvidence: "express 4.19 imported in server/src/app.ts; confirmed in server/package.json dependencies"
+        x-description: >
           Core API server handling REST endpoints, WebSocket connections,
           authentication, message routing, file uploads, and admin operations.
           Modular internal structure with domain separation.
-        modules:
+        x-modules:
           - name: messaging
             description: "1:1 and group message CRUD, delivery, read receipts"
             endpoints:
@@ -74,31 +99,19 @@ architecture:
               - "GET /api/v1/admin/audit-trail/export"
               - "PUT /api/v1/admin/settings"
 
-    shared:
-      - name: medchat-shared
-        type: shared-lib
-        path: "packages/shared"
-        runtime: node
-        x-confidence: high
-        x-evidence: "packages/shared/package.json defines @medchat/shared; exports types, validation schemas, and constants"
-        language: typescript
-        description: >
-          Shared TypeScript package providing types (User, Message, Conversation, etc.),
-          Zod validation schemas, and constants used by server, web, and mobile.
-
-    frontend:
+    mobile:
       - name: medchat-mobile
-        type: mobile
-        path: "apps/mobile"
-        runtime: node
+        platform: cross-platform
+        framework: react-native
+        x-path: "apps/mobile"
+        x-runtime: node
+        x-language: typescript
         x-confidence: high
         x-evidence: "MVP scope requires iOS + Android; React Native is the standard cross-platform choice for TypeScript teams"
-        language: typescript
-        framework: react-native
-        description: >
+        x-description: >
           Cross-platform mobile app (iOS + Android) for clinicians.
           Primary interface for bedside messaging, image capture, and notifications.
-        screens:
+        x-screens:
           - ConversationList
           - ConversationThread
           - NewMessage (with directory search)
@@ -107,29 +120,18 @@ architecture:
           - NotificationPreferences
           - BiometricLock
 
-      - name: medchat-web
-        type: web
-        path: "apps/web"
-        runtime: node
-        x-confidence: high
-        x-evidence: "MVP scope requires web app for desktop; React is specified in intent.json"
-        language: typescript
-        framework: react
-        description: >
-          Web application for desktop browser use (pharmacists, admins).
-          Responsive layout supporting side-by-side use with EHR systems.
-        screens:
-          - ConversationList
-          - ConversationThread
-          - NewMessage
-          - ProviderDirectory
-          - AdminDashboard
-          - AdminUserManagement
-          - AdminScheduleManagement
-          - AdminAuditTrail
-          - AdminSettings
+  sharedLibraries:
+    - name: medchat-shared
+      language: typescript
+      x-path: "packages/shared"
+      x-runtime: node
+      x-confidence: high
+      x-evidence: "packages/shared/package.json defines @medchat/shared; exports types, validation schemas, and constants"
+      x-description: >
+        Shared TypeScript package providing types, validation schemas, and constants
+        used by server, web, and mobile.
 
-  crossCutting:
+  x-crossCutting:
     encryption:
       atRest: AES-256
       inTransit: TLS-1.3

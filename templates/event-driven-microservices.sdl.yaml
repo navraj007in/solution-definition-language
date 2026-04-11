@@ -121,7 +121,7 @@ data:
     useCase:
       - "event-streaming"
       - "async-jobs"
-interServiceCommunication:
+x-interServiceCommunication:
   - pattern: "event-driven"
     description: "Services communicate via event bus"
     protocol: "AMQP"

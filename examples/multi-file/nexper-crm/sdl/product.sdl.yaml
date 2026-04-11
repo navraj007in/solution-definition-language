@@ -80,7 +80,7 @@ product:
         - "Import initial contacts from CSV"
         - "Configure first pipeline with custom stages"
 
-  screens:
+  x-screens:
     - id: contacts-list
       name: Contacts List
       route: /contacts

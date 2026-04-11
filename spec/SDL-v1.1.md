@@ -2,9 +2,11 @@
 
 **Complete Solution Design Language** — comprehensive architecture specification with API contracts, data models, SLOs, compliance, feature planning, and resilience patterns.
 
+For canonical enum values, artifact types, stable root section shapes, and alias policy, see [`../reference/canonical-contract.md`](../reference/canonical-contract.md).
+
 ## Overview
 
-SDL v1.1 extends v0.1 with production-grade details:
+SDL v1.1 provides production-grade architecture details:
 - **API Contracts** — OpenAPI, GraphQL, gRPC specs
 - **Data Model** — Entity definitions, fields, relationships, constraints
 - **Feature Planning** — MVP phasing, feature flags, dependencies
@@ -20,226 +22,120 @@ SDL v1.1 extends v0.1 with production-grade details:
 ```yaml
 sdlVersion: "1.1"
 
-# Core (required in both v0.1 & v1.1)
+# Core required sections
 solution: {}
 architecture: {}
 data: {}
 
 # v1.1 Additions (optional but recommended)
-contracts: {}        # API specs (OpenAPI, GraphQL, gRPC)
+contracts:
+  apis: []           # API specs (REST, GraphQL, gRPC, webhook, AsyncAPI metadata)
 domain: {}           # Detailed entity definitions with fields
-features: {}         # Feature planning, MVP phases, flags
+features: []         # Feature items (current schema shape)
 compliance: {}       # Regulatory requirements
 slos: {}             # Service level objectives per component
 resilience: {}       # Circuit breakers, retries, timeouts
 costs: {}            # Pricing model, per-component costs
 backupDr: {}         # RTO/RPO, failover strategy
 design: {}           # Design tokens, theming, component library
-
-# v0.1 Sections (unchanged)
 product: {}
 auth: {}
 deployment: {}
-environments: []
 nonFunctional: {}
 observability: {}
-integrations: []
+integrations: {}
 constraints: {}
 testing: {}
 techDebt: []
 ```
 
+Current implementation note:
+
+- The active schema and exported types are the source of truth for exact field shapes.
+- Some richer narrative examples below describe possible future expansion areas, but the implemented `v1.1` contract is intentionally narrower today.
+
 ---
 
 ## NEW: API Contracts Section
 
-Formal API contract definitions for REST, GraphQL, and gRPC services.
+Current implemented shape: lightweight API contract inventory.
 
 ```yaml
 contracts:
-  - name: api-server
-    type: openapi | graphql | grpc
-    version: "3.1.0"
-    path: sdl/contracts/api-server.openapi.yaml
-    endpoints:
-      count: 42
-      baseUrl: "https://api.example.com/v1"
-      
-  - name: subscription-service
-    type: graphql
-    path: sdl/contracts/subscription.graphql
-    
-  - name: worker-service
-    type: grpc
-    path: sdl/contracts/worker.proto
+  apis:
+    - name: api-server
+      type: rest
+      owner: backend-team
+    - name: subscription-service
+      type: graphql
+      owner: subscriptions-team
+    - name: worker-service
+      type: grpc
+      owner: platform-team
 ```
 
-**External contract files** (referenced, not embedded):
-- `sdl/contracts/api-server.openapi.yaml` — Full OpenAPI 3.1 spec
-- `sdl/contracts/subscription.graphql` — GraphQL SDL
-- `sdl/contracts/worker.proto` — Protobuf definitions
+Future direction:
+
+- richer references to external OpenAPI, GraphQL SDL, gRPC, or AsyncAPI files can be added later
+- those shapes should not be treated as part of the stable `v1.1` contract until schema and types are expanded
 
 ---
 
 ## NEW: Domain Model Section
 
-Detailed entity definitions with fields, types, relationships, and constraints.
+Current implemented shape: entities with lightweight field and relationship modeling.
 
 ```yaml
 domain:
   entities:
     - name: User
-      description: "System user with authentication"
-      table: users
       fields:
         - name: id
           type: uuid
-          primaryKey: true
-          generated: true
-          description: "Unique user identifier"
         - name: email
           type: string
-          maxLength: 255
-          unique: true
-          nullable: false
-          description: "Email address, used for login"
-        - name: password_hash
+          required: true
+        - name: passwordHash
           type: string
-          nullable: false
-          description: "Bcrypt hashed password"
-        - name: role
-          type: enum
-          enum: [user, team_admin, super_admin]
-          default: user
-          nullable: false
-        - name: created_at
-          type: timestamp
-          default: "NOW()"
-          nullable: false
-        - name: updated_at
-          type: timestamp
-          default: "NOW()"
-          onUpdate: "NOW()"
-          nullable: false
-        - name: deleted_at
-          type: timestamp
-          nullable: true
-          description: "Soft delete timestamp"
-      
-      relationships:
-        - name: orders
-          type: one-to-many
-          target: Order
-          foreignKey: user_id
-        - name: profile
-          type: one-to-one
-          target: UserProfile
-          foreignKey: user_id
-      
-      indexes:
-        - name: idx_email
-          fields: [email]
-          unique: true
-        - name: idx_role
-          fields: [role]
-        - name: idx_created_at
-          fields: [created_at]
-        - name: idx_deleted_at
-          fields: [deleted_at]
-      
-      constraints:
-        - type: check
-          expression: "length(email) > 0"
-        - type: unique
-          fields: [email]
-    
+          required: true
     - name: Order
-      table: orders
       fields:
         - name: id
           type: uuid
-          primaryKey: true
-        - name: user_id
+        - name: userId
           type: uuid
-          nullable: false
-          foreignKey: Users.id
         - name: total
           type: decimal
-          precision: 10
-          scale: 2
-          nullable: false
-        - name: status
-          type: enum
-          enum: [pending, processing, completed, cancelled]
-          default: pending
-        - name: items
-          type: json
-          description: "Order line items as JSON array"
-        - name: created_at
-          type: timestamp
-          default: "NOW()"
-      
-      indexes:
-        - fields: [user_id, created_at]
-        - fields: [status]
+          required: true
+
+  relationships:
+    - from: Order
+      to: User
+      type: many-to-one
 ```
 
 ---
 
 ## NEW: Features Section
 
-Feature planning, MVP phasing, feature flags, and dependencies.
+Current implemented shape: flat feature array.
 
 ```yaml
 features:
-  phase1:
-    name: MVP
-    deadline: "2026-06-30"
-    features:
-      - id: user-auth
-        name: "User Authentication"
-        description: "Email/password signup and login"
-        priority: critical
-        estimatedDays: 5
-      - id: user-profile
-        name: "User Profile Management"
-        priority: high
-        estimatedDays: 3
-        dependsOn: [user-auth]
-  
-  phase2:
-    name: Growth
-    deadline: "2026-09-30"
-    features:
-      - id: team-management
-        name: "Team Collaboration"
-        priority: high
-        estimatedDays: 8
-        dependsOn: [user-auth]
-      - id: api-integrations
-        name: "Third-party API Integrations"
-        priority: medium
-        estimatedDays: 5
-  
-  phase3:
-    name: Enterprise
-    features:
-      - id: sso
-        name: "Single Sign-On (SAML/OIDC)"
-        priority: high
-      - id: audit-logging
-        name: "Audit Logging & Compliance"
-        priority: critical
-  
-  featureFlags:
-    - name: new-dashboard
-      rollout: 50%
-      targetAudience: beta-users
-      phase: phase2
-    - name: ai-recommendations
-      rollout: 0%
-      phase: phase3
+  - name: User Authentication
+    description: Email/password signup and login
+    priority: critical
+  - name: Team Collaboration
+    description: Shared workspaces, roles, and member management
+    priority: high
+  - name: API Integrations
+    description: Third-party API integrations
+    priority: medium
 ```
+
+Future direction:
+
+- phased planning, dependencies, flags, rollout metadata, and delivery status should be treated as planned expansion until schema and types support them directly
 
 ---
 
@@ -312,58 +208,23 @@ compliance:
 
 ## NEW: SLO/SLI Section
 
-Service level objectives and key performance indicators per component.
+Current implemented shape: service-level overview keyed by service name.
 
 ```yaml
 slos:
-  - componentId: api-server
-    name: "API Server SLO"
-    availability:
-      target: 99.9%
-      window: monthly
-      errorBudget: "43 minutes/month"
-    latency:
-      p50: 50ms
-      p95: 200ms
-      p99: 500ms
-      p999: 1000ms
-    throughput:
-      rps: 1000
-      concurrentUsers: 5000
-    errorRate:
-      target: 0.1%
-      maxErrors: 1 per 1000 requests
-    
-    slis:
-      - metric: http-request-duration
-        description: "API response time"
-        query: "histogram_quantile(0.99, rate(http_request_duration_seconds[5m]))"
-        threshold: 500ms
-      - metric: http-error-rate
-        description: "5xx error rate"
-        query: "rate(http_requests_total{status=~'5..'}[5m])"
-        threshold: 0.001
-      - metric: database-connection-pool
-        description: "Available DB connections"
-        threshold: "> 10 available"
-    
-    alerts:
-      - name: HighErrorRate
-        condition: "error_rate > 0.005"
-        severity: critical
-        action: "page on-call engineer"
-      - name: HighLatency
-        condition: "p99_latency > 1000ms for 5m"
-        severity: warning
-        action: "notify ops team"
-  
-  - componentId: web-app
-    availability:
-      target: 99.5%
-    latency:
-      p95: 2000ms
-      p99: 5000ms
+  services:
+    - name: api-server
+      availability: "99.9%"
+      latencyP95: "200ms"
+    - name: web-app
+      availability: "99.5%"
+      latencyP95: "2000ms"
 ```
+
+Future direction:
+
+- richer SLI definitions, alerting rules, windows, and error budgets are reasonable extensions
+- they should not be treated as stable `v1.1` contract surface until schema and types are expanded
 
 ---
 
@@ -671,54 +532,9 @@ mobile:
 
 ---
 
-## Migration from v0.1 to v1.1
-
-**v0.1 files remain unchanged:**
-- `solution.sdl.yaml` — core architecture
-- `sdl/product.sdl.yaml`
-- `sdl/auth.sdl.yaml`
-- `sdl/deployment.sdl.yaml`
-- `sdl/environments.sdl.yaml`
-- `sdl/nfr.sdl.yaml`
-
-**v1.1 additions:**
-- `sdl/contracts.sdl.yaml` — API contract definitions
-- `sdl/domain.sdl.yaml` — Entity definitions with fields
-- `sdl/features.sdl.yaml` — Feature planning and flags
-- `sdl/compliance.sdl.yaml` — Regulatory requirements
-- `sdl/slos.sdl.yaml` — Service level objectives
-- `sdl/resilience.sdl.yaml` — Fault tolerance patterns
-- `sdl/costs.sdl.yaml` — Pricing and cost model
-- `sdl/backup-dr.sdl.yaml` — Disaster recovery strategy
-- `sdl/design.sdl.yaml` — Design tokens and system
-
-**Update main file:**
-```yaml
-sdlVersion: "1.1"
-
-imports:
-  - sdl/product.sdl.yaml
-  - sdl/auth.sdl.yaml
-  - sdl/deployment.sdl.yaml
-  - sdl/environments.sdl.yaml
-  - sdl/nfr.sdl.yaml
-  # v1.1 additions:
-  - sdl/contracts.sdl.yaml
-  - sdl/domain.sdl.yaml
-  - sdl/features.sdl.yaml
-  - sdl/compliance.sdl.yaml
-  - sdl/slos.sdl.yaml
-  - sdl/resilience.sdl.yaml
-  - sdl/costs.sdl.yaml
-  - sdl/backup-dr.sdl.yaml
-  - sdl/design.sdl.yaml
-```
-
----
-
 ## Validation Pipeline
 
-SDL v1.1 uses the same validation pipeline as v0.1, with extended conditional rules for new sections:
+SDL v1.1 uses the standard validation pipeline with extended conditional rules for new sections:
 
 ```
 YAML string → parse() → validate() → normalize() → detectWarnings() → SDL document
@@ -795,7 +611,5 @@ These are non-blocking but flag potential issues (10+ rules):
 
 ## Version Strategy
 
-- **v0.1** — Core architecture (lightweight, fast)
 - **v1.1** — Complete specification (production-grade)
-- **Future**: v1.2+ for cloud-native (Kubernetes), distributed tracing, event sourcing
-
+- **Future**: later versions may extend cloud-native, tracing, and event-driven modeling
