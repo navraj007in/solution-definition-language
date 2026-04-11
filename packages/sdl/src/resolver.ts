@@ -36,10 +36,10 @@ export interface ResolvedSdl {
 export type FileReader = (relativePath: string) => string | null;
 
 /**
- * Maximum import nesting depth.
- * Normative rule — see spec/SDL-v1.1.md "Modular SDL and Import Semantics § Depth Limit".
- * Supports root → depth-1 → depth-2 → depth-3 (3 levels of nesting below root).
- * Imports beyond this depth are skipped with a warning, not a hard error.
+ * Maximum import nesting depth — portability limit, not a language semantic.
+ * See spec/SDL-v1.1.md "Modular SDL and Import Semantics § Depth Limit".
+ * Spec requires implementations to support at least 3 levels; this satisfies that requirement.
+ * Imports beyond this depth are skipped with a warning (never a hard error).
  */
 const MAX_IMPORT_DEPTH = 3;
 const SDL_EXTENSIONS = ['.sdl.yaml', '.sdl.yml'];

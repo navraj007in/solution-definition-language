@@ -94,11 +94,26 @@ When the resolver merges an imported module into the accumulating document, it a
 
 ### Depth Limit
 
-The resolver enforces a maximum import depth of **3** (root → depth 1 → depth 2 → depth 3). Imports encountered beyond this depth are skipped and a warning is emitted.
+**Portability limit:** Implementations must support at least **3** levels of import nesting (root → depth 1 → depth 2 → depth 3). Imports beyond depth 3 may be skipped; when skipped, a warning must be emitted.
 
-**Rationale:** Depth-3 supports the common pattern of `solution.sdl.yaml → sdl/module.sdl.yaml → sdl/sub/detail.sdl.yaml` while preventing circular import chains and unbounded recursion. Most SDL documents need at most 2 levels; depth-3 is reserved for large architectures with nested module trees.
+This is an implementation portability requirement, not a semantic property of SDL itself. The SDL language does not assign meaning to nesting depth; the limit exists so that conformant implementations can be built without unbounded recursion guards. Circular imports (file A imports file B which imports file A) are always an error regardless of depth; detect them via a visited-file set.
 
-Circular imports (file A imports file B which imports file A) are detected via a visited-file set and produce an error, not a warning.
+Practical note: most SDL documents need at most 2 levels. Depth 3 is reserved for large architectures with nested module trees (e.g. a monorepo root → service-group module → per-service detail).
+
+### Array Merge Semantics: Concatenable vs. Identity-Keyed
+
+Not all arrays should be blindly concatenated across modules. The spec distinguishes two kinds:
+
+**Concatenable arrays** — order matters, duplicates are valid, append is correct:
+- `techDebt[]`, `compliance.frameworks[]`, `contracts.apis[]`, `slos.services[]`
+- `architecture.projects.*[]` — components from different modules describe different parts of the system
+
+**Identity-keyed arrays** — each entry has a logical identity field; importing the same entry twice is a modeling error:
+- `domain.entities[]` — keyed by `name`; two entries with the same `name` in different modules is a conflict, not an append
+- `integrations.custom[]` — keyed by `name`
+- `features[]` — keyed by `id` or `name`; duplicate feature names across modules should produce a warning
+
+**Rule for implementations:** When merging arrays, if the array is identity-keyed and two entries share the same identity field, emit a `duplicate-array-item` warning and retain the later entry (last-writer-wins, consistent with scalar override behavior). Concatenable arrays never produce duplicate warnings.
 
 ### What Should Not Be Imported
 
@@ -609,48 +624,54 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 
 ### Conditional Rules (Errors)
 
+> **Implementation status:** These rules define the normative validation contract for SDL v1.1.
+> The current runtime package (`packages/sdl/src/validator.ts`) implements JSON Schema validation
+> and warning detection only. The semantic rules below are normative — implementations must enforce
+> them to be spec-compliant. Rules marked **[not yet implemented]** are not enforced by the
+> reference package today; they are planned for the next validator release.
+
 These rules catch logical inconsistencies and must pass for valid SDL (26 rules total):
 
 **Reference Integrity (9 rules):**
-1. **Environment Components** → every component in `environments[].components` must exist in `architecture.projects`
-2. **SLO Components** → every component in `slos[].component` must exist in `architecture.projects`
-3. **Cost Components** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
-4. **Circular Dependencies** → `architecture.projects[].dependsOn` must not form cycles
-5. **API Endpoint Service** → each `contracts[].paths[].service` must exist in `architecture.projects`
-6. **Foreign Key Targets** → entities in `domain.entities[].relationships[].target` must exist as entities
-7. **Feature Dependencies** → `features.phase*.features[].dependsOn` must reference features in same/earlier phases
-8. **Resilience Service References** → services in `resilience.circuitBreaker[].service` must exist in `architecture.projects`
-9. **Backup Database References** → databases in `backupDr.databases[].name` must match `data.databases[].name`
+1. **SLO Service References** **[not yet implemented]** → every `slos.services[].name` should match a component name in `architecture.projects`
+2. **Cost Components** **[not yet implemented]** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
+3. **Circular Dependencies** **[not yet implemented]** → `architecture.projects[*][].dependsOn` must not form cycles
+4. **API Contract Service** **[not yet implemented]** → each entry in `contracts.apis[].endpoints[].service` (if present) must exist in `architecture.projects`
+5. **Foreign Key Targets** **[not yet implemented]** → entities in `domain.entities[].relationships[].target` must exist as entities in `domain.entities[].name`
+6. **Backup Database References** **[not yet implemented]** → databases in `backupDr.databases[].name` must match `data.primaryDatabase` or an entry in `data.secondaryDatabases[]`
+7. ~~**Environment Components**~~ — removed; `environments` is not a root-level SDL key. Environment-component binding is declared under `deployment`.
+8. ~~**Feature Dependencies (phase-keyed)**~~ — removed; `features` is a flat array (`features[]`), not a phase-keyed object. Phase tracking uses `features[].stage`.
+9. ~~**Resilience Service References**~~ — removed; `resilience.circuitBreaker` is a single configuration object, not a per-service array. Service-level overrides use `resilience.circuitBreaker.x-perService[]`.
 
 **Type Compatibility (3 rules):**
-10. **ORM-Database Pair** → `data.primaryDatabase.type` must be compatible with `architecture.projects[].orm`
-11. **Framework-Language** → `architecture.projects[].framework` must be compatible with `.language`
-12. **Auth Provider Integration** → if `auth.provider` is in integrations list, it must exist in `integrations[]`
+10. **ORM-Database Pair** **[not yet implemented]** → `data.primaryDatabase.type` must be compatible with `architecture.projects[*][].orm` (e.g. ef-core incompatible with mongodb)
+11. **Framework-Language** **[not yet implemented]** → `architecture.projects[*][].framework` must be compatible with `.language` (e.g. nextjs requires typescript or javascript)
+12. **Auth Provider Integration** **[not yet implemented]** → if `auth.identityProvider` names a third-party (auth0, clerk, okta), it must also appear in `integrations`
 
 **Deployment Integrity (5 rules):**
-13. **Microservices Count** → `architecture.style: "microservices"` requires 2+ services
-14. **Deployable Coverage** → every `deployable: true` component must appear in at least one environment
-15. **Port Conflicts** → within each environment, no duplicate ports
-16. **Region Support** → `deployment.regions[]` valid for `deployment.cloud`
-17. **CloudFormation Constraint** → `deployment.ciCd.provider: "cloudformation"` only with AWS
+13. **Microservices Count** **[not yet implemented]** → `architecture.style: "microservices"` requires 2+ components across `architecture.projects`
+14. **Deployable Coverage** **[not yet implemented]** → every component with `deployable: true` must appear in at least one environment entry
+15. **Port Conflicts** **[not yet implemented]** → within each environment, no two components may declare the same `port`
+16. **Region Support** **[not yet implemented]** → `deployment.regions[]` values must be valid for `deployment.cloud`
+17. **CloudFormation Constraint** **[not yet implemented]** → `deployment.ciCd.provider: "cloudformation"` only valid when `deployment.cloud: "aws"`
 
 **Data Model Integrity (4 rules):**
-18. **Primary Key Required** → all `domain.entities[]` must have `primaryKey: true` field
-19. **Cross-Database Foreign Keys** → FK relationships across databases noted as limitations
-20. **Unique Component Names** → component names globally unique (all categories)
-21. **Entity Ownership** (v1.1) → each `domain.entities[]` should be owned by a component
+18. **Primary Key Required** **[not yet implemented]** → all `domain.entities[]` with `fields[]` must have exactly one field with `primaryKey: true`
+19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.entities[].relationships[].target`) that span databases should be flagged as warnings, not errors
+20. **Unique Component Names** **[not yet implemented]** → component `name` values must be globally unique across all `architecture.projects` categories
+21. **Entity Ownership** **[not yet implemented]** → each `domain.entities[]` should declare an `owner` matching a component name
 
 **Configuration Completeness (3 rules):**
-22. **Deployable Component Fields** → `deployable: true` components must have `path` and `runtime`
-23. **OIDC Provider** → `auth.provider: "oidc"` requires issuer URL
-24. **Compliance Framework Validity** → `compliance.frameworks[].name` must be recognized (GDPR, HIPAA, SOC2, PCI-DSS, CCPA)
+22. **Deployable Component Fields** **[not yet implemented]** → components with `deployable: true` must have `path` or `runtime` defined
+23. **OIDC Provider URL** **[not yet implemented]** → `auth.strategy: "oidc"` requires `auth.identityProvider` to be set
+24. **Compliance Framework Validity** **[not yet implemented]** → `compliance.frameworks[].name` must be one of: `GDPR`, `HIPAA`, `SOC2`, `PCI-DSS`, `CCPA`, `ISO27001`
 
 **Resilience & Performance (2 rules):**
-25. **Resilience Thresholds** → `resilience.circuitBreaker[].failureThreshold` and `retryPolicy[].maxRetries` > 0
-26. **SLO Reasonableness** → `slos[].availability.target` between 90-99.99%, latency.p99 > latency.p50
+25. **Resilience Thresholds** **[not yet implemented]** → `resilience.circuitBreaker.threshold` must be > 0 when `circuitBreaker.enabled: true`; `resilience.retryPolicy.maxAttempts` must be > 0
+26. **SLO Reasonableness** **[not yet implemented]** → `slos.services[].availability` (when present) should represent a value between 90% and 99.99%; `slos.services[].latencyP95` should be a valid duration string (e.g. `"200ms"`)
 
 **PII & Security (1 rule):**
-27. **PII Encryption** → if any entity has PII fields, `data` must have `encryption.atRest: true`
+27. **PII Encryption** **[not yet implemented]** → if any `domain.entities[].fields[]` has `pii: true`, `data.primaryDatabase` should have `encryption.atRest: true`
 
 ### Warning Rules
 
