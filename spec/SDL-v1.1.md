@@ -618,7 +618,7 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation + 26 conditional rules
+2. **Validate** — JSON Schema validation + 25 conditional rules
 3. **Normalize** — 15+ auto-inference rules fill missing fields
 4. **Warnings** — 10+ rules detect potential issues (non-blocking)
 
@@ -632,7 +632,7 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 > Rules marked **[not yet implemented]** are normative but not yet enforced by the reference package.
 > Rules marked **[not yet implemented, field absent]** require a type contract expansion before they can be enforced.
 
-These rules catch logical inconsistencies and must pass for valid SDL (26 rules total):
+These rules catch logical inconsistencies and must pass for valid SDL (25 active rules; rules 7–9 are tombstones for removed rules):
 
 **Reference Integrity (7 rules):**
 1. **SLO Service References** **[enforced: SEM-005]** → every `slos.services[].name` must match a component name in `architecture.projects` or `architecture.services`
@@ -650,12 +650,13 @@ These rules catch logical inconsistencies and must pass for valid SDL (26 rules 
 11. **Framework-Language** **[not yet implemented, field absent for `.language`]** → `architecture.projects[*][].framework` compatibility with the project language cannot be checked until `.language` is a typed field on project types.
 12. **Auth Provider Integration** **[not yet implemented]** → if `auth.provider` names a third-party value (`auth0`, `clerk`, `cognito`, `firebase`, `supabase`), it should also appear in `integrations`
 
-**Deployment Integrity (5 rules):**
+**Deployment Integrity (6 rules):**
 13. **Microservices Count** **[enforced: JSON schema allOf]** → `architecture.style: "microservices"` requires `architecture.services` to have at least 2 entries
 14. **Deployable Coverage** **[not yet implemented, field absent]** → `deployable` is not a first-class field on `FrontendProject`, `BackendProject`, or `MobileProject` in the current type contract; it is an `x-` extension field. This rule applies when `x-deployable: true` is set. Formal field promotion is tracked as a future contract change.
 15. **Port Conflicts** **[not yet implemented]** → within each environment, no two components may declare the same `port`
 16. **Region Support** **[not yet implemented]** → `deployment.regions[]` values must be valid for `deployment.cloud`
 17. **CloudFormation Constraint** **[enforced: JSON schema allOf]** → `deployment.ciCd.iac: "cloudformation"` is only valid when `deployment.cloud: "aws"`
+28. **Deployment Environment Uniqueness** **[enforced: SEM-014]** → `deployment.ciCd.environments[].name` values must be unique within the environments array
 
 **Data Model Integrity (4 rules):**
 18. **Primary Key Required** **[not yet implemented, field absent]** → `DomainField` currently defines `name`, `type`, and `required` only; `primaryKey` is not in the active type contract. This rule is a placeholder for when `DomainField` is expanded.
@@ -675,9 +676,6 @@ These rules catch logical inconsistencies and must pass for valid SDL (26 rules 
 **PII & Security (1 rule):**
 27. **PII Encryption** **[enforced: JSON schema allOf]** → if `nonFunctional.security.pii: true`, then `nonFunctional.security.encryptionAtRest` must also be `true`. Note: `pii` is a field on `nonFunctional.security`, not on individual entity fields (`DomainField` has no `pii` property in the current type contract).
 
-**Additional enforced rules (not in numbered list above):**
-- **Deployment Environment Uniqueness** **[enforced: SEM-014]** → `deployment.ciCd.environments[].name` values must be unique within the environments array.
-
 ### Warning Rules
 
 These are non-blocking but flag potential issues (10+ rules):
@@ -687,13 +685,13 @@ These are non-blocking but flag potential issues (10+ rules):
 3. **Multi-persona without auth** — 3+ personas but no auth defined
 4. **Budget vs cost mismatch** — estimated costs exceed budget
 5. **Cross-database foreign keys** — relationships span different databases
-6. **Unused integrations** — integrations listed but not in any `dependsOn`
+6. **Unused integrations** — integrations listed but not referenced in any `architecture.services[].dependencies[]`
 7. **Missing observability** — production-stage architecture without observability section
 8. **Loose SLO targets** — production SLOs < 99% availability
 9. **High cost variance** — scenarios differ by >10x between low/high
-10. **Feature phase cycles** — features depend on features in future phases (soft validation)
+10. ~~**Feature phase cycles**~~ — removed; `FeatureSection` has no dependency field in the current type contract.
 11. **Compliance gaps** — project stage suggests compliance need but no frameworks defined
-12. **Design tokens missing** → stage: "production" without `design.tokens` defined
+12. **Design section missing** → stage: `"production"` without a `design` section defined (`DesignSection` currently exposes `personality`, `colors`, and `typography`; a `tokens` sub-field is not in the active type contract)
 
 ---
 
