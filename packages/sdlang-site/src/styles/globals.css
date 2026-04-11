@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-slate-950 text-slate-200 antialiased; }
+}
+
+@layer components {
+  .prose-sdl {
+    @apply prose prose-invert prose-sm max-w-none
+      prose-headings:text-slate-100
+      prose-h1:text-2xl prose-h2:text-xl prose-h3:text-base
+      prose-p:text-slate-300 prose-li:text-slate-300
+      prose-code:text-blue-300 prose-code:bg-slate-800 prose-code:px-1 prose-code:rounded
+      prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700
+      prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+      prose-strong:text-slate-200
+      prose-hr:border-slate-700
+      prose-table:text-xs
+      prose-th:text-slate-400 prose-th:font-medium
+      prose-td:text-slate-300;
+  }
+}

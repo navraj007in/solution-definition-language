@@ -20,3 +20,6 @@ package-lock.json
 packages/sdl-playground/node_modules
 packages/sdl-playground/dist
 packages/sdl/dist-esm
+packages/sdlang-site/node_modules
+packages/sdlang-site/.next
+packages/sdlang-site/out

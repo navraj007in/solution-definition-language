@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd ../.. && cd packages/sdlang-site && npm run build",
+  "outputDirectory": "packages/sdlang-site/out",
+  "framework": "nextjs"
+}
