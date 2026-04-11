@@ -100,45 +100,47 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## What SDL Generates
 
-| Output | Access |
-|---|---|
-| `architecture-diagram` | Registry-backed artifact type |
-| `repo-scaffold` | Registry-backed artifact type |
-| `iac-skeleton` | Registry-backed artifact type |
-| `adr` | Registry-backed artifact type |
-| `openapi` | Registry-backed artifact type |
-| `data-model` | Registry-backed artifact type |
-| `sequence-diagrams` | Registry-backed artifact type |
-| `backlog` | Registry-backed artifact type |
-| `deployment-guide` | Registry-backed artifact type |
-| `cost-estimate` | Registry-backed artifact type |
-| Docker Compose, Kubernetes, Monitoring, Nginx, Coding Rules | Available as direct generator APIs |
+Every generator result carries a `tier` field: `deterministic` (correct by construction, safe to use directly), `inferred` (heuristic-based, worth reviewing), or `advisory` (starting point — always review before use).
+
+| Output | Artifact Type | Tier |
+|---|---|---|
+| Architecture diagram | `architecture-diagram` | `deterministic` |
+| Repo scaffold | `repo-scaffold` | `deterministic` |
+| IaC skeleton | `iac-skeleton` | `deterministic` |
+| OpenAPI spec | `openapi` | `deterministic` |
+| Data model | `data-model` | `deterministic` |
+| Sequence diagrams | `sequence-diagrams` | `deterministic` |
+| Coding rules (CLAUDE.md, .cursorrules, etc.) | `coding-rules` | `inferred` |
+| Coding rules enforcement (ESLint, arch tests, CI gates) | `coding-rules-enforcement` | `inferred` |
+| Architecture decision records | `adr` | `advisory` |
+| Backlog and user stories | `backlog` | `advisory` |
+| Deployment guide | `deployment-guide` | `advisory` |
+| Cost estimate | `cost-estimate` | `advisory` |
+| Docker Compose, Kubernetes, Monitoring, Nginx | Direct API (`generateDockerCompose()`, etc.) | `deterministic` |
 
 ## Versions
 
-- **v1.1** — Active specification (production-grade)
-  - API contracts (OpenAPI, GraphQL, gRPC)
-  - Data model (entity definitions with fields, relationships, constraints)
-  - Feature planning (MVP phases, feature flags, dependencies)
-  - Compliance (GDPR, HIPAA, SOC2, PCI-DSS, CCPA)
-  - SLO/SLI (service level objectives, KPIs, alert thresholds)
-  - Resilience (circuit breakers, retries, timeouts, fallbacks)
-  - Cost model (pricing, usage-based costs, per-component breakdown)
-  - Backup & DR (RTO/RPO, failover, replication)
-  - Design system (tokens, theming, component library)
+- **v1.1** — Active specification
+  - Core sections (stable, validated, normalized, generator-consumed): `solution`, `product`, `architecture`, `auth`, `data`, `integrations`, `nonFunctional`, `deployment`, `artifacts`
+  - Partial sections (validated, some normalization or generator use): `testing`, `observability`, `constraints`, `techDebt`, `evolution`
+  - Minimal sections (schema-enforced shape, no generator consumption yet): `contracts`, `domain`, `features`, `slos`
+  - Placeholder sections (permissive, metadata only): `compliance`, `resilience`, `costs`, `backupDr`, `design`
+  - See [Section Support Matrix](reference/section-support.md) for detail on each section's maturity
   - Spec: [SDL-v1.1.md](spec/SDL-v1.1.md)
 
 ## Documentation
 
 | Document | Description |
 |---|---|
+| [AI Authoring Guide](reference/ai-authoring.md) | Compact machine-first reference: minimum valid document, all enums, normalization auto-fill, rejected legacy values, common mistakes |
 | [Canonical Contract](reference/canonical-contract.md) | Canonical enums, artifact types, root section shapes, and alias policy for active `v1.1` |
+| [Section Support Matrix](reference/section-support.md) | Per-section maturity, schema strictness, normalization, and generator consumption |
+| [Generators](reference/generators.md) | Generator tiers, what each produces, what SDL sections it consumes |
 | [Specification v1.1](spec/SDL-v1.1.md) | Active complete specification |
 | [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
-| [Generators](reference/generators.md) | What each generator produces and what SDL sections it consumes |
-| [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
 | [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
-| [SDL Knowledge](reference/sdl-knowledge.md) | SDL generation and validation guidance |
+| [Error Codes](reference/error-codes.md) | Parse, schema, and conditional validation errors |
+| [SDL Knowledge](reference/sdl-knowledge.md) | SDL generation and validation guidance for AI tools |
 
 ## Templates
 
@@ -162,7 +164,8 @@ Each imported file contains one or more SDL sections. The system resolves and me
 ## Examples
 
 - [Single-file SDL examples](examples/single-file/) — simple projects in one YAML file
-- [Multi-file SDL example](examples/multi-file/medchat/) — real-world HIPAA healthcare messaging platform with modular imports
+- [MedChat](examples/multi-file/medchat/) — HIPAA-compliant healthcare messaging platform, modular multi-file SDL
+- [Nexper CRM](examples/multi-file/nexper-crm/) — B2B SaaS CRM with full v1.1 coverage across contracts, domain, features, SLOs, compliance, and design
 
 ## Schema
 
@@ -173,12 +176,12 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
 
-- **Parser** — YAML to JavaScript object
-- **Validator** — Schema validation (Ajv)
-- **Normalizer** — Auto-inference of defaults
-- **Resolver** — Multi-file import resolution
+- **Parser** — YAML to typed SDL document
+- **Validator** — JSON schema + 20+ semantic rules with structured error codes
+- **Normalizer** — Auto-inference of defaults; returns `{ document, inferences }` so every filled field is visible with its reason
+- **Resolver** — Multi-file import resolution with circular import detection
 - **Diff** — Structural comparison of SDL versions
-- **Generators** — Docker Compose, Kubernetes, Terraform, CI/CD, coding rules, and related outputs
+- **Generators** — 12 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
 
 ## Version History
