@@ -40,23 +40,21 @@ export async function discoverArchitecture(
   );
 }
 
+import { computeComplexity } from './complexity-calculator.js';
+export { generateComplexityReport } from './complexity-report.js';
+export { generateComplexityYaml } from './complexity-yaml.js';
+
 /**
  * Calculate complexity scores from a completed discovery result
  *
- * Full implementation is performed by the SDL Discovery Agent (Step 7).
- * This stub documents the expected interface.
+ * Computes all 6 complexity dimensions (Structural, Dynamic, Integration, Technology,
+ * Delivery Burden, Organizational) and generates reduction plan and risk assessment.
  *
- * @param input Discovery result and optional profile override
+ * @param input Discovery result and optional profile override (startup | enterprise | platform)
  * @returns Complexity assessment with both indices, reduction plan, and risks
  */
 export async function calculateComplexity(input: ComplexityInput): Promise<ComplexityResult> {
-  // Stub: implementation is performed by the SDL Discovery Agent (Step 7)
-  // See: .claude/agents/sdl-discovery.md Step 7 for the full specification
-  throw new Error(
-    'Not yet implemented. Complexity scoring is performed by the SDL Discovery Agent (Step 7). ' +
-    'Use claude-code to invoke the agent; complexity output will be in sdl/complexity.sdl.yaml. ' +
-    'See reference/complexity-scoring.md for the scoring specification.'
-  );
+  return computeComplexity(input);
 }
 
 // Re-export all types and heuristics

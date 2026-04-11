@@ -30,6 +30,7 @@ export interface Component {
   language?: string;
   framework?: string;
   runtime?: string;
+  packages?: string[]; // npm/pip/cargo/etc. dependencies detected in this component
   properties?: Record<string, unknown>;
   reviewRequired?: boolean;
 }
@@ -102,6 +103,17 @@ export interface ScanMetadata {
 }
 
 /**
+ * Delivery tooling signals collected during scanning
+ */
+export interface DeliveryMetadata {
+  ciCdFiles: string[]; // e.g. ['github-actions', 'gitlab-ci', 'azure-devops', 'jenkins']
+  iacFiles: string[]; // e.g. ['terraform', 'cloudformation', 'bicep', 'pulumi']
+  healthEndpoints: string[]; // component IDs exposing /health or /healthz
+  hasEnvFiles: boolean; // .env files detected (secrets risk signal)
+  drDocumented: boolean; // backup/DR documentation found
+}
+
+/**
  * Complete discovery result
  */
 export interface DiscoveryResult {
@@ -119,6 +131,7 @@ export interface DiscoveryResult {
     lowConfidenceCount: number;
     averageConfidence: number;
   };
+  deliveryMetadata?: DeliveryMetadata; // optional; populated when agent scans delivery files
 }
 
 /**
