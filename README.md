@@ -184,6 +184,11 @@ The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
 - **Generators** — 12 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
 
+## Roadmap
+
+- [SDL Language Roadmap](spec/ROADMAP.md) — planned spec evolution: section formalization, v1.2 additions, migration policy
+- [Package Implementation Roadmap](packages/sdl/ROADMAP.md) — generator wiring, CLI, test coverage, `sdl migrate`
+
 ## Version History
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
