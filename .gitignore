@@ -17,3 +17,6 @@ package-lock.json
 *.seed
 *.pid.lock
 *.log
+packages/sdl-playground/node_modules
+packages/sdl-playground/dist
+packages/sdl/dist-esm
