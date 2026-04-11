@@ -18,3 +18,11 @@
 .mermaid-container svg {
   background: transparent !important;
 }
+
+/* Mobile: editor takes ~40vh, artifacts take the rest */
+@media (max-width: 767px) {
+  .editor-panel {
+    width: 100% !important;
+    height: 40vh;
+  }
+}
