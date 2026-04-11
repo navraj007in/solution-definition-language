@@ -42,11 +42,12 @@ SDL v1.1 captures:
 
 Use these files in order of authority:
 
-1. [`reference/canonical-contract.md`](canonical-contract.md) — canonical enums, artifact types, root section shapes, and alias policy
-2. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative v1.1 spec
-3. [`reference/schema-reference.md`](schema-reference.md) — quick v1.1 section reference
-4. [`reference/normalization-defaults.md`](normalization-defaults.md) — normalization rules and mappings
-5. [`reference/error-codes.md`](error-codes.md) — validation error vocabulary
+1. [`reference/ai-authoring.md`](ai-authoring.md) — compact machine-first authoring reference: minimum valid document, all enums, normalization behaviour, rejected legacy values, common mistakes
+2. [`reference/canonical-contract.md`](canonical-contract.md) — canonical enums, artifact types, root section shapes, and alias policy (full detail)
+3. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative v1.1 spec
+4. [`reference/schema-reference.md`](schema-reference.md) — quick v1.1 section reference
+5. [`reference/normalization-defaults.md`](normalization-defaults.md) — normalization rules and mappings
+6. [`reference/error-codes.md`](error-codes.md) — validation error vocabulary
 
 ## Required Root Sections
 

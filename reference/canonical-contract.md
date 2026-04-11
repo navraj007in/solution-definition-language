@@ -11,6 +11,8 @@ Use it for:
 
 For the support level of each section (schema strictness, normalization, generator consumption, maturity), see [`reference/section-support.md`](section-support.md).
 
+For the compact machine-first authoring guide (minimum valid document, normalization behaviour, rejected legacy values, common mistakes), see [`reference/ai-authoring.md`](ai-authoring.md).
+
 If any other prose example conflicts with this file, follow this file, the active JSON schema, and the exported runtime types in `packages/sdl/src/types.ts`.
 
 ## Authority Order

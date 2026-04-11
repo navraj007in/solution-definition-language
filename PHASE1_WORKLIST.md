@@ -8,12 +8,14 @@ Purpose: restore one canonical SDL contract across docs, examples, schema refere
 
 ## Remaining
 
-- Add an AI authoring quick reference for canonical values and required sections.
+None. Phase 1 complete.
 
 ## Completed
 
 - Published `reference/section-support.md` — support-level matrix per section covering schema strictness, normalization, generator consumption, and maturity level (stable / partial / minimal / placeholder).
 - Added pointer from `reference/canonical-contract.md` to `reference/section-support.md`.
+- Published `reference/ai-authoring.md` — compact machine-first authoring reference covering minimum valid document, all canonical enums, normalization auto-fill table, rejected legacy values, common generation mistakes, and when-in-doubt rules.
+- Wired `reference/ai-authoring.md` into `reference/sdl-knowledge.md` as the top authority for AI generation and into `reference/canonical-contract.md` as a pointer.
 
 - Wrote the repo audit in `AUDIT_REPORT.md`.
 - Updated the audit to clarify scope classification, AI reliability priority, and spec-depth direction.
