@@ -56,6 +56,10 @@ export type { SDLTemplate } from './templates';
 export type {
   Inference,
   SDLDocument,
+  ComplianceFramework,
+  ComplianceRequirement,
+  ResilienceCircuitBreaker,
+  ResilienceRetryPolicy,
   SolutionMetadata,
   ProductContext,
   Persona,

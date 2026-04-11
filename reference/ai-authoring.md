@@ -127,7 +127,10 @@ observability.metrics.provider:  prometheus | datadog | cloudwatch | grafana | n
 
 techDebt[].priority:          low | medium | high | critical
 features[].priority:          critical | high | medium | low
+features[].stage:             MVP | Growth | Enterprise
+features[].status:            planned | in-progress | done | deferred
 contracts.apis[].type:        rest | graphql | grpc | webhook | asyncapi
+resilience.retryPolicy.backoff: exponential | linear | fixed
 evolution.roadmap[].stage:    MVP | Growth | Enterprise
 product.personas[].accessLevel: public | authenticated | admin
 product.coreFlows[].priority: critical | high | medium | low
@@ -256,9 +259,9 @@ Use this to decide whether to author a section:
 | `contracts` | minimal | defined shape | no | none yet |
 | `domain` | minimal | defined shape | no | none yet |
 | `features` | minimal | partial | no | none yet |
-| `compliance` | placeholder | permissive | no | none |
+| `compliance` | minimal | defined — `frameworks[]` objects with `name` required | no | none |
 | `slos` | placeholder | permissive | no | none |
-| `resilience` | placeholder | permissive | no | none |
+| `resilience` | minimal | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` typed | no | none |
 | `costs` | placeholder | permissive | no | none |
 | `backupDr` | placeholder | permissive | no | none |
 | `design` | placeholder | permissive | no | none |

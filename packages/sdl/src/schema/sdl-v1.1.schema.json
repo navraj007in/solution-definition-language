@@ -251,16 +251,64 @@
           "priority": {
             "type": "string",
             "enum": ["critical", "high", "medium", "low"]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["MVP", "Growth", "Enterprise"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "in-progress", "done", "deferred"]
           }
         }
       }
     },
     "compliance": {
-      "$comment": "maturity: partial — structure is intentionally open; frameworks are commonly rich objects with requirements and certifications, not simple string enums",
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": { "^x-": {} },
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "applicable": { "type": "boolean" },
+              "notes": { "type": "string" },
+              "requirements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "patternProperties": { "^x-": {} },
+                  "properties": {
+                    "requirement": { "type": "string" },
+                    "description": { "type": "string" },
+                    "implementation": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "certifications": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "dataResidency": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "dataRetention": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        }
       }
     },
     "slos": {
@@ -297,11 +345,48 @@
       }
     },
     "resilience": {
-      "$comment": "maturity: placeholder — resilience patterns vary widely (circuit breaker, retry, bulkhead, rate limit, timeout); permissive until a generator consumes this section",
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "circuitBreaker": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "threshold": { "type": "integer" },
+            "timeout": { "type": "string" }
+          }
+        },
+        "retryPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "maxAttempts": { "type": "integer" },
+            "backoff": { "type": "string", "enum": ["exponential", "linear", "fixed"] },
+            "initialInterval": { "type": "string" }
+          }
+        },
+        "timeout": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "default": { "type": "string" }
+          }
+        },
+        "rateLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "requestsPerMinute": { "type": "integer" }
+          }
+        }
       }
     },
     "costs": {

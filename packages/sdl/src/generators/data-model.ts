@@ -5,14 +5,12 @@ import type { RawGeneratorResult } from './types';
  * Generates a data model (ERD + ORM schema) from an SDL document.
  * Deterministic — same input always produces identical output.
  *
- * Infers entities from:
- *   - Personas → User entity
- *   - Persona goals → domain entities (e.g. "Create tasks" → Task)
- *   - Core flows → additional entities from flow names
- *   - Auth config → Session entity (if JWT/custom)
+ * Entity source (in priority order):
+ *   1. domain.entities[] — used when present; authoritative
+ *   2. Inference from personas, core flows, and auth — used when domain is absent
  */
 export function generateDataModel(doc: SDLDocument): RawGeneratorResult {
-  const entities = inferEntities(doc);
+  const entities = resolveEntities(doc);
   const relations = inferRelations(entities, doc);
   const erd = renderERD(entities, relations);
 
@@ -71,6 +69,99 @@ interface Relation {
   to: string;
   type: 'one-to-one' | 'one-to-many' | 'many-to-many';
   label: string;
+}
+
+// ─── Entity Resolution ───
+
+/**
+ * Returns entities from domain.entities[] when present (authoritative),
+ * otherwise falls back to inference from product personas and core flows.
+ */
+function resolveEntities(doc: SDLDocument): Entity[] {
+  if (doc.domain?.entities && doc.domain.entities.length > 0) {
+    return entitiesFromDomain(doc);
+  }
+  return inferEntities(doc);
+}
+
+/**
+ * Converts domain.entities[] SDL declarations into the internal Entity type.
+ * Always prepends a User entity when auth is present and no User entity is declared.
+ */
+function entitiesFromDomain(doc: SDLDocument): Entity[] {
+  const entities: Entity[] = [];
+  const seen = new Set<string>();
+
+  // User entity from auth (if not declared in domain)
+  const hasDomainUser = doc.domain!.entities!.some(
+    (e) => e.name.toLowerCase() === 'user',
+  );
+  if (!hasDomainUser && doc.auth && doc.auth.strategy !== 'none') {
+    const userFields: Field[] = [
+      { name: 'id', type: 'uuid', pk: true, required: true },
+      { name: 'email', type: 'varchar', required: true, unique: true },
+      { name: 'name', type: 'varchar', required: true },
+    ];
+    if (doc.auth.roles && doc.auth.roles.length > 0) {
+      userFields.push({ name: 'role', type: 'varchar', required: true, comment: doc.auth.roles.join(', ') });
+    }
+    userFields.push(
+      { name: 'created_at', type: 'timestamp', required: true },
+      { name: 'updated_at', type: 'timestamp', required: true },
+    );
+    entities.push({ name: 'User', fields: userFields });
+    seen.add('user');
+  }
+
+  for (const domainEntity of doc.domain!.entities!) {
+    if (seen.has(domainEntity.name.toLowerCase())) continue;
+    seen.add(domainEntity.name.toLowerCase());
+
+    const fields: Field[] = [];
+    for (const f of domainEntity.fields ?? []) {
+      fields.push({
+        name: toSnakeCase(f.name),
+        type: sdlFieldTypeToDbType(f.type),
+        pk: (f as any).primaryKey === true,
+        required: f.required !== false && (f as any).nullable !== true,
+        unique: (f as any).unique === true,
+        comment: (f as any).description,
+      });
+    }
+
+    // Ensure every entity has at least an id field
+    if (!fields.some((f) => f.pk)) {
+      fields.unshift({ name: 'id', type: 'uuid', pk: true, required: true });
+    }
+
+    entities.push({ name: domainEntity.name, fields });
+  }
+
+  return entities;
+}
+
+/** Map SDL field type strings to canonical DB type strings */
+function sdlFieldTypeToDbType(sdlType: string): string {
+  const map: Record<string, string> = {
+    uuid: 'uuid',
+    string: 'varchar',
+    varchar: 'varchar',
+    text: 'text',
+    int: 'integer',
+    integer: 'integer',
+    bigint: 'bigint',
+    float: 'float',
+    decimal: 'decimal',
+    boolean: 'boolean',
+    bool: 'boolean',
+    date: 'date',
+    datetime: 'timestamp',
+    timestamp: 'timestamp',
+    json: 'jsonb',
+    jsonb: 'jsonb',
+    enum: 'varchar',
+  };
+  return map[sdlType.toLowerCase()] ?? sdlType;
 }
 
 // ─── Entity Inference ───

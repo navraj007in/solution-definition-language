@@ -5,17 +5,16 @@ import type { RawGeneratorResult } from './types';
  * Generates an OpenAPI 3.1 specification from an SDL document.
  * Deterministic — same input always produces identical output.
  *
- * Infers endpoints from:
- *   - Personas → User entity + auth endpoints
- *   - Core flows → CRUD endpoints for domain resources
- *   - Auth config → security schemes
- *   - Backend projects → server info
+ * Entity/API source (in priority order):
+ *   1. contracts.apis[] + domain.entities[] — used when present; authoritative
+ *   2. Inference from personas, core flows, and auth — fallback when absent
  */
 export function generateOpenApiSpec(doc: SDLDocument): RawGeneratorResult {
   const backends = doc.architecture.projects.backend || [];
   const primaryBackend = backends[0];
-  const entities = inferEntities(doc);
-  const spec = buildSpec(doc, primaryBackend, entities);
+  const entities = resolveEntities(doc);
+  const contractTags = resolveContractTags(doc);
+  const spec = buildSpec(doc, primaryBackend, entities, contractTags);
   const yaml = toYaml(spec);
 
   const files = [
@@ -35,6 +34,114 @@ export function generateOpenApiSpec(doc: SDLDocument): RawGeneratorResult {
       entities: entities.map((e) => e.name),
     },
   };
+}
+
+// ─── Contract + Entity Resolution ───
+
+interface ContractTag {
+  name: string;
+  type: string;
+  owner?: string;
+}
+
+/**
+ * Returns API contract tags from contracts.apis[] when present.
+ * These are used to annotate the spec with declared ownership and API type.
+ */
+function resolveContractTags(doc: SDLDocument): ContractTag[] {
+  if (!doc.contracts?.apis || doc.contracts.apis.length === 0) return [];
+  return doc.contracts.apis.map((api) => ({
+    name: api.name,
+    type: api.type ?? 'rest',
+    owner: api.owner,
+  }));
+}
+
+/**
+ * Returns entities from domain.entities[] when present (authoritative),
+ * otherwise falls back to inference from product personas and core flows.
+ */
+function resolveEntities(doc: SDLDocument): InferredEntity[] {
+  if (doc.domain?.entities && doc.domain.entities.length > 0) {
+    return entitiesFromDomain(doc);
+  }
+  return inferEntities(doc);
+}
+
+/**
+ * Converts domain.entities[] SDL declarations into InferredEntity format.
+ * Always prepends a User entity when auth is present and no User is declared.
+ */
+function entitiesFromDomain(doc: SDLDocument): InferredEntity[] {
+  const entities: InferredEntity[] = [];
+  const seen = new Set<string>();
+
+  const hasDomainUser = doc.domain!.entities!.some(
+    (e) => e.name.toLowerCase() === 'user',
+  );
+  if (!hasDomainUser && doc.auth && doc.auth.strategy !== 'none') {
+    const userFields: InferredEntity['fields'] = [
+      { name: 'id', type: 'string', required: true, description: 'Unique identifier' },
+      { name: 'email', type: 'string', required: true, description: 'User email address' },
+      { name: 'name', type: 'string', required: true, description: 'Display name' },
+    ];
+    if (doc.auth.roles && doc.auth.roles.length > 0) {
+      userFields.push({ name: 'role', type: 'string', required: true, description: `One of: ${doc.auth.roles.join(', ')}` });
+    }
+    userFields.push(
+      { name: 'createdAt', type: 'string', required: true, description: 'ISO 8601 timestamp' },
+      { name: 'updatedAt', type: 'string', required: true, description: 'ISO 8601 timestamp' },
+    );
+    entities.push({ name: 'User', fields: userFields });
+    seen.add('user');
+  }
+
+  for (const domainEntity of doc.domain!.entities!) {
+    if (seen.has(domainEntity.name.toLowerCase())) continue;
+    seen.add(domainEntity.name.toLowerCase());
+
+    const fields: InferredEntity['fields'] = [];
+    for (const f of domainEntity.fields ?? []) {
+      fields.push({
+        name: f.name,
+        type: sdlTypeToOpenApiType(f.type),
+        required: f.required !== false && (f as any).nullable !== true,
+        description: (f as any).description,
+      });
+    }
+
+    if (!fields.some((f) => f.name === 'id')) {
+      fields.unshift({ name: 'id', type: 'string', required: true, description: 'Unique identifier' });
+    }
+
+    entities.push({ name: domainEntity.name, fields });
+  }
+
+  return entities;
+}
+
+/** Map SDL field type strings to OpenAPI type strings */
+function sdlTypeToOpenApiType(sdlType: string): string {
+  const map: Record<string, string> = {
+    uuid: 'string',
+    string: 'string',
+    varchar: 'string',
+    text: 'string',
+    int: 'integer',
+    integer: 'integer',
+    bigint: 'integer',
+    float: 'number',
+    decimal: 'number',
+    boolean: 'boolean',
+    bool: 'boolean',
+    date: 'string',
+    datetime: 'string',
+    timestamp: 'string',
+    json: 'object',
+    jsonb: 'object',
+    enum: 'string',
+  };
+  return map[sdlType.toLowerCase()] ?? 'string';
 }
 
 // ─── Entity Inference ───
@@ -160,7 +267,7 @@ interface OpenApiSpec {
   tags: { name: string; description: string }[];
 }
 
-function buildSpec(doc: SDLDocument, backend: BackendProject | undefined, entities: InferredEntity[]): OpenApiSpec {
+function buildSpec(doc: SDLDocument, backend: BackendProject | undefined, entities: InferredEntity[], contractTags: ContractTag[]): OpenApiSpec {
   const spec: OpenApiSpec = {
     openapi: '3.1.0',
     info: {
@@ -179,6 +286,24 @@ function buildSpec(doc: SDLDocument, backend: BackendProject | undefined, entiti
     },
     tags: [],
   };
+
+  // Annotate spec with declared API contracts when present
+  if (contractTags.length > 0) {
+    (spec.info as any)['x-contracts'] = contractTags.map((ct) => ({
+      name: ct.name,
+      type: ct.type,
+      ...(ct.owner ? { owner: ct.owner } : {}),
+    }));
+    // Add non-REST contracts as informational tags
+    for (const ct of contractTags) {
+      if (ct.type !== 'rest') {
+        spec.tags.push({
+          name: ct.name,
+          description: `${ct.type.toUpperCase()} API${ct.owner ? ` — owned by ${ct.owner}` : ''}`,
+        });
+      }
+    }
+  }
 
   // Security schemes
   if (doc.auth && doc.auth.strategy !== 'none') {

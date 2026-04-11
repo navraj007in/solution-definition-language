@@ -553,20 +553,57 @@ export interface FeatureSection extends ExtensionFields {
   name: string;
   description?: string;
   priority?: 'critical' | 'high' | 'medium' | 'low';
+  /** Which solution lifecycle stage this feature ships in */
+  stage?: 'MVP' | 'Growth' | 'Enterprise';
+  /** Current delivery status of this feature */
+  status?: 'planned' | 'in-progress' | 'done' | 'deferred';
+}
+
+export interface ComplianceFramework extends ExtensionFields {
+  /** Framework name, e.g. GDPR, HIPAA, SOC2-Type2, PCI-DSS */
+  name: string;
+  applicable?: boolean;
+  requirements?: ComplianceRequirement[];
+  notes?: string;
+}
+
+export interface ComplianceRequirement extends ExtensionFields {
+  requirement?: string;
+  description?: string;
+  implementation?: string;
 }
 
 export interface ComplianceSection extends ExtensionFields {
-  frameworks?: Array<'gdpr' | 'hipaa' | 'sox' | 'pci-dss' | 'iso27001' | 'soc2'>;
+  frameworks?: ComplianceFramework[];
+  certifications?: Record<string, unknown>[];
+  dataResidency?: Record<string, unknown>[];
+  dataRetention?: Record<string, unknown>[];
 }
 
 export interface SloSection extends ExtensionFields {
   services?: Array<{ name: string; availability?: string; latencyP95?: string }>;
 }
 
+export interface ResilienceCircuitBreaker extends ExtensionFields {
+  enabled?: boolean;
+  /** Failure percentage threshold before opening the circuit */
+  threshold?: number;
+  /** How long the circuit stays open before trying again, e.g. "30s" */
+  timeout?: string;
+}
+
+export interface ResilienceRetryPolicy extends ExtensionFields {
+  maxAttempts?: number;
+  backoff?: 'exponential' | 'linear' | 'fixed';
+  /** Initial retry interval, e.g. "100ms" */
+  initialInterval?: string;
+}
+
 export interface ResilienceSection extends ExtensionFields {
-  strategy?: string;
-  rto?: string;
-  rpo?: string;
+  circuitBreaker?: ResilienceCircuitBreaker;
+  retryPolicy?: ResilienceRetryPolicy;
+  timeout?: { default?: string };
+  rateLimit?: { requestsPerMinute?: number };
 }
 
 export interface CostSection extends ExtensionFields {

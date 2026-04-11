@@ -31,12 +31,12 @@ Use it to understand which sections are stable and which are still evolving, and
 | `constraints` | no | yes | partial | no | `adr` (budget field only) | partial |
 | `techDebt` / `technicalDebt` | no | yes | partial | no | `adr` | partial |
 | `evolution` | no | yes | partial | no | `coding-rules` | partial |
-| `contracts` | no | yes | defined — `apis[]` items have `additionalProperties: false`, `type` enum enforced | no | none | minimal |
-| `domain` | no | yes | defined — entity items have `additionalProperties: false`; entity-level fields (`description`, `table`, `indexes`, `constraints`) enumerated; `fields[]` items have known DB attributes typed (`nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`) with `additionalProperties: true` | no | none | minimal |
-| `features` | no | yes | defined — items have `additionalProperties: false`, `priority` enum enforced | no | none | minimal |
+| `contracts` | no | yes | defined — `apis[]` items have `additionalProperties: false`, `type` enum enforced | no | `openapi` reads `contracts.apis[]` for tags and API type annotation when present | partial |
+| `domain` | no | yes | defined — entity items have `additionalProperties: false`; entity-level fields (`description`, `table`, `indexes`, `constraints`) enumerated; `fields[]` items have known DB attributes typed (`nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`) with `additionalProperties: true` | no | `data-model` reads `domain.entities[]` as authoritative entity source when present | partial |
+| `features` | no | yes | defined — items have `additionalProperties: false`; `priority` enum enforced; `stage` (MVP\|Growth\|Enterprise) and `status` (planned\|in-progress\|done\|deferred) added | no | none | minimal |
 | `slos` | no | yes | defined — `services[]` items have `additionalProperties: false`, `name` required | no | none | minimal |
-| `compliance` | no | yes | permissive — framework structures vary too widely for a simple string enum; common shapes include named framework objects with requirements, certifications, data residency | no | none | placeholder |
-| `resilience` | no | yes | permissive — resilience patterns vary widely (circuit breaker, retry policy, bulkhead, rate limit, timeout, fallback) | no | none | placeholder |
+| `compliance` | no | yes | defined — `frameworks[]` items have `additionalProperties: false` with `name` required; `requirements[]` typed; `certifications`, `dataResidency`, `dataRetention` accepted as open arrays | no | none | minimal |
+| `resilience` | no | yes | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` each have typed shapes with `additionalProperties: false`; per-service detail goes in `x-` extensions | no | none | minimal |
 | `costs` | no | yes | permissive — cost breakdown structures vary (per-service, third-party, scaling tiers, total) | no | none | placeholder |
 | `backupDr` | no | yes | permissive — backup/DR structures vary significantly (database-level, storage, site failover, recovery procedures) | no | none | placeholder |
 | `design` | no | yes | permissive — design system content is intentionally heterogeneous (tokens, themes, motion, iconography, component libraries) | no | none | placeholder |
@@ -78,11 +78,11 @@ Do not assume these sections will be backfilled by normalization or consumed by 
 
 ## Roadmap
 
-Sections in `minimal` and `placeholder` maturity will be promoted as follows:
-
-- `contracts` → `partial` once `openapi` generator reads it to produce server stubs and security schemes
-- `domain` → `partial` once `data-model` generator reads it to drive schema output
+- `contracts` → `stable` once `openapi` generates richer server stubs, security schemes, and path groupings from `contracts.apis[]`
+- `domain` → `stable` once `data-model` produces fully entity-driven ORM schemas and ERDs without fallback inference
+- `compliance` → `partial` once a compliance checklist generator reads `frameworks[]`
+- `resilience` → `partial` once `coding-rules` emits resilience pattern rules from circuit breaker and retry config
+- `slos` → `partial` once `monitoring` reads `slos.services[]` for alert threshold configuration
 - `features` → `partial` once a planning-tier generator reads it
-- `slos` → `partial` once a monitoring or alerting generator reads it
-- `compliance`, `resilience`, `costs`, `backupDr` → tighten schema and add generator consumption together; the structures are too varied to formalize speculatively — wait for a concrete generator use case to define the shape
-- `design` → lowest priority; promote only if a design-token or component-scaffold generator is added
+- `costs`, `backupDr` → promote only when a concrete generator use case emerges; currently experimental
+- `design` → intentionally open; promote only if a design-token or component-scaffold generator is added
