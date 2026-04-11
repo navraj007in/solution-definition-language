@@ -6,3 +6,4 @@ node_modules/
 *.d.ts.map
 !package.json
 !tsconfig.json
+!__tests__/**/*.js
