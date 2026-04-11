@@ -187,6 +187,10 @@ jobs:
             echo "::warning::solution.sdl.yaml not produced — SDL generation may have failed"
           fi
 
+          # Diagram files — always expected, warn if missing
+          check_sdl "${OUTPUT_DIR}/diagrams/architecture.md"
+          check_sdl "${OUTPUT_DIR}/diagrams/data.md"
+
           if [ "${fail}" -ne 0 ]; then
             echo "One or more required output files are missing. Check the runner output above."
             exit 1
@@ -229,6 +233,7 @@ jobs:
           add-paths: |
             solution.sdl.yaml
             sdl/**
+            diagrams/**
             sdl-discovery-report.md
             confidence-report.json
             unknowns-and-review-items.md
@@ -243,7 +248,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "${INPUT_OUTPUT_BRANCH}"
-          git add solution.sdl.yaml sdl sdl-discovery-report.md confidence-report.json unknowns-and-review-items.md sdl-discovery.json complexity-report.md 2>/dev/null || true
+          git add solution.sdl.yaml sdl diagrams sdl-discovery-report.md confidence-report.json unknowns-and-review-items.md sdl-discovery.json complexity-report.md 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No discovery changes to commit"
             exit 0

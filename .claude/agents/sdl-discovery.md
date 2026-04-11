@@ -139,15 +139,25 @@ Read `{output_dir}/correlation.json` produced by the `sdl-correlator` agent in S
 
 Use this data as the authoritative dependency graph input for SDL generation (Step 6).
 
-### 4b. Run Drift Analysis (drift mode only)
+### 4b. Run Post-Correlation Sub-Agents (Parallel)
 
-**Skip this step if `mode` is not `drift` or `existing_sdl_path` is not provided.**
+Steps 4b-i and 4b-ii read only from `{output_dir}/correlation.json` and `{output_dir}/scan/*.json` — they can run in parallel. Spawn both in a single `Agent` tool message.
+
+#### 4b-i. Drift Analysis (drift mode only)
+
+**Skip if `mode` is not `drift` or `existing_sdl_path` is not provided.**
 
 1. Spawn the `sdl-drift` sub-agent via the Agent tool
 2. Pass `output_dir` and `existing_sdl_path`
-3. The drift agent reads `{output_dir}/correlation.json` alongside the existing SDL files and diffs them
-4. Drift agent writes `{output_dir}/drift.json` and `{output_dir}/drift-report.md`
-5. Read `{output_dir}/drift.json` before proceeding — it contains the classified change set used by Step 6
+3. Drift agent writes `{output_dir}/drift.json` and `{output_dir}/drift-report.md`
+4. Read `{output_dir}/drift.json` before Step 6 — it contains the classified change set
+
+#### 4b-ii. Diagram Generation
+
+1. Spawn the `sdl-diagram` sub-agent via the Agent tool
+2. Pass `output_dir`
+3. Diagram agent writes `{output_dir}/diagrams/architecture.md` and `{output_dir}/diagrams/data.md`
+4. No output from this step is required before proceeding to Step 5
 
 ### 5. Score Confidence
 
@@ -335,6 +345,10 @@ Generate a **modular multi-file SDL v1.1 structure** (not monolithic).
 - **unknowns-and-review-items.md** — Human decision checklist
 - **sdl-discovery.json** — Structured metadata about the scan (includes `complexity_scores` field)
 
+**Diagram outputs** (always produced):
+- **diagrams/architecture.md** — Mermaid service dependency graph: services, workers, frontends, datastores, external integrations with confidence-styled edges
+- **diagrams/data.md** — Mermaid datastore ownership map with blast radius annotations per datastore
+
 **Drift mode additional outputs** (only when `mode=drift`):
 - **drift-report.md** — Human-readable topology diff: services added/removed/modified, dependency changes, datastore changes, review items
 - **drift.json** — Structured diff for machine consumption (CI gates, dashboards)
@@ -342,7 +356,7 @@ Generate a **modular multi-file SDL v1.1 structure** (not monolithic).
 **Structure example:**
 ```
 output_dir/
-├── solution.sdl.yaml                (root with imports, includes complexity)
+├── solution.sdl.yaml
 ├── sdl/
 │   ├── services.sdl.yaml
 │   ├── data.sdl.yaml
@@ -352,8 +366,11 @@ output_dir/
 │   ├── contracts.sdl.yaml
 │   ├── artifacts.sdl.yaml
 │   ├── assumptions.sdl.yaml
-│   └── complexity.sdl.yaml           (NEW)
-├── complexity-report.md              (NEW)
+│   └── complexity.sdl.yaml
+├── diagrams/
+│   ├── architecture.md              (Mermaid service dependency graph)
+│   └── data.md                      (Mermaid datastore ownership map)
+├── complexity-report.md
 ├── sdl-discovery-report.md
 ├── confidence-report.json
 ├── unknowns-and-review-items.md
