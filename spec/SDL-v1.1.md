@@ -624,54 +624,59 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 
 ### Conditional Rules (Errors)
 
-> **Implementation status:** These rules define the normative validation contract for SDL v1.1.
-> The current runtime package (`packages/sdl/src/validator.ts`) implements JSON Schema validation
-> and warning detection only. The semantic rules below are normative — implementations must enforce
-> them to be spec-compliant. Rules marked **[not yet implemented]** are not enforced by the
-> reference package today; they are planned for the next validator release.
+> **Implementation status:** The reference package enforces these rules through two mechanisms:
+> - **JSON Schema (AJV)** — structural and type rules run during schema validation (`packages/sdl/src/validator.ts`)
+> - **Semantic validator** — cross-section relational rules run via `packages/sdl/src/semantic-validator.ts` (SEM-001 through SEM-014), invoked from the public `index.ts` API
+>
+> Rules marked **[enforced: ...]** are active and will reject invalid documents.
+> Rules marked **[not yet implemented]** are normative but not yet enforced by the reference package.
+> Rules marked **[not yet implemented, field absent]** require a type contract expansion before they can be enforced.
 
 These rules catch logical inconsistencies and must pass for valid SDL (26 rules total):
 
 **Reference Integrity (7 rules):**
-1. **SLO Service References** **[not yet implemented]** → every `slos.services[].name` should match a component name in `architecture.projects`
+1. **SLO Service References** **[enforced: SEM-005]** → every `slos.services[].name` must match a component name in `architecture.projects` or `architecture.services`
 2. **Cost Components** **[not yet implemented, field absent]** → `CostSection` currently defines only `monthly` and `notes`; a per-component cost breakdown (`costs.infrastructure[].component`) is not in the active type contract. This rule is a placeholder for when `CostSection` is expanded.
-3. **Circular Dependencies** **[not yet implemented]** → `x-dependsOn[]` extension fields on `architecture.projects[*][]` must not form cycles (using the `x-dependsOn` extension convention, as `dependsOn` is not a first-class field in project types)
+3. **Service Dependency Integrity** **[enforced: SEM-002, SEM-003, SEM-004]** → entries in `architecture.services[].dependencies[]` must reference known service names (SEM-002); a service may not depend on itself (SEM-003); the dependency graph must be acyclic (SEM-004). Note: `dependsOn` is not a first-class field on project types; these rules apply to `architecture.services[].dependencies[]` only.
 4. **API Contract Service** **[not yet implemented]** → `contracts.apis[].owner` (if present) must match a component name in `architecture.projects`
-5. **Foreign Key Targets** **[not yet implemented]** → `domain.entities[].relationships[].to` must match a name in `domain.entities[].name`
+5. **Foreign Key Targets** **[enforced: SEM-001]** → `domain.relationships[].from` and `.to` must each match a name in `domain.entities[].name`
 6. **Backup Coverage** **[not yet implemented]** → `backupDr.backups[].target` should reference a value matching `data.primaryDatabase.type` or an entry in `data.secondaryDatabases[]`
 7. ~~**Environment Components**~~ — removed; `environments` is not a root-level SDL key.
 8. ~~**Feature Dependencies (phase-keyed)**~~ — removed; `features` is a flat array, not a phase-keyed object.
 9. ~~**Resilience Service References**~~ — removed; `resilience.circuitBreaker` is a single configuration object.
 
 **Type Compatibility (3 rules):**
-10. **ORM-Database Pair** **[not yet implemented]** → `data.primaryDatabase.type` must be compatible with `architecture.projects[*][].orm` (e.g. ef-core incompatible with mongodb)
-11. **Framework-Language** **[not yet implemented]** → `architecture.projects[*][].framework` must be compatible with `.language` (e.g. nextjs requires typescript or javascript)
+10. **ORM-Database Pair** **[enforced: JSON schema allOf]** → `data.primaryDatabase.type: "mongodb"` is incompatible with `architecture.projects.backend[*].orm: "ef-core"`. Other ORM-database incompatibilities are not yet checked.
+11. **Framework-Language** **[not yet implemented, field absent for `.language`]** → `architecture.projects[*][].framework` compatibility with the project language cannot be checked until `.language` is a typed field on project types.
 12. **Auth Provider Integration** **[not yet implemented]** → if `auth.provider` names a third-party value (`auth0`, `clerk`, `cognito`, `firebase`, `supabase`), it should also appear in `integrations`
 
 **Deployment Integrity (5 rules):**
-13. **Microservices Count** **[not yet implemented]** → `architecture.style: "microservices"` requires 2+ components across `architecture.projects`
+13. **Microservices Count** **[enforced: JSON schema allOf]** → `architecture.style: "microservices"` requires `architecture.services` to have at least 2 entries
 14. **Deployable Coverage** **[not yet implemented, field absent]** → `deployable` is not a first-class field on `FrontendProject`, `BackendProject`, or `MobileProject` in the current type contract; it is an `x-` extension field. This rule applies when `x-deployable: true` is set. Formal field promotion is tracked as a future contract change.
 15. **Port Conflicts** **[not yet implemented]** → within each environment, no two components may declare the same `port`
 16. **Region Support** **[not yet implemented]** → `deployment.regions[]` values must be valid for `deployment.cloud`
-17. **CloudFormation Constraint** **[not yet implemented]** → `deployment.ciCd.provider: "cloudformation"` only valid when `deployment.cloud: "aws"`
+17. **CloudFormation Constraint** **[enforced: JSON schema allOf]** → `deployment.ciCd.iac: "cloudformation"` is only valid when `deployment.cloud: "aws"`
 
 **Data Model Integrity (4 rules):**
 18. **Primary Key Required** **[not yet implemented, field absent]** → `DomainField` currently defines `name`, `type`, and `required` only; `primaryKey` is not in the active type contract. This rule is a placeholder for when `DomainField` is expanded.
-19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.entities[].relationships[].to`) that span databases should be flagged as warnings, not errors
-20. **Unique Component Names** **[not yet implemented]** → component `name` values must be globally unique across all `architecture.projects` categories
+19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.relationships[].to`) that span databases should be flagged as warnings, not errors
+20. **Unique Component Names** **[enforced: SEM-007, SEM-008]** → project and service `name` values must be globally unique across all `architecture.projects` categories and `architecture.services` (SEM-007); domain entity names must be unique within `domain.entities` (SEM-008)
 21. **Entity Ownership** **[not yet implemented, field absent]** → `DomainEntity` currently defines only `name` and `fields[]`; an `owner` field is not in the active type contract. This rule is a placeholder for when `DomainEntity` is expanded.
 
 **Configuration Completeness (3 rules):**
 22. **Deployable Component Fields** **[not yet implemented, field absent]** → depends on `deployable` being a first-class field (see rule 14); when `x-deployable: true` is set, the component should also declare `x-path` or have a `framework` that implies a known runtime
-23. **OIDC Provider URL** **[not yet implemented]** → `auth.strategy: "oidc"` requires `auth.provider` to be set
-24. **Compliance Framework Validity** **[not yet implemented]** → `compliance.frameworks[].name` must be one of: `GDPR`, `HIPAA`, `SOC2`, `PCI-DSS`, `CCPA`, `ISO27001`
+23. **Auth Strategy Provider** **[enforced: JSON schema allOf + SEM-010]** → `auth.strategy: "oidc"` requires `auth.provider` to be set (JSON schema allOf); `auth.strategy: "passwordless"` or `"magic-link"` also requires `auth.provider` (SEM-010)
+24. **Compliance Framework Validity** **[enforced: SEM-009]** → `compliance.frameworks[].name` must be one of: `GDPR`, `HIPAA`, `SOC2`, `SOC2-Type2`, `PCI-DSS`, `CCPA`, `ISO27001`, `ISO 27001`, `SOX`, `FERPA`, `FISMA`
 
 **Resilience & Performance (2 rules):**
-25. **Resilience Thresholds** **[not yet implemented]** → `resilience.circuitBreaker.threshold` must be > 0 when `circuitBreaker.enabled: true`; `resilience.retryPolicy.maxAttempts` must be > 0
-26. **SLO Reasonableness** **[not yet implemented]** → `slos.services[].availability` (when present) should represent a value between 90% and 99.99%; `slos.services[].latencyP95` should be a valid duration string (e.g. `"200ms"`)
+25. **Resilience Thresholds** **[enforced: SEM-011, SEM-012]** → `resilience.circuitBreaker.threshold` must be between 1 and 99 (SEM-011); `resilience.retryPolicy.maxAttempts` must be ≥ 1 (SEM-012)
+26. **SLO Reasonableness** **[enforced: SEM-013]** → `slos.services[].availability` must be between 90.0% and 99.999% when present. Note: `slos.services[].latencyP95` string format validation is not yet enforced.
 
 **PII & Security (1 rule):**
-27. **PII Encryption** **[not yet implemented]** → if `nonFunctional.security.pii: true`, `data.primaryDatabase` should have encryption at rest implied by the deployment cloud (or `nonFunctional.security.encryptionAtRest: true`). Note: `pii` is a field on `nonFunctional.security`, not on individual entity fields (`DomainField` has no `pii` property in the current type contract).
+27. **PII Encryption** **[enforced: JSON schema allOf]** → if `nonFunctional.security.pii: true`, then `nonFunctional.security.encryptionAtRest` must also be `true`. Note: `pii` is a field on `nonFunctional.security`, not on individual entity fields (`DomainField` has no `pii` property in the current type contract).
+
+**Additional enforced rules (not in numbered list above):**
+- **Deployment Environment Uniqueness** **[enforced: SEM-014]** → `deployment.ciCd.environments[].name` values must be unique within the environments array.
 
 ### Warning Rules
 
