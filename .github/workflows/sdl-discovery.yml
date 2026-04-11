@@ -143,14 +143,53 @@ jobs:
           bash -lc "${SDL_DISCOVERY_RUNNER}"
 
       - name: Verify output contract
+        id: verify
         run: |
+          set -euo pipefail
+          fail=0
+
+          check_file() {
+            if [ ! -f "$1" ]; then
+              echo "::error::Missing required output: $1"
+              fail=1
+            fi
+          }
+
+          check_sdl() {
+            if [ ! -f "$1" ]; then
+              echo "::warning::Missing SDL file: $1"
+            fi
+          }
+
+          # Required top-level outputs
           test -d "${OUTPUT_DIR}"
-          test -f "${OUTPUT_DIR}/sdl-discovery-report.md"
-          test -f "${OUTPUT_DIR}/confidence-report.json"
-          test -f "${OUTPUT_DIR}/unknowns-and-review-items.md"
-          test -f "${OUTPUT_DIR}/sdl-discovery.json"
+          check_file "${OUTPUT_DIR}/sdl-discovery-report.md"
+          check_file "${OUTPUT_DIR}/confidence-report.json"
+          check_file "${OUTPUT_DIR}/unknowns-and-review-items.md"
+          check_file "${OUTPUT_DIR}/sdl-discovery.json"
+
+          # SDL files — warn individually so missing files are clearly surfaced
           if [ -f "${OUTPUT_DIR}/solution.sdl.yaml" ]; then
             echo "root_sdl_present=true" >> "$GITHUB_OUTPUT"
+            check_sdl "${OUTPUT_DIR}/sdl/services.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/data.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/auth.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/integrations.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/deployment.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/contracts.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/artifacts.sdl.yaml"
+            check_sdl "${OUTPUT_DIR}/sdl/assumptions.sdl.yaml"
+            if [ "${INPUT_INCLUDE_COMPLEXITY}" = "true" ]; then
+              check_sdl "${OUTPUT_DIR}/sdl/complexity.sdl.yaml"
+              check_sdl "${OUTPUT_DIR}/complexity-report.md"
+            fi
+          else
+            echo "::warning::solution.sdl.yaml not produced — SDL generation may have failed"
+          fi
+
+          if [ "${fail}" -ne 0 ]; then
+            echo "One or more required output files are missing. Check the runner output above."
+            exit 1
           fi
 
       - name: Upload discovery artifacts
