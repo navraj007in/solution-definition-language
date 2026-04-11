@@ -9,6 +9,10 @@ export interface AllArtifacts {
   'architecture-diagram': GeneratorResult | null
   'data-model': GeneratorResult | null
   'openapi': GeneratorResult | null
+  'sequence-diagrams': GeneratorResult | null
+  'backlog': GeneratorResult | null
+  'adr': GeneratorResult | null
+  'repo-scaffold': GeneratorResult | null
   'cost-estimate': GeneratorResult | null
   'coding-rules': GeneratorResult | null
   'compliance-checklist': GeneratorResult | null
@@ -21,10 +25,14 @@ export function generateAll(doc: SDLDocument): AllArtifacts {
 
   return {
     'architecture-diagram': safe(() => generate(doc, 'architecture-diagram')),
-    'data-model': safe(() => generate(doc, 'data-model')),
-    'openapi': safe(() => generate(doc, 'openapi')),
-    'cost-estimate': safe(() => generate(doc, 'cost-estimate')),
-    'coding-rules': safe(() => generateCodingRules(doc)),
+    'data-model':           safe(() => generate(doc, 'data-model')),
+    'openapi':              safe(() => generate(doc, 'openapi')),
+    'sequence-diagrams':    safe(() => generate(doc, 'sequence-diagrams')),
+    'backlog':              safe(() => generate(doc, 'backlog')),
+    'adr':                  safe(() => generate(doc, 'adr')),
+    'repo-scaffold':        safe(() => generate(doc, 'repo-scaffold')),
+    'cost-estimate':        safe(() => generate(doc, 'cost-estimate')),
+    'coding-rules':         safe(() => generateCodingRules(doc)),
     'compliance-checklist': safe(() => generateComplianceChecklist(doc)),
   }
 }
