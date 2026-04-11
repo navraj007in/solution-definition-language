@@ -84,21 +84,25 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string"
               },
               "type": {
-                "type": "string"
+                "type": "string",
+                "enum": ["rest", "graphql", "grpc", "webhook", "asyncapi"]
               },
               "owner": {
                 "type": "string"
               }
-            },
-            "required": [
-              "name"
-            ]
+            }
           }
         }
       }
@@ -114,29 +118,114 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "table": {
+                "type": "string"
+              },
+              "indexes": {
+                "type": "array"
+              },
+              "constraints": {
+                "type": "array"
+              },
+              "relationships": {
+                "type": "array"
               },
               "fields": {
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": true,
+                  "required": [
+                    "name",
+                    "type"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "nullable": {
+                      "type": "boolean"
+                    },
+                    "primaryKey": {
+                      "type": "boolean"
+                    },
+                    "foreignKey": {
+                      "type": "string"
+                    },
+                    "unique": {
+                      "type": "boolean"
+                    },
+                    "generated": {
+                      "type": "boolean"
+                    },
+                    "default": {},
+                    "enum": {
+                      "type": "array"
+                    },
+                    "maxLength": {
+                      "type": "integer"
+                    },
+                    "precision": {
+                      "type": "integer"
+                    },
+                    "scale": {
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "onUpdate": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
-            },
-            "required": [
-              "name"
-            ]
+            }
           }
         },
         "relationships": {
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -145,7 +234,13 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-": {}
+        },
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -154,15 +249,14 @@
             "type": "string"
           },
           "priority": {
-            "type": "string"
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
           }
-        },
-        "required": [
-          "name"
-        ]
+        }
       }
     },
     "compliance": {
+      "$comment": "maturity: partial — structure is intentionally open; frameworks are commonly rich objects with requirements and certifications, not simple string enums",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -171,12 +265,39 @@
     },
     "slos": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "availability": {
+                "type": "string"
+              },
+              "latencyP95": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "resilience": {
+      "$comment": "maturity: placeholder — resilience patterns vary widely (circuit breaker, retry, bulkhead, rate limit, timeout); permissive until a generator consumes this section",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -184,6 +305,7 @@
       }
     },
     "costs": {
+      "$comment": "maturity: placeholder — cost structures vary by team (per-service breakdown, third-party, scaling tiers); permissive until a generator consumes this section",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -191,6 +313,7 @@
       }
     },
     "backupDr": {
+      "$comment": "maturity: placeholder — backup and DR structures vary significantly (database-level, storage, site failover, recovery procedures); permissive until a generator consumes this section",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -198,6 +321,7 @@
       }
     },
     "design": {
+      "$comment": "maturity: placeholder — design system content is intentionally heterogeneous; permissive by design to accommodate varying token structures, component libraries, and theming approaches",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {

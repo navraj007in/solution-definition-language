@@ -31,15 +31,15 @@ Use it to understand which sections are stable and which are still evolving, and
 | `constraints` | no | yes | partial | no | `adr` (budget field only) | partial |
 | `techDebt` / `technicalDebt` | no | yes | partial | no | `adr` | partial |
 | `evolution` | no | yes | partial | no | `coding-rules` | partial |
-| `contracts` | no | yes | defined (`additionalProperties: false` on root object) | no | none | minimal |
-| `domain` | no | yes | defined (`additionalProperties: false` on root object) | no | none | minimal |
-| `features` | no | yes | partial (array of items, no `additionalProperties` guard) | no | none | minimal |
-| `compliance` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
-| `slos` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
-| `resilience` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
-| `costs` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
-| `backupDr` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
-| `design` | no | yes | permissive (`additionalProperties: true`) | no | none | placeholder |
+| `contracts` | no | yes | defined — `apis[]` items have `additionalProperties: false`, `type` enum enforced | no | none | minimal |
+| `domain` | no | yes | defined — entity items have `additionalProperties: false`; entity-level fields (`description`, `table`, `indexes`, `constraints`) enumerated; `fields[]` items have known DB attributes typed (`nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`) with `additionalProperties: true` | no | none | minimal |
+| `features` | no | yes | defined — items have `additionalProperties: false`, `priority` enum enforced | no | none | minimal |
+| `slos` | no | yes | defined — `services[]` items have `additionalProperties: false`, `name` required | no | none | minimal |
+| `compliance` | no | yes | permissive — framework structures vary too widely for a simple string enum; common shapes include named framework objects with requirements, certifications, data residency | no | none | placeholder |
+| `resilience` | no | yes | permissive — resilience patterns vary widely (circuit breaker, retry policy, bulkhead, rate limit, timeout, fallback) | no | none | placeholder |
+| `costs` | no | yes | permissive — cost breakdown structures vary (per-service, third-party, scaling tiers, total) | no | none | placeholder |
+| `backupDr` | no | yes | permissive — backup/DR structures vary significantly (database-level, storage, site failover, recovery procedures) | no | none | placeholder |
+| `design` | no | yes | permissive — design system content is intentionally heterogeneous (tokens, themes, motion, iconography, component libraries) | no | none | placeholder |
 
 ## Column Definitions
 
@@ -80,7 +80,9 @@ Do not assume these sections will be backfilled by normalization or consumed by 
 
 Sections in `minimal` and `placeholder` maturity will be promoted as follows:
 
-- `contracts` and `domain` → `partial` once at least one generator consumes them (planned: `openapi` consuming `contracts`, `data-model` consuming `domain`)
+- `contracts` → `partial` once `openapi` generator reads it to produce server stubs and security schemes
+- `domain` → `partial` once `data-model` generator reads it to drive schema output
 - `features` → `partial` once a planning-tier generator reads it
-- `slos`, `resilience`, `compliance` → tighten schema then add generator consumption before promoting
-- `costs`, `backupDr`, `design` → lowest priority; promote only if clear generator demand exists
+- `slos` → `partial` once a monitoring or alerting generator reads it
+- `compliance`, `resilience`, `costs`, `backupDr` → tighten schema and add generator consumption together; the structures are too varied to formalize speculatively — wait for a concrete generator use case to define the shape
+- `design` → lowest priority; promote only if a design-token or component-scaffold generator is added
