@@ -111,7 +111,7 @@ Not all arrays should be blindly concatenated across modules. The spec distingui
 **Identity-keyed arrays** — each entry has a logical identity field; importing the same entry twice is a modeling error:
 - `domain.entities[]` — keyed by `name`; two entries with the same `name` in different modules is a conflict, not an append
 - `integrations.custom[]` — keyed by `name`
-- `features[]` — keyed by `id` or `name`; duplicate feature names across modules should produce a warning
+- `features[]` — keyed by `name` (`FeatureSection` has no `id` field); duplicate `name` values across modules should produce a warning
 
 **Rule for implementations:** When merging arrays, if the array is identity-keyed and two entries share the same identity field, emit a `duplicate-array-item` warning and retain the later entry (last-writer-wins, consistent with scalar override behavior). Concatenable arrays never produce duplicate warnings.
 
@@ -601,11 +601,11 @@ mobile:
 ## Validation Rules (v1.1)
 
 1. **Contracts** — if `architecture.projects.backend[].apiStyle === "rest"`, must have corresponding OpenAPI contract
-2. **Domain entities** — if `domain.entities[]` defined, must match entity names in contracts
-3. **SLOs** — each `slos` entry must reference a component in `architecture.projects`
+2. **Domain entities** — if `domain.entities[]` defined, entity `name` values must be unique
+3. **SLOs** — `slos.services[].name` entries should correspond to a component name in `architecture.projects`
 4. **Compliance** — if `compliance.frameworks[].applicable === true`, requirements must be mapped to implementation
-5. **Features** — feature `dependsOn` must reference other feature IDs that exist
-6. **Resilience** — circuit breaker targets must be valid component or external service names
+5. ~~**Features dependsOn**~~ — removed; `FeatureSection` has no `dependsOn` field in the current type contract
+6. **Resilience** — `resilience.circuitBreaker.enabled: true` requires `threshold > 0`
 
 ---
 
@@ -632,38 +632,38 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 
 These rules catch logical inconsistencies and must pass for valid SDL (26 rules total):
 
-**Reference Integrity (9 rules):**
+**Reference Integrity (7 rules):**
 1. **SLO Service References** **[not yet implemented]** → every `slos.services[].name` should match a component name in `architecture.projects`
-2. **Cost Components** **[not yet implemented]** → every component in `costs.infrastructure[].component` must exist in `architecture.projects`
-3. **Circular Dependencies** **[not yet implemented]** → `architecture.projects[*][].dependsOn` must not form cycles
-4. **API Contract Service** **[not yet implemented]** → each entry in `contracts.apis[].endpoints[].service` (if present) must exist in `architecture.projects`
-5. **Foreign Key Targets** **[not yet implemented]** → entities in `domain.entities[].relationships[].target` must exist as entities in `domain.entities[].name`
-6. **Backup Database References** **[not yet implemented]** → databases in `backupDr.databases[].name` must match `data.primaryDatabase` or an entry in `data.secondaryDatabases[]`
-7. ~~**Environment Components**~~ — removed; `environments` is not a root-level SDL key. Environment-component binding is declared under `deployment`.
-8. ~~**Feature Dependencies (phase-keyed)**~~ — removed; `features` is a flat array (`features[]`), not a phase-keyed object. Phase tracking uses `features[].stage`.
-9. ~~**Resilience Service References**~~ — removed; `resilience.circuitBreaker` is a single configuration object, not a per-service array. Service-level overrides use `resilience.circuitBreaker.x-perService[]`.
+2. **Cost Components** **[not yet implemented, field absent]** → `CostSection` currently defines only `monthly` and `notes`; a per-component cost breakdown (`costs.infrastructure[].component`) is not in the active type contract. This rule is a placeholder for when `CostSection` is expanded.
+3. **Circular Dependencies** **[not yet implemented]** → `x-dependsOn[]` extension fields on `architecture.projects[*][]` must not form cycles (using the `x-dependsOn` extension convention, as `dependsOn` is not a first-class field in project types)
+4. **API Contract Service** **[not yet implemented]** → `contracts.apis[].owner` (if present) must match a component name in `architecture.projects`
+5. **Foreign Key Targets** **[not yet implemented]** → `domain.entities[].relationships[].to` must match a name in `domain.entities[].name`
+6. **Backup Coverage** **[not yet implemented]** → `backupDr.backups[].target` should reference a value matching `data.primaryDatabase.type` or an entry in `data.secondaryDatabases[]`
+7. ~~**Environment Components**~~ — removed; `environments` is not a root-level SDL key.
+8. ~~**Feature Dependencies (phase-keyed)**~~ — removed; `features` is a flat array, not a phase-keyed object.
+9. ~~**Resilience Service References**~~ — removed; `resilience.circuitBreaker` is a single configuration object.
 
 **Type Compatibility (3 rules):**
 10. **ORM-Database Pair** **[not yet implemented]** → `data.primaryDatabase.type` must be compatible with `architecture.projects[*][].orm` (e.g. ef-core incompatible with mongodb)
 11. **Framework-Language** **[not yet implemented]** → `architecture.projects[*][].framework` must be compatible with `.language` (e.g. nextjs requires typescript or javascript)
-12. **Auth Provider Integration** **[not yet implemented]** → if `auth.identityProvider` names a third-party (auth0, clerk, okta), it must also appear in `integrations`
+12. **Auth Provider Integration** **[not yet implemented]** → if `auth.provider` names a third-party value (`auth0`, `clerk`, `cognito`, `firebase`, `supabase`), it should also appear in `integrations`
 
 **Deployment Integrity (5 rules):**
 13. **Microservices Count** **[not yet implemented]** → `architecture.style: "microservices"` requires 2+ components across `architecture.projects`
-14. **Deployable Coverage** **[not yet implemented]** → every component with `deployable: true` must appear in at least one environment entry
+14. **Deployable Coverage** **[not yet implemented, field absent]** → `deployable` is not a first-class field on `FrontendProject`, `BackendProject`, or `MobileProject` in the current type contract; it is an `x-` extension field. This rule applies when `x-deployable: true` is set. Formal field promotion is tracked as a future contract change.
 15. **Port Conflicts** **[not yet implemented]** → within each environment, no two components may declare the same `port`
 16. **Region Support** **[not yet implemented]** → `deployment.regions[]` values must be valid for `deployment.cloud`
 17. **CloudFormation Constraint** **[not yet implemented]** → `deployment.ciCd.provider: "cloudformation"` only valid when `deployment.cloud: "aws"`
 
 **Data Model Integrity (4 rules):**
-18. **Primary Key Required** **[not yet implemented]** → all `domain.entities[]` with `fields[]` must have exactly one field with `primaryKey: true`
-19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.entities[].relationships[].target`) that span databases should be flagged as warnings, not errors
+18. **Primary Key Required** **[not yet implemented, field absent]** → `DomainField` currently defines `name`, `type`, and `required` only; `primaryKey` is not in the active type contract. This rule is a placeholder for when `DomainField` is expanded.
+19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.entities[].relationships[].to`) that span databases should be flagged as warnings, not errors
 20. **Unique Component Names** **[not yet implemented]** → component `name` values must be globally unique across all `architecture.projects` categories
-21. **Entity Ownership** **[not yet implemented]** → each `domain.entities[]` should declare an `owner` matching a component name
+21. **Entity Ownership** **[not yet implemented, field absent]** → `DomainEntity` currently defines only `name` and `fields[]`; an `owner` field is not in the active type contract. This rule is a placeholder for when `DomainEntity` is expanded.
 
 **Configuration Completeness (3 rules):**
-22. **Deployable Component Fields** **[not yet implemented]** → components with `deployable: true` must have `path` or `runtime` defined
-23. **OIDC Provider URL** **[not yet implemented]** → `auth.strategy: "oidc"` requires `auth.identityProvider` to be set
+22. **Deployable Component Fields** **[not yet implemented, field absent]** → depends on `deployable` being a first-class field (see rule 14); when `x-deployable: true` is set, the component should also declare `x-path` or have a `framework` that implies a known runtime
+23. **OIDC Provider URL** **[not yet implemented]** → `auth.strategy: "oidc"` requires `auth.provider` to be set
 24. **Compliance Framework Validity** **[not yet implemented]** → `compliance.frameworks[].name` must be one of: `GDPR`, `HIPAA`, `SOC2`, `PCI-DSS`, `CCPA`, `ISO27001`
 
 **Resilience & Performance (2 rules):**
@@ -671,7 +671,7 @@ These rules catch logical inconsistencies and must pass for valid SDL (26 rules 
 26. **SLO Reasonableness** **[not yet implemented]** → `slos.services[].availability` (when present) should represent a value between 90% and 99.99%; `slos.services[].latencyP95` should be a valid duration string (e.g. `"200ms"`)
 
 **PII & Security (1 rule):**
-27. **PII Encryption** **[not yet implemented]** → if any `domain.entities[].fields[]` has `pii: true`, `data.primaryDatabase` should have `encryption.atRest: true`
+27. **PII Encryption** **[not yet implemented]** → if `nonFunctional.security.pii: true`, `data.primaryDatabase` should have encryption at rest implied by the deployment cloud (or `nonFunctional.security.encryptionAtRest: true`). Note: `pii` is a field on `nonFunctional.security`, not on individual entity fields (`DomainField` has no `pii` property in the current type contract).
 
 ### Warning Rules
 
