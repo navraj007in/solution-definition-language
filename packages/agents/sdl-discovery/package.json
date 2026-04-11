@@ -1,0 +1,45 @@
+{
+  "name": "@arch0/sdl-discovery",
+  "version": "0.1.0",
+  "description": "SDL Discovery Agent - reverse-engineer architecture from code repositories",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/__tests__/**/*.test.js",
+    "pretest": "tsc",
+    "lint": "echo 'Linting would run here'",
+    "discover": "node --loader ts-node/esm src/cli.ts"
+  },
+  "keywords": [
+    "SDL",
+    "architecture",
+    "discovery",
+    "reverse-engineering",
+    "code-analysis"
+  ],
+  "author": "arch0 contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@arch0/sdl": "workspace:*",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "files": [
+    "dist",
+    "HEURISTICS.md",
+    "README.md"
+  ]
+}
