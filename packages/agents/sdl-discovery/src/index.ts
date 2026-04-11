@@ -26,17 +26,34 @@ export interface ComponentDiscovery {
 /**
  * Scan repositories and generate SDL discovery
  *
+ * ⚠️ INTENTIONAL STUB — Discovery is implemented as a Claude agent, not a function.
+ *
+ * Why? Discovery requires interactive reasoning, human decisions, and contextual
+ * inference that are better suited to a conversational agent than a sync function.
+ * See .claude/agents/sdl-discovery.md (Steps 1-6) for the full workflow.
+ *
+ * Use the Claude Code CLI to run discovery:
+ *   claude-code --agent sdl-discovery-agent --repos ./repo --output ./output
+ *
+ * This package provides supporting utilities for agents and consumers:
+ * - Types: DiscoveryResult, ComplexityResult, Component, Dependency, etc.
+ * - Heuristics: signal detection for components, complexity scoring
+ * - calculateComplexity(): all 6 dimensions with scoring and reduction plan
+ *
  * @param options Scan configuration
- * @returns Discovery result with components and metadata
+ * @returns Never — throws with clear error directing to agent
+ * @throws Always throws with instructions to use the agent instead
  */
 export async function discoverArchitecture(
   options: DiscoveryConfig
 ): Promise<DiscoveryResult> {
-  // Stub: implementation is performed by the SDL Discovery Agent (v1.2)
-  // See: .claude/agents/sdl-discovery.md for the full workflow
   throw new Error(
-    'Not yet implemented. Use claude-code CLI to invoke the SDL Discovery Agent. ' +
-    'See .claude/agents/sdl-discovery.md for the specification.'
+    'discoverArchitecture() is an intentional stub.\n\n' +
+    'Discovery is implemented as a Claude agent (see .claude/agents/sdl-discovery.md),\n' +
+    'not as a function, because it requires interactive reasoning and human decisions.\n\n' +
+    'Use the Claude Code CLI:\n' +
+    '  claude-code --agent sdl-discovery-agent --repos ./repo --output ./output\n\n' +
+    'This package provides supporting types and utilities (heuristics, complexity calculation).'
   );
 }
 
