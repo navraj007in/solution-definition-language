@@ -1,6 +1,7 @@
 export { parse } from './parser';
 export type { ParseResult } from './parser';
 export { validate } from './validator';
+export { validateSemantics } from './semantic-validator';
 export { normalize } from './normalizer';
 export type { NormalizeResult } from './normalizer';
 export { detectWarnings } from './warnings';
@@ -101,6 +102,7 @@ export type {
 
 import { parse } from './parser';
 import { validate } from './validator';
+import { validateSemantics } from './semantic-validator';
 import { normalize } from './normalizer';
 import { parseWithImports } from './resolver';
 import type { FileReader, ResolvedSdl } from './resolver';
@@ -162,6 +164,22 @@ export function compileWithImports(
     };
   }
 
+  // Semantic validation (cross-section relational checks)
+  const semanticErrors = validateSemantics(resolved.document as unknown as SDLDocument);
+  if (semanticErrors.length > 0) {
+    return {
+      success: false,
+      errors: semanticErrors,
+      warnings: [],
+      document: null,
+      summary: null,
+      inferences: [],
+      modules: resolved.modules,
+      resolveWarnings: resolved.warnings,
+      resolveErrors: resolved.errors,
+    };
+  }
+
   // Normalize
   const { document: normalized, inferences } = normalize(resolved.document as unknown as SDLDocument);
 
@@ -203,6 +221,19 @@ export function compile(yamlString: string): CompileResult {
     return {
       success: false,
       errors: validationResult.errors,
+      warnings: [],
+      document: null,
+      summary: null,
+      inferences: [],
+    };
+  }
+
+  // 2.5. Semantic validation (cross-section relational checks)
+  const semanticErrors = validateSemantics(parseResult.data as SDLDocument);
+  if (semanticErrors.length > 0) {
+    return {
+      success: false,
+      errors: semanticErrors,
       warnings: [],
       document: null,
       summary: null,

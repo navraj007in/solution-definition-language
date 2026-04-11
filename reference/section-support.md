@@ -34,9 +34,9 @@ Use it to understand which sections are stable and which are still evolving, and
 | `contracts` | no | yes | defined — `apis[]` items have `additionalProperties: false`, `type` enum enforced | no | `openapi` reads `contracts.apis[]` for tags and API type annotation when present | partial |
 | `domain` | no | yes | defined — entity items have `additionalProperties: false`; entity-level fields (`description`, `table`, `indexes`, `constraints`) enumerated; `fields[]` items have known DB attributes typed (`nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`) with `additionalProperties: true` | no | `data-model` reads `domain.entities[]` as authoritative entity source when present | partial |
 | `features` | no | yes | defined — items have `additionalProperties: false`; `priority` enum enforced; `stage` (MVP\|Growth\|Enterprise) and `status` (planned\|in-progress\|done\|deferred) added | no | none | minimal |
-| `slos` | no | yes | defined — `services[]` items have `additionalProperties: false`, `name` required | no | none | minimal |
-| `compliance` | no | yes | defined — `frameworks[]` items have `additionalProperties: false` with `name` required; `requirements[]` typed; `certifications`, `dataResidency`, `dataRetention` accepted as open arrays | no | none | minimal |
-| `resilience` | no | yes | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` each have typed shapes with `additionalProperties: false`; per-service detail goes in `x-` extensions | no | none | minimal |
+| `slos` | no | yes | defined — `services[]` items have `additionalProperties: false`, `name` required | no | `monitoring` reads `slos.services[]` for per-service SLO alert configuration | partial |
+| `compliance` | no | yes | defined — `frameworks[]` items have `additionalProperties: false` with `name` required; `requirements[]` typed; `certifications`, `dataResidency`, `dataRetention` accepted as open arrays | no | `compliance-checklist` reads `compliance.frameworks[]` to generate framework-specific compliance checklists | partial |
+| `resilience` | no | yes | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` each have typed shapes with `additionalProperties: false`; per-service detail goes in `x-` extensions | no | `coding-rules` emits resilience pattern rules from circuit breaker, retry, timeout, and rate limit config | partial |
 | `costs` | no | yes | permissive — cost breakdown structures vary (per-service, third-party, scaling tiers, total) | no | none | placeholder |
 | `backupDr` | no | yes | permissive — backup/DR structures vary significantly (database-level, storage, site failover, recovery procedures) | no | none | placeholder |
 | `design` | no | yes | permissive — design system content is intentionally heterogeneous (tokens, themes, motion, iconography, component libraries) | no | none | placeholder |
@@ -67,7 +67,7 @@ Use it to understand which sections are stable and which are still evolving, and
 
 ## Notes on Placeholder Sections
 
-`compliance`, `slos`, `resilience`, `costs`, `backupDr`, and `design` are present in the schema and types as intentional future-facing stubs. They:
+`costs`, `backupDr`, and `design` are present in the schema and types as intentional future-facing stubs. They:
 
 - accept arbitrary content today (no validation failures)
 - are not read by any generator in the current release
@@ -76,13 +76,15 @@ Use it to understand which sections are stable and which are still evolving, and
 
 Do not assume these sections will be backfilled by normalization or consumed by generators without checking this document.
 
+**Status update:** `compliance`, `slos`, and `resilience` are no longer placeholder-only. They are now consumed by generators (`compliance-checklist`, `monitoring`, and `coding-rules` respectively) and have progressed from `minimal` to `partial` maturity.
+
 ## Roadmap
 
+- ✓ `compliance` → `partial` (as of v1.1, `compliance-checklist` generator consumes `frameworks[]`)
+- ✓ `resilience` → `partial` (as of v1.1, `coding-rules` generator emits resilience pattern rules)
+- ✓ `slos` → `partial` (as of v1.1, `monitoring` generator reads `slos.services[]` for alert thresholds)
 - `contracts` → `stable` once `openapi` generates richer server stubs, security schemes, and path groupings from `contracts.apis[]`
 - `domain` → `stable` once `data-model` produces fully entity-driven ORM schemas and ERDs without fallback inference
-- `compliance` → `partial` once a compliance checklist generator reads `frameworks[]`
-- `resilience` → `partial` once `coding-rules` emits resilience pattern rules from circuit breaker and retry config
-- `slos` → `partial` once `monitoring` reads `slos.services[]` for alert threshold configuration
 - `features` → `partial` once a planning-tier generator reads it
 - `costs`, `backupDr` → promote only when a concrete generator use case emerges; currently experimental
 - `design` → intentionally open; promote only if a design-token or component-scaffold generator is added

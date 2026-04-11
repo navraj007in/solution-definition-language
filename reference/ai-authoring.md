@@ -172,7 +172,7 @@ Do not set these fields if you have no concrete value. The normalizer fills them
 
 ## Valid Artifact Types (for `artifacts.generate[]`)
 
-Only these 12 values are valid in `artifacts.generate`. Unknown values are skipped at generation time (not validation errors, but produce no output).
+Only these 13 values are valid in `artifacts.generate`. Unknown values are skipped at generation time (not validation errors, but produce no output).
 
 ```
 architecture-diagram
@@ -187,6 +187,7 @@ deployment-guide
 cost-estimate
 coding-rules
 coding-rules-enforcement
+compliance-checklist
 ```
 
 ---

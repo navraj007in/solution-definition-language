@@ -24,18 +24,17 @@ Solution Design Language (SDL) is a YAML-based specification for capturing compl
 | `product` | object | Personas, flows, value proposition |
 | `auth` | object | Authentication strategy |
 | `deployment` | object | Cloud, runtime, CI/CD, infrastructure |
-| `environments` | array | Runtime environment definitions |
 | `nonFunctional` | object | Availability, scaling, security, performance |
 | `observability` | object | Logging, tracing, metrics |
-| `integrations` | array/object | Third-party providers |
+| `integrations` | object | Third-party providers |
 | `constraints` | object | Budget, team, timeline, existing infrastructure |
 | `testing` | object | Test framework and coverage strategy |
 | `techDebt` | array | Known debt and remediation planning |
-| `contracts` | object/array | REST, GraphQL, and gRPC contract definitions |
+| `contracts` | object | REST, GraphQL, and gRPC contract definitions |
 | `domain` | object | Entity definitions, fields, relationships, constraints |
-| `features` | object | MVP phases, feature flags, dependencies |
+| `features` | array | Product delivery phases with feature definitions |
 | `compliance` | object | Regulatory and residency requirements |
-| `slos` | array | Service-level objectives and indicators |
+| `slos` | object | Service-level objectives and indicators |
 | `resilience` | object | Circuit breakers, retries, timeouts, fallbacks |
 | `costs` | object | Infrastructure and third-party cost model |
 | `backupDr` | object | Recovery objectives, replication, failover |

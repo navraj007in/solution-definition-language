@@ -25,26 +25,26 @@ architecture:
         styling: tailwind
         stateManagement: zustand
         x-deployable: true
-        x-dependsOn: [api-server, clerk]
+        x-dependsOn: [api-backend, clerk]
         x-port: 3000
 
     backend:
-      - name: api-server
+      - name: api-backend
         framework: nodejs
         apiStyle: rest
         orm: prisma
         x-deployable: true
-        x-dependsOn: [web-app, ai-worker, stripe, sendgrid, clerk, sentry]
+        x-dependsOn: [web-app, ai-service, stripe, sendgrid, clerk, sentry]
         x-port: 4000
 
-      - name: ai-worker
+      - name: ai-service
         framework: python-fastapi
         apiStyle: rest
         x-deployable: true
         x-dependsOn: [openai, sentry]
         x-port: 8000
 
-      - name: notification-worker
+      - name: notifications-service
         framework: nodejs
         apiStyle: rest
         x-deployable: true
