@@ -1,0 +1,239 @@
+name: SDL Discovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit SHA to scan
+        required: false
+        default: ""
+        type: string
+      mode:
+        description: Discovery mode
+        required: true
+        default: discovery
+        type: choice
+        options:
+          - discovery
+          - inventory
+          - drift
+          - monorepo
+      output_mode:
+        description: Upload artifacts only or write results to a branch
+        required: true
+        default: artifacts
+        type: choice
+        options:
+          - artifacts
+          - branch
+      output_branch:
+        description: Target branch when output_mode=branch
+        required: false
+        default: codex/sdl-discovery
+        type: string
+      open_pr:
+        description: Open or update a draft PR when output_mode=branch
+        required: false
+        default: false
+        type: boolean
+      existing_sdl_path:
+        description: Existing SDL root path for drift or merge-aware discovery
+        required: false
+        default: solution.sdl.yaml
+        type: string
+      scope_paths:
+        description: Optional comma-separated repo paths to scan
+        required: false
+        default: ""
+        type: string
+      domain_hints:
+        description: Optional domain hints for the discovery runner
+        required: false
+        default: ""
+        type: string
+      environment_hints:
+        description: Optional environment hints for the discovery runner
+        required: false
+        default: ""
+        type: string
+      include_complexity:
+        description: Include complexity outputs if supported by the runner
+        required: false
+        default: true
+        type: boolean
+      preserve_existing_sdl:
+        description: Preserve existing SDL where the runner supports merge-aware updates
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      OUTPUT_DIR: .sdl-discovery-output
+      SDL_DISCOVERY_RUNNER: ${{ vars.SDL_DISCOVERY_RUNNER }}
+      INPUT_REF: ${{ inputs.ref }}
+      INPUT_MODE: ${{ inputs.mode }}
+      INPUT_OUTPUT_MODE: ${{ inputs.output_mode }}
+      INPUT_OUTPUT_BRANCH: ${{ inputs.output_branch }}
+      INPUT_OPEN_PR: ${{ inputs.open_pr }}
+      INPUT_EXISTING_SDL_PATH: ${{ inputs.existing_sdl_path }}
+      INPUT_SCOPE_PATHS: ${{ inputs.scope_paths }}
+      INPUT_DOMAIN_HINTS: ${{ inputs.domain_hints }}
+      INPUT_ENVIRONMENT_HINTS: ${{ inputs.environment_hints }}
+      INPUT_INCLUDE_COMPLEXITY: ${{ inputs.include_complexity }}
+      INPUT_PRESERVE_EXISTING_SDL: ${{ inputs.preserve_existing_sdl }}
+    steps:
+      - name: Resolve ref
+        id: ref
+        run: |
+          if [ -n "${INPUT_REF}" ]; then
+            echo "value=${INPUT_REF}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.value }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate runner configuration
+        run: |
+          if [ -z "${SDL_DISCOVERY_RUNNER}" ]; then
+            echo "SDL_DISCOVERY_RUNNER repository variable is not configured." >&2
+            echo "Configure it with the command that executes the shared SDL discovery spec in GitHub." >&2
+            echo "The command must write outputs into \$OUTPUT_DIR." >&2
+            exit 1
+          fi
+
+      - name: Prepare output directory
+        run: |
+          rm -rf "${OUTPUT_DIR}"
+          mkdir -p "${OUTPUT_DIR}"
+
+      - name: Run SDL discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Running discovery with configured runner"
+          echo "Ref: ${INPUT_REF:-${GITHUB_REF_NAME}}"
+          echo "Mode: ${INPUT_MODE}"
+          echo "Output mode: ${INPUT_OUTPUT_MODE}"
+          export SDL_DISCOVERY_REF="${{ steps.ref.outputs.value }}"
+          export SDL_DISCOVERY_MODE="${INPUT_MODE}"
+          export SDL_DISCOVERY_OUTPUT_DIR="${OUTPUT_DIR}"
+          export SDL_DISCOVERY_EXISTING_SDL_PATH="${INPUT_EXISTING_SDL_PATH}"
+          export SDL_DISCOVERY_SCOPE_PATHS="${INPUT_SCOPE_PATHS}"
+          export SDL_DISCOVERY_DOMAIN_HINTS="${INPUT_DOMAIN_HINTS}"
+          export SDL_DISCOVERY_ENVIRONMENT_HINTS="${INPUT_ENVIRONMENT_HINTS}"
+          export SDL_DISCOVERY_INCLUDE_COMPLEXITY="${INPUT_INCLUDE_COMPLEXITY}"
+          export SDL_DISCOVERY_PRESERVE_EXISTING_SDL="${INPUT_PRESERVE_EXISTING_SDL}"
+          bash -lc "${SDL_DISCOVERY_RUNNER}"
+
+      - name: Verify output contract
+        run: |
+          test -d "${OUTPUT_DIR}"
+          test -f "${OUTPUT_DIR}/sdl-discovery-report.md"
+          test -f "${OUTPUT_DIR}/confidence-report.json"
+          test -f "${OUTPUT_DIR}/unknowns-and-review-items.md"
+          test -f "${OUTPUT_DIR}/sdl-discovery.json"
+          if [ -f "${OUTPUT_DIR}/solution.sdl.yaml" ]; then
+            echo "root_sdl_present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload discovery artifacts
+        if: ${{ inputs.output_mode == 'artifacts' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdl-discovery-${{ github.run_id }}
+          path: ${{ env.OUTPUT_DIR }}
+          if-no-files-found: error
+
+      - name: Stage discovery outputs into workspace
+        if: ${{ inputs.output_mode == 'branch' }}
+        run: |
+          rsync -a --delete "${OUTPUT_DIR}/" ./
+
+      - name: Create or update discovery pull request
+        if: ${{ inputs.output_mode == 'branch' && inputs.open_pr }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ inputs.output_branch }}
+          title: Draft SDL discovery for ${{ github.event.repository.name }}
+          draft: true
+          commit-message: "chore: generate SDL discovery draft"
+          body: |
+            This PR was generated by the manual `SDL Discovery` workflow.
+
+            Scan settings:
+            - Ref: `${{ steps.ref.outputs.value }}`
+            - Mode: `${{ inputs.mode }}`
+            - Existing SDL path: `${{ inputs.existing_sdl_path }}`
+            - Scope paths: `${{ inputs.scope_paths || 'repo root' }}`
+            - Include complexity: `${{ inputs.include_complexity }}`
+            - Preserve existing SDL: `${{ inputs.preserve_existing_sdl }}`
+
+            Generated outputs are drafts and require human review.
+          add-paths: |
+            solution.sdl.yaml
+            sdl/**
+            sdl-discovery-report.md
+            confidence-report.json
+            unknowns-and-review-items.md
+            sdl-discovery.json
+            complexity-report.md
+
+      - name: Commit and push discovery branch
+        if: ${{ inputs.output_mode == 'branch' && !inputs.open_pr }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "${INPUT_OUTPUT_BRANCH}"
+          git add solution.sdl.yaml sdl sdl-discovery-report.md confidence-report.json unknowns-and-review-items.md sdl-discovery.json complexity-report.md 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No discovery changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: generate SDL discovery draft"
+          git push --force-with-lease origin "${INPUT_OUTPUT_BRANCH}"
+
+      - name: Publish job summary
+        shell: bash
+        run: |
+          {
+            echo "## SDL Discovery"
+            echo
+            echo "- Ref: \`${{ steps.ref.outputs.value }}\`"
+            echo "- Mode: \`${INPUT_MODE}\`"
+            echo "- Output mode: \`${INPUT_OUTPUT_MODE}\`"
+            echo "- Existing SDL path: \`${INPUT_EXISTING_SDL_PATH}\`"
+            if [ -n "${INPUT_SCOPE_PATHS}" ]; then
+              echo "- Scope paths: \`${INPUT_SCOPE_PATHS}\`"
+            fi
+            echo "- Include complexity: \`${INPUT_INCLUDE_COMPLEXITY}\`"
+            echo "- Preserve existing SDL: \`${INPUT_PRESERVE_EXISTING_SDL}\`"
+            echo
+            echo "Generated files:"
+            find "${OUTPUT_DIR}" -maxdepth 2 -type f | sort | sed 's#^#- `#; s#$#`#'
+            echo
+            if [ "${INPUT_OUTPUT_MODE}" = "artifacts" ]; then
+              echo "Artifacts were uploaded for download from this run."
+            else
+              echo "Discovery outputs were written to branch mode."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

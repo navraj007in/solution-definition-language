@@ -293,17 +293,50 @@ Example review items:
 
 See [examples/discovered-sdls/](../../examples/discovered-sdls/) for generated SDL outputs.
 
-## Limitations
+## Detection Coverage
+
+The agent's detection capability is split across two tiers:
+
+### Tier 1 — Configuration-Level (HIGH confidence)
+
+Extracted from: manifests, docker-compose, Kubernetes, env files, CI/CD.
+
+| What's Detected | Source |
+|-----------------|--------|
+| Service names and tech stacks | `package.json`, `go.mod`, `pom.xml`, etc. |
+| Explicit service dependencies | `docker-compose depends_on`, env `*_URL` vars |
+| Shared datastores | Multiple services sharing same `DATABASE_URL` host |
+| Monorepo internal deps | Workspace package imports |
+| External integrations | `STRIPE_*`, `SENDGRID_*`, `OPENAI_*` env keys |
+| Deployment topology | CI/CD `needs:` chains, environments |
+| Infrastructure | Kubernetes Services, Ingress, ConfigMaps |
+
+### Tier 2 — Code-Level (HIGH/MEDIUM confidence)
+
+Extracted from: source files across detected languages (JS/TS, Python, Go, C#, Java, Ruby).
+
+| What's Detected | Source |
+|-----------------|--------|
+| HTTP calls to other services | `axios.post()`, `requests.get()`, `http.Get()` in code |
+| Service routes exposed | `app.get('/path')`, `@Controller`, route registrations |
+| Queue producers/consumers | `queue.publish('topic')`, `consumer.subscribe('topic')` |
+| API contract files | OpenAPI, GraphQL, gRPC .proto, AsyncAPI specs |
+| Generated client SDK deps | `@org/service-client` imports in code |
+
+## Known Limitations
 
 The agent cannot:
-- Infer true business intent without documentation
-- Detect hidden runtime dependencies not in code/config
-- Verify correctness of unused or stale code
-- Determine actual runtime topology (requires runtime inspection)
-- Handle extremely unconventional project structures well
-- Scale to scanning thousands of repos efficiently (designed for org-wide, not cloud-wide)
+- **Detect dynamic URLs** — URLs built at runtime from variables without env var anchors (confidence: LOW)
+- **Understand business logic** — Cannot infer intent, only observable code structure
+- **Detect hidden runtime dependencies** — Internal service meshes, sidecar proxies, runtime service discovery not in code
+- **Verify stale code** — Commented-out or dead code may yield false signals
+- **Determine actual production topology** — Inferred from config; actual traffic patterns require runtime inspection
+- **Scale to thousands of repos** — Designed for org-wide discovery (10s–100s of repos), not cloud-wide
+- **Detect unconventional patterns** — Custom HTTP wrappers, reflection-based routing, macro-generated code
 
-Always validate generated SDL with your architecture team before using as source of truth.
+**Organizational complexity always requires manual validation.** The agent estimates team count from service count (LOW confidence) — always confirm with your architecture team.
+
+Always treat generated SDL as a **draft for review**, not a production source of truth.
 
 ## Heuristics Reference
 
