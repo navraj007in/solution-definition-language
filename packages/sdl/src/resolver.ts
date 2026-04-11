@@ -35,6 +35,12 @@ export interface ResolvedSdl {
 /** Function that reads a file given its path relative to the root. */
 export type FileReader = (relativePath: string) => string | null;
 
+/**
+ * Maximum import nesting depth.
+ * Normative rule — see spec/SDL-v1.1.md "Modular SDL and Import Semantics § Depth Limit".
+ * Supports root → depth-1 → depth-2 → depth-3 (3 levels of nesting below root).
+ * Imports beyond this depth are skipped with a warning, not a hard error.
+ */
 const MAX_IMPORT_DEPTH = 3;
 const SDL_EXTENSIONS = ['.sdl.yaml', '.sdl.yml'];
 
@@ -102,7 +108,8 @@ function deepMerge(
       warnings.push({
         type: 'scalar-override',
         path: currentPath,
-        message: `Key "${currentPath.join('.')}" overridden by ${sourceModule}`,
+        // last-writer-wins is normative per spec/SDL-v1.1.md "Merge Rules"
+        message: `Key "${currentPath.join('.')}" overridden by ${sourceModule} (was: ${JSON.stringify(targetVal)}, now: ${JSON.stringify(sourceVal)})`,
         sourceModule,
       });
       target[key] = sourceVal;

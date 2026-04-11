@@ -5,8 +5,16 @@ Solution Design Language (SDL) is a YAML-based specification for capturing compl
 ## Status
 
 - `v1.1` is the active SDL version.
-- The normative source for `v1.1` is [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md).
-- The canonical naming and shape reference for the active contract is [`canonical-contract.md`](canonical-contract.md).
+
+## Authority Hierarchy
+
+When sources conflict, resolve in this order:
+
+1. **[`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md)** — normative specification. All validation rules, allowed fields, and semantic constraints are defined here. This document is the single source of truth.
+2. **[`canonical-contract.md`](canonical-contract.md)** — quick-reference summary of enum values, field shapes, and alias policy derived from the spec. Use this for lookup; if it disagrees with the spec, the spec wins and `canonical-contract.md` should be updated.
+3. **Runtime schema and types** (`packages/sdl/src/schema/sdl-v1.1.schema.json`, `packages/sdl/src/types.ts`) — machine-executable derivations of the spec. These lag the spec during active development. When they disagree with the spec, file a bug against the package, not the spec.
+
+> **Rule:** Do not add authority sources outside this hierarchy. If a new document needs to describe SDL, it must subordinate itself to `spec/SDL-v1.1.md` explicitly.
 
 ## Required Root Fields
 
@@ -117,7 +125,7 @@ The current implementation surface is narrower than some narrative examples in t
 - `features` is currently modeled as an array in the active schema and exported types
 - `slos` is currently modeled as an object in the active schema and exported types
 
-When in doubt, follow [`canonical-contract.md`](canonical-contract.md), then the active schema and exported types in `packages/sdl/src/schema/sdl-v1.1.schema.json` and `packages/sdl/src/types.ts`.
+When in doubt, follow the authority hierarchy above: spec first, then `canonical-contract.md` for quick lookup, then runtime types. The spec always wins.
 
 ## Validation
 

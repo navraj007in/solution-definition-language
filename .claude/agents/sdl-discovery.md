@@ -170,11 +170,13 @@ Assign confidence per field and component:
 
 Produce a draft SDL v1.1 modular document. Follow the output contract in Step 9.
 
-Each SDL section includes:
-- `confidence: high | medium | low` (or `x-confidence` if using extension fields)
-- `evidence: [list of evidence sources]` (or `x-evidence`)
-- `review_required: boolean` (if applicable)
+Each SDL section includes extension fields for discovery metadata:
+- `x-confidence: high | medium | low` — always use the `x-` prefixed form; bare `confidence` is not part of the SDL contract
+- `x-evidence: [list of evidence sources]` — always use the `x-` prefixed form; bare `evidence` is not part of the SDL contract
+- `x-review-required: true | false` — always use the `x-` prefixed form
 - Comments explaining inferred relationships
+
+> **Schema rule:** `x-confidence`, `x-evidence`, and `x-review-required` are SDL extension fields (the `x-` prefix is the stable contract for tooling metadata). Never emit bare `confidence`, `evidence`, or `review_required` as top-level or section-level keys — those are not part of the SDL v1.1 schema.
 
 #### Drift Mode: Selective SDL Regeneration
 
@@ -327,7 +329,7 @@ Generate a **modular multi-file SDL v1.1 structure** (not monolithic).
 **Root file:**
 - **solution.sdl.yaml** — Root document with imports + core solution/product sections
 
-**Modular SDL files** (in `sdl/` subdirectory):
+**Modular SDL files** (in `sdl/` subdirectory) — these are valid SDL v1.1 sections and are listed in `solution.sdl.yaml` imports:
 1. **sdl/services.sdl.yaml** — architecture section (frontends, backends, mobile, shared libraries)
 2. **sdl/data.sdl.yaml** — data section (datastores, replication, migration strategy)
 3. **sdl/auth.sdl.yaml** — auth section (strategy, providers, middleware, mobile-security)
@@ -335,8 +337,12 @@ Generate a **modular multi-file SDL v1.1 structure** (not monolithic).
 5. **sdl/deployment.sdl.yaml** — deployment section (containers, environments, CI/CD, artifacts, scaling)
 6. **sdl/contracts.sdl.yaml** — contracts section (API specs, shared types, service dependencies)
 7. **sdl/artifacts.sdl.yaml** — artifacts section (docker images, frontend builds, mobile app)
-8. **sdl/assumptions.sdl.yaml** — assumptions + unknowns (key inferred relationships, review items, gaps)
-9. **sdl/complexity.sdl.yaml** — complexity section (Architecture Index + Delivery Burden Index, dimensions, scores, reduction plan)
+
+**Discovery sidecar files** (in `sdl/` subdirectory) — NOT listed in `solution.sdl.yaml` imports; these are discovery-layer metadata, not part of the stable SDL contract:
+- **sdl/assumptions.sdl.yaml** — assumptions + unknowns (key inferred relationships, review items, gaps). Not a stable SDL section; kept alongside SDL for human review but excluded from imports.
+- **sdl/complexity.sdl.yaml** — complexity section (Architecture Index + Delivery Burden Index, dimensions, scores, reduction plan). Not a stable SDL section; sidecar output consumed by tools but not part of the SDL contract.
+
+> **Why sidecar?** `assumptions` and `complexity` are discovery-layer concerns, not architecture-description concerns. Including them in SDL `imports` would make every SDL-consuming tool responsible for parsing discovery metadata. They live next to the SDL but outside its contract boundary.
 
 **Supporting reports** (in root output directory):
 - **sdl-discovery-report.md** — Markdown summary for human review (includes Complexity Summary section)
@@ -388,15 +394,16 @@ imports:
   - sdl/deployment.sdl.yaml
   - sdl/contracts.sdl.yaml
   - sdl/artifacts.sdl.yaml
-  - sdl/assumptions.sdl.yaml
-  - sdl/complexity.sdl.yaml
+  # NOTE: sdl/assumptions.sdl.yaml and sdl/complexity.sdl.yaml are NOT imported here.
+  # They are discovery sidecar files — kept in sdl/ for human review but excluded
+  # from the SDL import graph. SDL consumers should not need to parse them.
 
 solution:
   name: ...
   description: ...
   stage: ...
-  confidence: ...
-  evidence: [...]
+  x-confidence: high | medium | low   # x-prefix: extension field, not SDL contract
+  x-evidence: [...]                   # x-prefix: extension field, not SDL contract
 
 product:
   personas: [...]

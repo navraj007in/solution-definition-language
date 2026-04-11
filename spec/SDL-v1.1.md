@@ -2,7 +2,12 @@
 
 **Complete Solution Design Language** — comprehensive architecture specification with API contracts, data models, SLOs, compliance, feature planning, and resilience patterns.
 
-For canonical enum values, artifact types, stable root section shapes, and alias policy, see [`../reference/canonical-contract.md`](../reference/canonical-contract.md).
+This document is the normative SDL v1.1 specification. All other documents are subordinate:
+- [`../reference/canonical-contract.md`](../reference/canonical-contract.md) — quick-reference summary of enums, shapes, and aliases derived from this spec
+- [`../reference/schema-reference.md`](../reference/schema-reference.md) — field listing and authority hierarchy
+- Runtime schema/types in `packages/sdl/` — machine-executable derivations of this spec
+
+If any subordinate document conflicts with this spec, this spec wins.
 
 ## Overview
 
@@ -49,10 +54,67 @@ testing: {}
 techDebt: []
 ```
 
-Current implementation note:
+Implementation status note:
 
-- The active schema and exported types are the source of truth for exact field shapes.
-- Some richer narrative examples below describe possible future expansion areas, but the implemented `v1.1` contract is intentionally narrower today.
+- This spec is the source of truth for field shapes. The active schema and exported types in `packages/sdl/` are derived from this spec; when they diverge, the spec governs and the package should be updated.
+- Some sections below describe the full intended contract. Where the runtime package has not yet implemented a section, that section is marked **[not yet implemented]**. Implementors should treat unimplemented sections as planned, not optional.
+
+---
+
+## Modular SDL and Import Semantics
+
+SDL documents may be split across multiple files using the `imports` key. This section defines the normative rules for how imports are resolved and merged.
+
+### Import Declaration
+
+```yaml
+sdlVersion: "1.1"
+imports:
+  - sdl/auth.sdl.yaml
+  - sdl/deployment.sdl.yaml
+solution: {}
+architecture: {}
+data: {}
+```
+
+- `imports` is an optional array of relative file paths at the root of an SDL document.
+- Imported paths must end in `.sdl.yaml` or `.sdl.yml`. Other extensions produce a warning.
+- Each imported file is itself a valid SDL fragment (it may omit `sdlVersion` and `imports`).
+- Import order is significant: modules listed earlier are treated as the base; modules listed later override scalar values in earlier modules (see merge rules below).
+
+### Merge Rules (normative)
+
+When the resolver merges an imported module into the accumulating document, it applies the following rules in order for each key:
+
+1. **Key absent in base** — the value from the imported module is adopted without conflict.
+2. **Both values are arrays** — arrays are concatenated. Deduplication is not applied; consumers must handle duplicate entries.
+3. **Both values are non-null objects** — merge recursively, applying these same rules.
+4. **Scalar conflict** (both values are scalars, or one is a scalar and the other is an object/array) — the imported module's value wins (*last writer wins*). A `scalar-override` warning is emitted. This is intentional: it allows modules to specialize or override defaults set by earlier modules.
+5. **`imports` key** — never merged. Each file's `imports` list is only used to queue further resolution; it is stripped from the accumulated document.
+
+### Depth Limit
+
+The resolver enforces a maximum import depth of **3** (root → depth 1 → depth 2 → depth 3). Imports encountered beyond this depth are skipped and a warning is emitted.
+
+**Rationale:** Depth-3 supports the common pattern of `solution.sdl.yaml → sdl/module.sdl.yaml → sdl/sub/detail.sdl.yaml` while preventing circular import chains and unbounded recursion. Most SDL documents need at most 2 levels; depth-3 is reserved for large architectures with nested module trees.
+
+Circular imports (file A imports file B which imports file A) are detected via a visited-file set and produce an error, not a warning.
+
+### What Should Not Be Imported
+
+The following are sidecar outputs produced by tooling and **must not** appear in `imports`:
+- `sdl/assumptions.sdl.yaml` — discovery review items, not architecture description
+- `sdl/complexity.sdl.yaml` — complexity scoring, not architecture description
+- Any file whose root keys are all `x-*` extension fields
+
+Listing sidecar files in `imports` would force all SDL consumers to understand discovery-layer metadata. Keep sidecar files adjacent to the SDL but outside the import graph.
+
+### Extension Fields in Imported Modules
+
+Any key prefixed with `x-` is an extension field. Extension fields:
+- Are preserved verbatim during merge (same merge rules as above apply)
+- Are ignored by validators that do not know them
+- Are the correct mechanism for tooling metadata such as `x-confidence`, `x-evidence`, and `x-review-required`
 
 ---
 
