@@ -228,6 +228,14 @@ function inferRelations(entities, doc) {
     return relations;
 }
 // ─── ERD Renderer ───
+/** Sanitize a name for use as a Mermaid erDiagram identifier (no spaces or special chars) */
+function erdId(name) {
+    // PascalCase: "Team member" → "TeamMember"
+    return name
+        .split(/[\s_-]+/)
+        .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+        .join('');
+}
 function renderERD(entities, relations) {
     const lines = [];
     lines.push('erDiagram');
@@ -238,14 +246,18 @@ function renderERD(entities, relations) {
             : rel.type === 'many-to-many'
                 ? '}o--o{'
                 : '||--||';
-        lines.push(`    ${rel.from} ${cardinality} ${rel.to} : "${rel.label}"`);
+        // Use a simple label without spaces to avoid Mermaid parse errors
+        const safeLabel = rel.label.replace(/\s+/g, '-').toLowerCase();
+        lines.push(`    ${erdId(rel.from)} ${cardinality} ${erdId(rel.to)} : "${safeLabel}"`);
     }
     // Entities
     for (const entity of entities) {
-        lines.push(`    ${entity.name} {`);
+        lines.push(`    ${erdId(entity.name)} {`);
         for (const field of entity.fields) {
             const constraint = field.pk ? 'PK' : field.unique ? 'UK' : field.comment?.startsWith('FK') ? 'FK' : '';
-            lines.push(`        ${field.type} ${field.name}${constraint ? ' ' + constraint : ''}`);
+            // Field names also sanitized — no spaces
+            const safeName = field.name.replace(/\s+/g, '_');
+            lines.push(`        ${field.type} ${safeName}${constraint ? ' ' + constraint : ''}`);
         }
         lines.push('    }');
     }

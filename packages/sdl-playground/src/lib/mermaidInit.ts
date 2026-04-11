@@ -8,8 +8,8 @@ export function initMermaid() {
     startOnLoad: false,
     theme: 'dark',
     themeVariables: {
-      background: '#1e2330',
-      primaryColor: '#3b82f6',
+      background: '#0f1117',
+      primaryColor: '#1e3a5f',
       primaryTextColor: '#e2e8f0',
       primaryBorderColor: '#334155',
       lineColor: '#64748b',
@@ -17,22 +17,30 @@ export function initMermaid() {
       tertiaryColor: '#0f172a',
       edgeLabelBackground: '#1e293b',
       nodeTextColor: '#e2e8f0',
+      clusterBkg: '#1a1f2e',
+      clusterBorder: '#334155',
+      titleColor: '#94a3b8',
     },
-    fontFamily: 'system-ui, sans-serif',
-    fontSize: 14,
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    fontSize: 13,
   })
   initialized = true
 }
 
 let idCounter = 0
 
+/**
+ * Strip %%{init: ...}%% front-matter — we set theme via mermaid.initialize().
+ * This prevents conflicts when generators include their own init blocks.
+ */
+function stripInitBlock(content: string): string {
+  return content.replace(/^%%\{[\s\S]*?\}%%\s*\n?/m, '').trim()
+}
+
 export async function renderMermaid(content: string): Promise<string> {
   initMermaid()
-  const id = `mermaid-${++idCounter}`
-  try {
-    const { svg } = await mermaid.render(id, content)
-    return svg
-  } catch {
-    throw new Error('Failed to render diagram')
-  }
+  const cleaned = stripInitBlock(content)
+  const id = `mermaid-render-${++idCounter}`
+  const { svg } = await mermaid.render(id, cleaned)
+  return svg
 }

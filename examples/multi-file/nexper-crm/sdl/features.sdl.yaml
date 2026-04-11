@@ -1,174 +1,174 @@
 features:
   # Phase 1 — MVP (completed features)
-  - id: org-onboarding
+  - x-id: org-onboarding
     name: "Organisation Onboarding"
     description: "Create org, invite first users, configure billing via Stripe"
     priority: critical
     stage: MVP
     status: done
-    estimatedDays: 5
+    x-estimatedDays: 5
     x-phase: phase1
 
-  - id: contact-crud
+  - x-id: contact-crud
     name: "Contact Management"
     description: "CRUD for contacts with search, filters, and CSV import"
     priority: critical
     stage: MVP
     status: done
-    estimatedDays: 8
-    dependsOn: [org-onboarding]
+    x-estimatedDays: 8
+    x-dependsOn: [org-onboarding]
     x-phase: phase1
 
-  - id: deal-pipeline
+  - x-id: deal-pipeline
     name: "Deal Pipeline (Kanban)"
     description: "Pipeline with configurable stages, drag-and-drop deal cards"
     priority: critical
     stage: MVP
     status: done
-    estimatedDays: 10
-    dependsOn: [contact-crud]
+    x-estimatedDays: 10
+    x-dependsOn: [contact-crud]
     x-phase: phase1
 
-  - id: activity-logging
+  - x-id: activity-logging
     name: "Activity Logging"
     description: "Log calls, emails, meetings, notes against contacts and deals"
     priority: critical
     stage: MVP
     status: done
-    estimatedDays: 6
-    dependsOn: [contact-crud, deal-pipeline]
+    x-estimatedDays: 6
+    x-dependsOn: [contact-crud, deal-pipeline]
     x-phase: phase1
 
-  - id: basic-reporting
+  - x-id: basic-reporting
     name: "Basic Reporting"
     description: "Pipeline summary and activity count dashboards"
     priority: high
     stage: MVP
     status: done
-    estimatedDays: 5
-    dependsOn: [deal-pipeline, activity-logging]
+    x-estimatedDays: 5
+    x-dependsOn: [deal-pipeline, activity-logging]
     x-phase: phase1
 
-  - id: billing-stripe
+  - x-id: billing-stripe
     name: "Stripe Billing"
     description: "Subscription management, plan upgrades, invoice history"
     priority: critical
     stage: MVP
     status: done
-    estimatedDays: 6
-    dependsOn: [org-onboarding]
+    x-estimatedDays: 6
+    x-dependsOn: [org-onboarding]
     x-phase: phase1
 
   # Phase 2 — Growth
-  - id: ai-contact-scoring
+  - x-id: ai-contact-scoring
     name: "AI Contact Scoring"
     description: "Async AI score (0-100) per contact based on activity and enrichment"
     priority: high
     stage: Growth
     status: in-progress
-    estimatedDays: 12
-    dependsOn: [contact-crud, activity-logging]
+    x-estimatedDays: 12
+    x-dependsOn: [contact-crud, activity-logging]
     x-phase: phase2
 
-  - id: ai-deal-probability
+  - x-id: ai-deal-probability
     name: "AI Deal Win Probability"
     description: "Real-time win probability badge on deal cards"
     priority: high
     stage: Growth
     status: planned
-    estimatedDays: 10
-    dependsOn: [deal-pipeline, ai-contact-scoring]
+    x-estimatedDays: 10
+    x-dependsOn: [deal-pipeline, ai-contact-scoring]
     x-phase: phase2
 
-  - id: ai-talk-track
+  - x-id: ai-talk-track
     name: "AI Talk Track Generation"
     description: "On-demand talk track and objection handlers for a contact"
     priority: medium
     stage: Growth
     status: planned
-    estimatedDays: 8
-    dependsOn: [ai-contact-scoring]
+    x-estimatedDays: 8
+    x-dependsOn: [ai-contact-scoring]
     x-phase: phase2
 
-  - id: email-sync
+  - x-id: email-sync
     name: "Gmail / Outlook Email Sync"
     description: "OAuth2 email sync — auto-log inbound/outbound emails to contacts"
     priority: high
     stage: Growth
     status: planned
-    estimatedDays: 15
-    dependsOn: [contact-crud, activity-logging]
+    x-estimatedDays: 15
+    x-dependsOn: [contact-crud, activity-logging]
     x-phase: phase2
 
-  - id: webhook-delivery
+  - x-id: webhook-delivery
     name: "Webhook Delivery"
     description: "Customer-configurable webhooks for CRM events with HMAC signing"
     priority: medium
     stage: Growth
     status: planned
-    estimatedDays: 8
-    dependsOn: [contact-crud, deal-pipeline, activity-logging]
+    x-estimatedDays: 8
+    x-dependsOn: [contact-crud, deal-pipeline, activity-logging]
     x-phase: phase2
 
-  - id: team-notifications
+  - x-id: team-notifications
     name: "In-App and Email Notifications"
     description: "@mention notifications, deal updates, task reminders"
     priority: medium
     stage: Growth
     status: planned
-    estimatedDays: 7
-    dependsOn: [activity-logging]
+    x-estimatedDays: 7
+    x-dependsOn: [activity-logging]
     x-phase: phase2
 
-  - id: csv-export
+  - x-id: csv-export
     name: "Data Export (CSV)"
     description: "Export contacts, deals, and activities with column selection"
     priority: medium
     stage: Growth
     status: planned
-    estimatedDays: 4
-    dependsOn: [contact-crud, deal-pipeline]
+    x-estimatedDays: 4
+    x-dependsOn: [contact-crud, deal-pipeline]
     x-phase: phase2
 
   # Phase 3 — Enterprise
-  - id: sso-saml
+  - x-id: sso-saml
     name: "SSO (SAML / OIDC)"
     description: "Enterprise SSO via Okta, Azure AD, Google Workspace"
     priority: high
     stage: Enterprise
     status: planned
-    estimatedDays: 20
+    x-estimatedDays: 20
     x-phase: phase3
 
-  - id: advanced-audit
+  - x-id: advanced-audit
     name: "Advanced Audit Logging"
     description: "Compliance-grade audit trail with export and retention controls"
     priority: high
     stage: Enterprise
     status: planned
-    estimatedDays: 10
-    dependsOn: [sso-saml]
+    x-estimatedDays: 10
+    x-dependsOn: [sso-saml]
     x-phase: phase3
 
-  - id: eu-data-residency
+  - x-id: eu-data-residency
     name: "EU Data Residency"
     description: "Dedicated eu-west-1 deployment with data residency guarantee"
     priority: high
     stage: Enterprise
     status: planned
-    estimatedDays: 15
+    x-estimatedDays: 15
     x-phase: phase3
 
-  - id: mobile-app
+  - x-id: mobile-app
     name: "Mobile App (iOS + Android)"
     description: "React Native app with contact lookup, activity logging, deal updates"
     priority: medium
     stage: Enterprise
     status: planned
-    estimatedDays: 30
+    x-estimatedDays: 30
     x-phase: phase3
 
-featureFlags:
+x-featureFlags:
   - name: ai_contact_scoring
     rollout: "25%"
     targetAudience: beta-users

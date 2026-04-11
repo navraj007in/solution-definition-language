@@ -30,7 +30,7 @@ describe('generators', () => {
             assert.equal(result.files.length, 1);
             assert.equal(result.files[0].path, 'artifacts/architecture/c4-container.mmd');
             const content = result.files[0].content;
-            assert.ok(content.includes('graph TB'));
+            assert.ok(content.includes('flowchart TB'));
             assert.ok(content.includes('Client Tier'));
             assert.ok(content.includes('Application Backend'));
             assert.ok(content.includes('Data Storage'));

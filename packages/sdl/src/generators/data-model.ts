@@ -114,8 +114,9 @@ function entitiesFromDomain(doc: SDLDocument): Entity[] {
   }
 
   for (const domainEntity of doc.domain!.entities!) {
-    if (seen.has(domainEntity.name.toLowerCase())) continue;
-    seen.add(domainEntity.name.toLowerCase());
+    const safeName = domainEntity.name.split(/[\s_-]+/).map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join('');
+    if (seen.has(safeName.toLowerCase())) continue;
+    seen.add(safeName.toLowerCase());
 
     const fields: Field[] = [];
     for (const f of domainEntity.fields ?? []) {
@@ -134,7 +135,7 @@ function entitiesFromDomain(doc: SDLDocument): Entity[] {
       fields.unshift({ name: 'id', type: 'uuid', pk: true, required: true });
     }
 
-    entities.push({ name: domainEntity.name, fields });
+    entities.push({ name: safeName, fields });
   }
 
   return entities;
@@ -213,6 +214,7 @@ function inferEntities(doc: SDLDocument): Entity[] {
   return entities;
 }
 
+/** Extract a single entity name from a persona goal string. */
 function extractEntityName(goal: string): string | null {
   const patterns = [
     /^(?:create|add|manage|view|edit|update|delete|remove|list|browse|search|submit|assign|track)\s+(.+)$/i,
@@ -222,7 +224,14 @@ function extractEntityName(goal: string): string | null {
   for (const pattern of patterns) {
     const match = goal.match(pattern);
     if (match) {
-      return singularize(capitalize(match[1].trim()));
+      let phrase = match[1].trim();
+      // Drop leading conjunctions: "and search products" → "products"
+      phrase = phrase.replace(/^(?:and|or|the|a|an)\s+/i, '');
+      // If still multi-word, keep only the last word (the primary noun)
+      const words = phrase.split(/\s+/);
+      const noun = words[words.length - 1];
+      if (!noun) return null;
+      return singularize(capitalize(noun));
     }
   }
   return null;
@@ -244,8 +253,10 @@ function extractEntityFromFlow(flowName: string): string | null {
 }
 
 function buildDomainEntity(name: string): Entity {
+  // Sanitize to PascalCase identifier — no spaces or special chars
+  const safeName = name.split(/[\s_-]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
   return {
-    name,
+    name: safeName,
     fields: [
       { name: 'id', type: 'uuid', pk: true, required: true },
       { name: 'title', type: 'varchar', required: true },
@@ -290,6 +301,15 @@ function inferRelations(entities: Entity[], doc: SDLDocument): Relation[] {
 
 // ─── ERD Renderer ───
 
+/** Sanitize a name for use as a Mermaid erDiagram identifier (no spaces or special chars) */
+function erdId(name: string): string {
+  // PascalCase: "Team member" → "TeamMember"
+  return name
+    .split(/[\s_-]+/)
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join('');
+}
+
 function renderERD(entities: Entity[], relations: Relation[]): string {
   const lines: string[] = [];
 
@@ -302,15 +322,19 @@ function renderERD(entities: Entity[], relations: Relation[]): string {
       : rel.type === 'many-to-many'
         ? '}o--o{'
         : '||--||';
-    lines.push(`    ${rel.from} ${cardinality} ${rel.to} : "${rel.label}"`);
+    // Use a simple label without spaces to avoid Mermaid parse errors
+    const safeLabel = rel.label.replace(/\s+/g, '-').toLowerCase();
+    lines.push(`    ${erdId(rel.from)} ${cardinality} ${erdId(rel.to)} : "${safeLabel}"`);
   }
 
   // Entities
   for (const entity of entities) {
-    lines.push(`    ${entity.name} {`);
+    lines.push(`    ${erdId(entity.name)} {`);
     for (const field of entity.fields) {
       const constraint = field.pk ? 'PK' : field.unique ? 'UK' : field.comment?.startsWith('FK') ? 'FK' : '';
-      lines.push(`        ${field.type} ${field.name}${constraint ? ' ' + constraint : ''}`);
+      // Field names also sanitized — no spaces
+      const safeName = field.name.replace(/\s+/g, '_');
+      lines.push(`        ${field.type} ${safeName}${constraint ? ' ' + constraint : ''}`);
     }
     lines.push('    }');
   }
