@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates a cost estimate from an SDL document.
@@ -14,7 +14,7 @@ import type { GeneratorResult } from './types';
  *   - Integrations (payments, email, monitoring)
  *   - CI/CD
  */
-export function generateCostEstimate(doc: SDLDocument): GeneratorResult {
+export function generateCostEstimate(doc: SDLDocument): RawGeneratorResult {
   const items = estimateCosts(doc);
   const totalMonthly = items.reduce((sum, i) => sum + i.monthlyCost, 0);
   const markdown = renderCostMarkdown(doc, items, totalMonthly);

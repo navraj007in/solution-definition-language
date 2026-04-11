@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates infrastructure-as-code from an SDL document:
@@ -7,10 +7,10 @@ import type { GeneratorResult } from './types';
  *   - Terraform configuration for the target cloud
  * Deterministic — same input always produces identical output.
  */
-export function generateCiCdPipeline(doc: SDLDocument): GeneratorResult {
+export function generateCiCdPipeline(doc: SDLDocument): RawGeneratorResult {
   const provider = doc.deployment.ciCd?.provider || 'github-actions';
 
-  let cicdResult: GeneratorResult;
+  let cicdResult: RawGeneratorResult;
   if (provider === 'gitlab-ci') {
     cicdResult = generateGitLabCi(doc);
   } else if (provider === 'azure-devops') {
@@ -42,7 +42,7 @@ export function generateCiCdPipeline(doc: SDLDocument): GeneratorResult {
   return cicdResult;
 }
 
-function generateGitHubActions(doc: SDLDocument): GeneratorResult {
+function generateGitHubActions(doc: SDLDocument): RawGeneratorResult {
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];
   const lines: string[] = [];
@@ -283,7 +283,7 @@ function deployTargetLabel(cloud: string): string {
 
 // ─── GitLab CI Generator ───
 
-function generateGitLabCi(doc: SDLDocument): GeneratorResult {
+function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];
   const dbType = doc.data.primaryDatabase.type;
@@ -513,7 +513,7 @@ function generateGitLabCi(doc: SDLDocument): GeneratorResult {
 
 // ─── Azure DevOps Generator ───
 
-function generateAzureDevOps(doc: SDLDocument): GeneratorResult {
+function generateAzureDevOps(doc: SDLDocument): RawGeneratorResult {
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];
   const dbType = doc.data.primaryDatabase.type;

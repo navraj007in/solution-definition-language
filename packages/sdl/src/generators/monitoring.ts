@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates monitoring and observability configs.
@@ -7,7 +7,7 @@ import type { GeneratorResult, GeneratedFile } from './types';
  * Derived from SDL NFRs (availability target, response time, scaling).
  * Deterministic — same input always produces identical output.
  */
-export function generateMonitoring(doc: SDLDocument): GeneratorResult {
+export function generateMonitoring(doc: SDLDocument): RawGeneratorResult {
   const files: GeneratedFile[] = [];
   const backends = doc.architecture.projects.backend || [];
   const frontends = doc.architecture.projects.frontend || [];

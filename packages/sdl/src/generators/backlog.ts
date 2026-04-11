@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates a product backlog (user stories + tasks) from an SDL document.
@@ -11,7 +11,7 @@ import type { GeneratorResult } from './types';
  *   - Technical setup stories (auth, database, deployment, CI/CD)
  *   - Prioritized with MoSCoW (Must/Should/Could/Won't)
  */
-export function generateBacklog(doc: SDLDocument): GeneratorResult {
+export function generateBacklog(doc: SDLDocument): RawGeneratorResult {
   const epics: Epic[] = [];
   let storyCounter = 1;
 

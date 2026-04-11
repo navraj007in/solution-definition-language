@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates Mermaid sequence diagrams from an SDL document.
@@ -10,7 +10,7 @@ import type { GeneratorResult } from './types';
  *   - Auth flow (login/register) when auth is configured
  *   - Default CRUD flow per persona goal when no core flows exist
  */
-export function generateSequenceDiagrams(doc: SDLDocument): GeneratorResult {
+export function generateSequenceDiagrams(doc: SDLDocument): RawGeneratorResult {
   const diagrams: { name: string; slug: string; content: string }[] = [];
 
   // Auth flow

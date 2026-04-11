@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates a data model (ERD + ORM schema) from an SDL document.
@@ -11,7 +11,7 @@ import type { GeneratorResult } from './types';
  *   - Core flows → additional entities from flow names
  *   - Auth config → Session entity (if JWT/custom)
  */
-export function generateDataModel(doc: SDLDocument): GeneratorResult {
+export function generateDataModel(doc: SDLDocument): RawGeneratorResult {
   const entities = inferEntities(doc);
   const relations = inferRelations(entities, doc);
   const erd = renderERD(entities, relations);

@@ -1,12 +1,12 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates a Docker Compose file for local development.
  * Includes all backends, frontends, databases, cache, queues, and search.
  * Deterministic — same input always produces identical output.
  */
-export function generateDockerCompose(doc: SDLDocument): GeneratorResult {
+export function generateDockerCompose(doc: SDLDocument): RawGeneratorResult {
   const lines: string[] = [];
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];

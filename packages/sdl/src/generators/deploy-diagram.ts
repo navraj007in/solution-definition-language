@@ -1,4 +1,4 @@
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 export interface DeployDiagramInput {
   strategy: string;
@@ -16,7 +16,7 @@ export interface DeployDiagramInput {
  * Generate a Mermaid deployment topology diagram from a deployment plan.
  * Pure function — no side effects.
  */
-export function generateDeployDiagram(input: DeployDiagramInput): GeneratorResult {
+export function generateDeployDiagram(input: DeployDiagramInput): RawGeneratorResult {
   const lines: string[] = ['graph TB'];
 
   // Group services by platform

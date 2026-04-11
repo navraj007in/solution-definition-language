@@ -1,5 +1,5 @@
 import type { SDLDocument, BackendProject, FrontendProject } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates enforcement tooling configs from an SDL document.
@@ -9,7 +9,7 @@ import type { GeneratorResult, GeneratedFile } from './types';
  * Toggle: user adds 'coding-rules-enforcement' to artifacts.generate in SDL.
  * Deterministic — same input always produces identical output.
  */
-export function generateCodingRulesEnforcement(doc: SDLDocument): GeneratorResult {
+export function generateCodingRulesEnforcement(doc: SDLDocument): RawGeneratorResult {
   const files: GeneratedFile[] = [];
   const backends = doc.architecture.projects.backend || [];
   const frontends = doc.architecture.projects.frontend || [];

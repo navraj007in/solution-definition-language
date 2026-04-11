@@ -1,5 +1,5 @@
 import type { SDLDocument, BackendProject, FrontendProject, MobileProject } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 import { type ParsedADR, adrsToCodingRules } from './adr-rules';
 
 /** AI tools that sync-ai can generate instruction files for */
@@ -22,7 +22,7 @@ export interface CodingRulesOptions {
  *
  * Deterministic — same input always produces identical output.
  */
-export function generateCodingRules(doc: SDLDocument, options?: CodingRulesOptions): GeneratorResult {
+export function generateCodingRules(doc: SDLDocument, options?: CodingRulesOptions): RawGeneratorResult {
   const files: GeneratedFile[] = [];
   const targets = options?.targets ?? (['claude', 'cursor', 'copilot', 'aider'] as AITarget[]);
   const adrs = options?.adrs ?? [];

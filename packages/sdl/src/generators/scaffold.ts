@@ -1,11 +1,11 @@
 import type { SDLDocument, FrontendProject, BackendProject, MobileProject } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates repository scaffolds (virtual file maps) for each project in the SDL.
  * Deterministic — same input always produces identical output.
  */
-export function generateRepoScaffold(doc: SDLDocument): GeneratorResult {
+export function generateRepoScaffold(doc: SDLDocument): RawGeneratorResult {
   const files: GeneratedFile[] = [];
 
   for (const fe of doc.architecture.projects.frontend || []) {

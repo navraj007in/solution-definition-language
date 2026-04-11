@@ -10,6 +10,20 @@ Purpose: restore one canonical SDL contract across docs, examples, schema refere
 
 None. Phase 1 complete.
 
+---
+
+## Phase 3 — Separate Generator Confidence Tiers
+
+### Completed
+
+- Added `GeneratorTier = 'deterministic' | 'inferred' | 'advisory'` to `packages/sdl/src/generators/types.ts`.
+- Added `tier: GeneratorTier` to `GeneratorResult` — always set by the registry, never by individual generator functions.
+- Added `RawGeneratorResult = Omit<GeneratorResult, 'tier'>` as the internal return type for generator functions; updated all 16 generator files to use it.
+- Added `REGISTRY_TIER_MAP` and `DIRECT_TIER_MAP` in `generators/index.ts` classifying all generators.
+- Updated `generate()`, `generateAll()`, and all direct API wrappers to inject `tier` via `withTier()`.
+- Exported `getGeneratorTier()` for callers that need tier without generating.
+- Updated `reference/generators.md` with tier table, per-tier guidance, and advisory output section explaining what each advisory generator produces and what it does not.
+
 ## Completed
 
 - Published `reference/section-support.md` — support-level matrix per section covering schema strictness, normalization, generator consumption, and maturity level (stable / partial / minimal / placeholder).

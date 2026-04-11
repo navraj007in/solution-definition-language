@@ -1,11 +1,11 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates a Mermaid C4 container diagram from an SDL document.
  * Deterministic — same input always produces identical output.
  */
-export function generateArchitectureDiagram(doc: SDLDocument): GeneratorResult {
+export function generateArchitectureDiagram(doc: SDLDocument): RawGeneratorResult {
   const lines: string[] = [];
   lines.push('%%{init: {"theme":"base"}}%%');
   lines.push('graph TB');

@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 interface ADRSpec {
   number: string;
@@ -26,7 +26,7 @@ interface ADRSpec {
  *   8. Cache strategy (if present)
  *   9. CI/CD provider (if present)
  */
-export function generateADRs(doc: SDLDocument): GeneratorResult {
+export function generateADRs(doc: SDLDocument): RawGeneratorResult {
   const adrs: ADRSpec[] = [];
   let counter = 1;
 

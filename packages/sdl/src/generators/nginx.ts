@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates Nginx reverse proxy configuration.
@@ -7,7 +7,7 @@ import type { GeneratorResult, GeneratedFile } from './types';
  * Includes SSL placeholder, gzip compression, and proxy headers.
  * Deterministic — same input always produces identical output.
  */
-export function generateNginxConfig(doc: SDLDocument): GeneratorResult {
+export function generateNginxConfig(doc: SDLDocument): RawGeneratorResult {
   const files: GeneratedFile[] = [];
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];

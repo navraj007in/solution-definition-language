@@ -1,12 +1,12 @@
 import type { SDLDocument, BackendProject, FrontendProject } from '../types';
-import type { GeneratorResult, GeneratedFile } from './types';
+import type { RawGeneratorResult, GeneratedFile } from './types';
 
 /**
  * Generates Kubernetes manifests for production deployment.
  * Includes Deployments, Services, Ingress, ConfigMap, HPA, and Namespace.
  * Deterministic — same input always produces identical output.
  */
-export function generateKubernetes(doc: SDLDocument): GeneratorResult {
+export function generateKubernetes(doc: SDLDocument): RawGeneratorResult {
   const files: GeneratedFile[] = [];
   const frontends = doc.architecture.projects.frontend || [];
   const backends = doc.architecture.projects.backend || [];

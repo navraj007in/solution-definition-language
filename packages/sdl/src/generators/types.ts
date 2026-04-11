@@ -6,15 +6,40 @@ export interface GeneratedFile {
   content: string;
 }
 
-/** Result from a single generator */
+/**
+ * Confidence tier for a generator output.
+ *
+ * deterministic — output is correct by construction; same SDL always produces
+ *   the same result and the result can be used without manual review.
+ *
+ * inferred — output is derived from SDL facts via heuristics; structurally
+ *   sound but may contain assumptions worth reviewing before committing.
+ *
+ * advisory — output is a starting point, not a deliverable; requires human
+ *   review and editing before use.
+ */
+export type GeneratorTier = 'deterministic' | 'inferred' | 'advisory';
+
+/**
+ * Result from a single generator.
+ * `tier` is always set by the registry — individual generator functions
+ * do not set it directly.
+ */
 export interface GeneratorResult {
   artifactType: ArtifactType;
+  tier: GeneratorTier;
   files: GeneratedFile[];
   metadata: Record<string, unknown>;
 }
 
-/** Generator function signature — pure, deterministic */
-export type GeneratorFn = (doc: SDLDocument) => GeneratorResult;
+/**
+ * Raw output from an individual generator function — tier is injected by
+ * the registry wrapper and is not expected from the generator itself.
+ */
+export type RawGeneratorResult = Omit<GeneratorResult, 'tier'>;
+
+/** Generator function signature */
+export type GeneratorFn = (doc: SDLDocument) => RawGeneratorResult;
 
 /** Result from generateAll */
 export interface GenerateAllResult {

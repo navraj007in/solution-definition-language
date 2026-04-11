@@ -1,5 +1,5 @@
 import type { SDLDocument } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates a deployment guide (runbook) from an SDL document.
@@ -13,7 +13,7 @@ import type { GeneratorResult } from './types';
  *   - Post-deployment verification
  *   - Rollback procedure
  */
-export function generateDeploymentGuide(doc: SDLDocument): GeneratorResult {
+export function generateDeploymentGuide(doc: SDLDocument): RawGeneratorResult {
   const markdown = renderGuide(doc);
 
   return {

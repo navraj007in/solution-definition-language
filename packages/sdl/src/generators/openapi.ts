@@ -1,5 +1,5 @@
 import type { SDLDocument, BackendProject } from '../types';
-import type { GeneratorResult } from './types';
+import type { RawGeneratorResult } from './types';
 
 /**
  * Generates an OpenAPI 3.1 specification from an SDL document.
@@ -11,7 +11,7 @@ import type { GeneratorResult } from './types';
  *   - Auth config → security schemes
  *   - Backend projects → server info
  */
-export function generateOpenApiSpec(doc: SDLDocument): GeneratorResult {
+export function generateOpenApiSpec(doc: SDLDocument): RawGeneratorResult {
   const backends = doc.architecture.projects.backend || [];
   const primaryBackend = backends[0];
   const entities = inferEntities(doc);
