@@ -1,0 +1,79 @@
+sdlVersion: "1.1"
+
+solution:
+  name: "SDLang.com"
+  description: "Marketing and documentation site for the Solution Design Language"
+  stage: "MVP"
+  domain: "developer-tools"
+
+product:
+  valueProposition: "One YAML file that describes your entire software system and generates architecture diagrams, API specs, data models, scaffolding, and AI coding rules."
+  personas:
+    - name: "Software Architect"
+      goals:
+        - "Explore the SDL specification"
+        - "View example SDL documents"
+        - "Understand what SDL generates"
+      accessLevel: public
+    - name: "Developer"
+      goals:
+        - "Try SDL in the playground"
+        - "Download starter templates"
+        - "Read the documentation"
+      accessLevel: public
+  coreFlows:
+    - name: "Explore playground"
+      steps:
+        - "Load a starter template"
+        - "Edit YAML in the browser"
+        - "See live architecture diagram and generated artifacts"
+      priority: critical
+    - name: "Read docs"
+      steps:
+        - "Browse specification sections"
+        - "View canonical enum reference"
+        - "Read generator documentation"
+      priority: high
+
+architecture:
+  style: "serverless"
+  projects:
+    frontend:
+      - name: "site"
+        framework: "nextjs"
+        rendering: "ssg"
+        styling: "tailwind"
+
+data:
+  primaryDatabase:
+    type: "postgres"
+    hosting: "serverless"
+
+deployment:
+  cloud: "vercel"
+  ciCd:
+    provider: "github-actions"
+    environments:
+      - name: "preview"
+        autoApproval: true
+      - name: "production"
+        autoApproval: false
+        requiresTests: true
+
+constraints:
+  budget: "startup"
+  team:
+    frontend: 1
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 500
+    expectedUsersYear1: 10000
+
+artifacts:
+  generate:
+    - "architecture-diagram"
+    - "repo-scaffold"
+    - "deployment-guide"
