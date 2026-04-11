@@ -35,6 +35,7 @@ Every generator result includes a `tier` field:
 | Backlog | `backlog` | `advisory` | Markdown backlog and stories | product, architecture, auth, integrations |
 | Deployment Guide | `deployment-guide` | `advisory` | Step-by-step deployment instructions | deployment, architecture.projects, data |
 | Cost Estimate | `cost-estimate` | `advisory` | Infrastructure cost breakdown | data, deployment, integrations, auth |
+| Compliance Checklist | `compliance-checklist` | `advisory` | Per-framework compliance checklist in Markdown | compliance |
 
 ## Direct Generator APIs
 
@@ -44,9 +45,45 @@ These generators are exported directly by the package and are not addressable th
 |---|---|---|---|
 | `generateDockerCompose()` | `deterministic` | `artifacts/docker/docker-compose.yml` | architecture.projects, data, deployment |
 | `generateKubernetes()` | `deterministic` | Kubernetes manifest files | architecture.projects, data, deployment, nonFunctional |
-| `generateMonitoring()` | `deterministic` | Prometheus, alert rules, Grafana dashboard | observability, architecture.projects |
+| `generateMonitoring()` | `deterministic` | Prometheus, alert rules, Grafana dashboard | observability, slos, architecture.projects |
 | `generateNginxConfig()` | `deterministic` | `artifacts/nginx/nginx.conf` | architecture.projects |
 | `generateDeployDiagram()` | `deterministic` | Deployment diagram file | deployment, architecture.projects |
+
+## Utility Exports
+
+These functions are exported for use by CLI tools and consumers.
+
+| Export | Purpose |
+|---|---|
+| `summarizeGenerationResults(results)` | Returns a formatted tier breakdown string for CLI output — shows deterministic / inferred / advisory counts with review guidance |
+| `getGeneratorTier(artifactType)` | Returns the tier for a registry artifact type without generating |
+| `getImplementedArtifactTypes()` | Returns the list of registry-backed artifact types |
+
+## Migration
+
+`migrate(yamlString)` detects stale or invalid SDL patterns and returns a corrected document with a list of changes made. Handles all known legacy vocabulary from v0.1 and early v1.1 examples.
+
+```typescript
+import { migrate } from '@arch0/sdl';
+
+const result = migrate(oldYaml);
+// result.clean        — true if no changes were needed
+// result.changes      — [{ path, from, to, reason }]
+// result.document     — corrected plain object (serialize with yaml.stringify)
+// result.compilesClean — true if migrated doc passes compile()
+// result.remainingErrors — validation errors not fixed by migration
+```
+
+Migration cases handled:
+- `stage: mvp` → `stage: MVP` (and growth → Growth, enterprise → Enterprise)
+- `framework: express` → `framework: nodejs`
+- `framework: next` → `framework: nextjs`
+- `framework: fastapi` → `framework: python-fastapi`
+- `auth.strategy: jwt` → `auth.strategy: oidc` + `auth.sessions.accessToken: jwt` + `auth.provider: custom`
+- `contracts: [...]` → `contracts: { apis: [...] }`
+- `features: { phase1: [...] }` → `features: [...]` with `x-phase` annotation
+- `slos: [...]` → `slos: { services: [...] }`
+- Unknown root keys without `x-` prefix → prefixed with `x-`
 
 ## Usage
 

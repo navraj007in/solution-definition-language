@@ -354,6 +354,7 @@ These are the valid values for `artifacts.generate[]` and for `generate()` / `ge
 - `cost-estimate`
 - `coding-rules`
 - `coding-rules-enforcement`
+- `compliance-checklist`
 
 ## Direct Generator APIs
 
