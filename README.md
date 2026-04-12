@@ -121,11 +121,16 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 ## Versions
 
 - **v1.1** — Active specification
-  - Core sections (stable, validated, normalized, generator-consumed): `solution`, `product`, `architecture`, `auth`, `data`, `integrations`, `nonFunctional`, `deployment`, `artifacts`
-  - Partial sections (validated, some normalization or generator use): `testing`, `observability`, `constraints`, `techDebt`, `evolution`
-  - Minimal sections (schema-enforced shape, no generator consumption yet): `contracts`, `domain`, `features`, `slos`
-  - Placeholder sections (permissive, metadata only): `compliance`, `resilience`, `costs`, `backupDr`, `design`
-  - See [Section Support Matrix](reference/section-support.md) for detail on each section's maturity
+  - **Stable** (validated, normalized, consumed by most generators): `solution`, `product`, `architecture`, `auth`, `data`, `integrations`, `nonFunctional`, `deployment`, `artifacts`
+  - **Partial** (validated, some normalization, consumed by at least one generator): `testing`, `observability`, `constraints`, `techDebt`, `evolution`, `contracts`, `domain`, `slos`, `compliance`, `resilience`
+    - `slos` → consumed by `monitoring` generator (per-service SLO alert thresholds)
+    - `compliance` → consumed by `compliance-checklist` generator (framework-specific checklists)
+    - `resilience` → consumed by `coding-rules` generator (circuit breaker, retry, timeout rules)
+    - `contracts` → consumed by `openapi` generator (API type annotation and tag grouping)
+    - `domain` → consumed by `data-model` generator (entity-driven ORM schemas)
+  - **Minimal** (schema-enforced shape, no generator consumption yet): `features`
+  - **Placeholder** (permissive schema, metadata only): `costs`, `backupDr`, `design`
+  - See [Section Support Matrix](reference/section-support.md) for the full per-section breakdown
   - Spec: [SDL-v1.1.md](spec/SDL-v1.1.md)
 
 ## Documentation
@@ -206,12 +211,12 @@ See [ROADMAP.md](ROADMAP.md) and [packages/agents/sdl-discovery/README.md](packa
 
 ## Reference Implementation
 
-The `@arch0/sdl` npm package in [packages/sdl/](packages/sdl/) provides:
+The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
 
 - **Parser** — YAML to typed SDL document
-- **Validator** — JSON schema + 20+ semantic rules with structured error codes
+- **Validator** — JSON Schema (AJV) + 14 semantic cross-section rules (reference integrity, uniqueness, cycle detection, config completeness, resilience thresholds, SLO ranges) + 5 structural allOf rules, all returning structured error codes
 - **Normalizer** — Auto-inference of defaults; returns `{ document, inferences }` so every filled field is visible with its reason
-- **Resolver** — Multi-file import resolution with circular import detection
+- **Resolver** — Multi-file import resolution with merge semantics (array concatenation, object recursion, last-writer-wins scalars), circular import detection, and depth limit enforcement
 - **Diff** — Structural comparison of SDL versions
 - **Generators** — 12 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
