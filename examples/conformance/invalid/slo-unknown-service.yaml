@@ -1,0 +1,41 @@
+sdlVersion: "1.1"
+
+# ── Conformance: SEM-005 SLO_SERVICE_UNKNOWN ──────────────────────────────────
+# slos.services[].name must match a name in architecture.projects or .services.
+# "ghost-service" does not exist — this document must fail with SLO_SERVICE_UNKNOWN.
+
+solution:
+  name: conformance-slo-unknown
+  description: "Conformance test — SLO references a service that does not exist"
+  stage: MVP
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 100
+
+deployment:
+  cloud: aws
+
+slos:
+  services:
+    - name: ghost-service   # <-- does not exist in architecture
+      availability: "99.9%"

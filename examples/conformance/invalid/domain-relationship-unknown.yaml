@@ -1,0 +1,49 @@
+sdlVersion: "1.1"
+
+# ── Conformance: SEM-001 DOMAIN_RELATIONSHIP_ENTITY_UNKNOWN ──────────────────
+# domain.relationships[].from and .to must each match a name in domain.entities.
+# "Payment" is referenced in a relationship but not defined as an entity —
+# this document must fail with DOMAIN_RELATIONSHIP_ENTITY_UNKNOWN.
+
+solution:
+  name: conformance-domain-rel-unknown
+  description: "Conformance test — domain relationship targets an undefined entity"
+  stage: MVP
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 100
+
+deployment:
+  cloud: aws
+
+domain:
+  entities:
+    - name: Order
+      fields:
+        - name: id
+          type: uuid
+          required: true
+  relationships:
+    - from: Order
+      to: Payment   # <-- "Payment" entity does not exist in domain.entities
+      type: belongs-to

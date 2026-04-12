@@ -1,0 +1,449 @@
+sdlVersion: "1.1"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Canonical SDL v1.1 example
+#
+# Scope: uses every stable + partial section with typed first-class fields.
+# x-* usage: none — every value here is part of the active type contract.
+# Scenario: Evently — an event ticketing SaaS (Growth stage, AWS, PCI+GDPR).
+# ──────────────────────────────────────────────────────────────────────────────
+
+solution:
+  name: evently
+  description: "Event ticketing SaaS — seat reservations, payments, and organiser tools for mid-size venues"
+  stage: Growth
+  domain: app.evently.io
+  regions:
+    primary: us-east-1
+    secondary: [eu-west-1]
+  repository:
+    org: evently-io
+    naming: kebab-case
+
+# ── Product ───────────────────────────────────────────────────────────────────
+
+product:
+  valueProposition: "Sell tickets in minutes, not weeks — no contracts, instant payouts"
+  personas:
+    - name: Organiser
+      goals:
+        - "Create and publish events"
+        - "Manage seating and capacity"
+        - "View real-time sales reports"
+      accessLevel: authenticated
+    - name: Attendee
+      goals:
+        - "Find and buy tickets"
+        - "Receive e-ticket and reminders"
+        - "Request refunds"
+      accessLevel: public
+    - name: Admin
+      goals:
+        - "Moderate events"
+        - "Manage platform billing"
+        - "Review fraud reports"
+      accessLevel: admin
+  coreFlows:
+    - name: purchase-ticket
+      priority: critical
+      steps:
+        - "Attendee searches for event"
+        - "Selects seat tier and quantity"
+        - "Completes Stripe Checkout"
+        - "Receives e-ticket via email"
+    - name: create-event
+      priority: critical
+      steps:
+        - "Organiser fills event details"
+        - "Configures seating tiers and prices"
+        - "Publishes event to marketplace"
+
+# ── Architecture ─────────────────────────────────────────────────────────────
+
+architecture:
+  style: microservices
+  projects:
+    frontend:
+      - name: web-app
+        framework: nextjs
+        rendering: ssr
+        styling: tailwind
+        stateManagement: zustand
+    backend:
+      - name: api
+        framework: nodejs
+        apiStyle: rest
+        orm: prisma
+        apiVersioning: url-prefix
+      - name: ticketing-worker
+        framework: nodejs
+        type: worker
+      - name: notification-worker
+        framework: nodejs
+        type: worker
+
+  # Services are named distinctly from projects — SEM-007 enforces uniqueness
+  # across both pools. Dependencies here drive SEM-002 (unknown ref) and
+  # SEM-004 (cycle) checks.
+  services:
+    - name: api-svc
+      kind: backend
+      responsibilities:
+        - "REST API for events, tickets, and orders"
+        - "Payment intent creation via Stripe"
+        - "Auth token validation"
+      exposes:
+        http:
+          basePath: /api/v1
+          openapi: true
+      dependencies:
+        - ticketing-svc
+        - notification-svc
+
+    - name: ticketing-svc
+      kind: worker
+      responsibilities:
+        - "Seat reservation and release on timeout"
+        - "PDF ticket generation"
+        - "Inventory reconciliation"
+
+    - name: notification-svc
+      kind: worker
+      responsibilities:
+        - "E-ticket delivery via SendGrid"
+        - "Organiser sales digest emails"
+        - "Refund confirmation notifications"
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+auth:
+  strategy: oidc
+  provider: auth0
+  roles:
+    - attendee
+    - organiser
+    - admin
+  sessions:
+    accessToken: jwt
+    refreshToken: true
+    ttl:
+      access: 15m
+      refresh: 7d
+  mfa: false
+  socialProviders:
+    - google
+    - apple
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+    name: evently_db
+    size: medium
+    role: primary
+  cache:
+    type: redis
+    useCase: [session, query]
+  queues:
+    provider: sqs
+    useCase: [async-jobs, notifications]
+  storage:
+    blobs:
+      provider: s3
+      public: false
+
+# ── Integrations ──────────────────────────────────────────────────────────────
+
+integrations:
+  payments:
+    provider: stripe
+    mode: marketplace
+    currency: USD
+  email:
+    provider: sendgrid
+    useCase: [transactional, notifications]
+  analytics:
+    provider: posthog
+  monitoring:
+    provider: datadog
+  cdn:
+    provider: cloudfront
+
+# ── Deployment ────────────────────────────────────────────────────────────────
+
+deployment:
+  cloud: aws
+  networking:
+    publicApi: true
+    waf: true
+    ddos: true
+    customDomain: true
+  ciCd:
+    provider: github-actions
+    environments:
+      - name: staging
+        requiresTests: true
+        autoApproval: true
+      - name: production
+        requiresTests: true
+        autoApproval: false
+        secrets:
+          - STRIPE_SECRET_KEY
+          - SENDGRID_API_KEY
+          - DATABASE_URL
+  infrastructure:
+    iac: terraform
+    stateBacking: s3
+
+# ── Non-functional requirements ───────────────────────────────────────────────
+
+nonFunctional:
+  availability:
+    target: "99.9"
+    maintenanceWindow: "Sundays 02:00–04:00 UTC"
+  scaling:
+    expectedUsersMonth1: 500
+    expectedUsersYear1: 25000
+    peakConcurrentUsers: 2000
+    dataGrowthPerMonth: "5GB"
+  performance:
+    apiResponseTime: "200ms"
+    pageLoadTime: "2s"
+  security:
+    pii: true
+    pci: true
+    encryptionAtRest: true
+    encryptionInTransit: true
+    auditLogging: compliance
+    penetrationTesting: true
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+
+testing:
+  unit:
+    framework: jest
+  e2e:
+    framework: playwright
+  coverage:
+    target: 80
+    enforce: true
+
+# ── Observability ─────────────────────────────────────────────────────────────
+
+observability:
+  logging:
+    provider: pino
+    structured: true
+    level: info
+  tracing:
+    provider: opentelemetry
+    samplingRate: 0.1
+  metrics:
+    provider: datadog
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+
+constraints:
+  budget: scaleup
+  team:
+    backend: 3
+    frontend: 2
+    devops: 1
+  timeline: "6-months"
+
+# ── API Contracts ─────────────────────────────────────────────────────────────
+# ContractDefinition: name (required), type, owner (must match a project name)
+
+contracts:
+  apis:
+    - name: evently-rest-api
+      type: rest
+    - name: evently-webhooks
+      type: webhook
+
+# ── Domain ────────────────────────────────────────────────────────────────────
+# domain.relationships[].from and .to are checked by SEM-001 against entity names.
+
+domain:
+  entities:
+    - name: User
+      fields:
+        - name: id
+          type: uuid
+          required: true
+        - name: email
+          type: string
+          required: true
+        - name: role
+          type: string
+          required: true
+    - name: Event
+      fields:
+        - name: id
+          type: uuid
+          required: true
+        - name: title
+          type: string
+          required: true
+        - name: capacity
+          type: integer
+          required: true
+        - name: startsAt
+          type: timestamp
+          required: true
+    - name: Order
+      fields:
+        - name: id
+          type: uuid
+          required: true
+        - name: status
+          type: string
+          required: true
+        - name: totalAmount
+          type: decimal
+          required: true
+    - name: Ticket
+      fields:
+        - name: id
+          type: uuid
+          required: true
+        - name: tier
+          type: string
+          required: true
+        - name: seatCode
+          type: string
+          required: false
+  relationships:
+    - from: Order
+      to: User
+      type: belongs-to
+    - from: Order
+      to: Event
+      type: belongs-to
+    - from: Ticket
+      to: Order
+      type: belongs-to
+    - from: Ticket
+      to: Event
+      type: belongs-to
+
+# ── Features ──────────────────────────────────────────────────────────────────
+# FeatureSection fields: name, description, priority, stage, status
+
+features:
+  - name: seat-reservations
+    description: "Time-bounded seat holds during checkout"
+    priority: critical
+    stage: MVP
+    status: done
+  - name: stripe-checkout
+    description: "Hosted Stripe Checkout flow for ticket purchases"
+    priority: critical
+    stage: MVP
+    status: done
+  - name: organiser-dashboard
+    description: "Real-time sales and capacity reporting for organisers"
+    priority: high
+    stage: Growth
+    status: in-progress
+  - name: refund-automation
+    description: "Self-serve refunds within configurable policy window"
+    priority: medium
+    stage: Growth
+    status: planned
+
+# ── Compliance ────────────────────────────────────────────────────────────────
+# compliance.frameworks[].name validated by SEM-009
+
+compliance:
+  frameworks:
+    - name: PCI-DSS
+      applicable: true
+      notes: "Stripe handles cardholder data; Evently is SAQ A eligible"
+    - name: GDPR
+      applicable: true
+      notes: "EU attendees; data residency handled via eu-west-1 replica"
+
+# ── SLOs ──────────────────────────────────────────────────────────────────────
+# slos.services[].name validated by SEM-005 against architecture.projects / .services
+
+slos:
+  services:
+    - name: api-svc
+      availability: "99.9%"
+      latencyP95: "200ms"
+    - name: ticketing-svc
+      availability: "99.5%"
+    - name: notification-svc
+      availability: "99.0%"
+
+# ── Resilience ────────────────────────────────────────────────────────────────
+# circuitBreaker.threshold validated by SEM-011 (must be 1–99)
+# retryPolicy.maxAttempts validated by SEM-012 (must be >= 1)
+
+resilience:
+  circuitBreaker:
+    enabled: true
+    threshold: 50
+    timeout: 30s
+  retryPolicy:
+    maxAttempts: 3
+    backoff: exponential
+    initialInterval: 100ms
+  timeout:
+    default: 5s
+  rateLimit:
+    requestsPerMinute: 1000
+
+# ── Costs ─────────────────────────────────────────────────────────────────────
+# CostSection: monthly (string), notes (string[])
+# Permissive section — use it for advisory budget tracking only.
+
+costs:
+  monthly: "$1,200"
+  notes:
+    - "RDS postgres multi-AZ: ~$350/mo"
+    - "ECS Fargate (3 services): ~$420/mo"
+    - "ElastiCache redis: ~$120/mo"
+    - "SQS + S3 + data transfer: ~$80/mo"
+    - "DataDog + SendGrid + PostHog: ~$230/mo"
+
+# ── Backup and DR ─────────────────────────────────────────────────────────────
+# BackupDrSection: backups[].target, .frequency, .retention
+
+backupDr:
+  backups:
+    - target: postgres
+      frequency: daily
+      retention: 30d
+    - target: s3
+      frequency: daily
+      retention: 90d
+
+# ── Design ────────────────────────────────────────────────────────────────────
+# DesignSection: personality, colors (Record<string,string>), typography (Record<string,string>)
+
+design:
+  personality: "vibrant, energetic, trustworthy"
+  colors:
+    primary: "#6C47FF"
+    secondary: "#FF6B6B"
+    neutral: "#1A1A2E"
+    surface: "#FFFFFF"
+  typography:
+    heading: "Inter, sans-serif"
+    body: "Inter, sans-serif"
+    mono: "JetBrains Mono, monospace"
+
+# ── Artifacts ─────────────────────────────────────────────────────────────────
+
+artifacts:
+  generate:
+    - architecture-diagram
+    - openapi
+    - data-model
+    - repo-scaffold
+    - coding-rules
+    - adr

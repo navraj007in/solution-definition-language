@@ -1,0 +1,40 @@
+sdlVersion: "1.1"
+
+# ── Conformance: SEM-007 PROJECT_NAME_DUPLICATE ───────────────────────────────
+# Project names must be globally unique across frontend, backend, mobile, and services.
+# "api" appears in both backend projects — this document must fail with
+# PROJECT_NAME_DUPLICATE.
+
+solution:
+  name: conformance-duplicate-names
+  description: "Conformance test — duplicate project name across architecture sections"
+  stage: MVP
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: modular-monolith
+  projects:
+    frontend:
+      - name: api          # <-- "api" duplicated below
+        framework: nextjs
+    backend:
+      - name: api          # <-- same name as the frontend project above
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 100
+
+deployment:
+  cloud: aws

@@ -1,0 +1,104 @@
+sdlVersion: "1.1"
+
+# ── Conformance: Valid service dependency graph ────────────────────────────────
+# Demonstrates correct usage of architecture.services[].dependencies[]:
+# - Names reference real services (SEM-002)
+# - No service depends on itself (SEM-003)
+# - No cycles in the dependency graph (SEM-004)
+# - SLO names reference real service/project names (SEM-005)
+# - Domain relationships reference existing entity names (SEM-001)
+
+solution:
+  name: conformance-valid-deps
+  description: "Conformance test — valid service dependency graph and semantic references"
+  stage: Growth
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: microservices
+  projects:
+    frontend:
+      - name: web
+        framework: nextjs
+    backend:
+      - name: api
+        framework: nodejs
+      - name: worker
+        framework: nodejs
+        type: worker
+  # Services are named distinctly from projects — SEM-007 pools both into
+  # the same uniqueness namespace.
+  services:
+    - name: api-svc
+      kind: backend
+      responsibilities:
+        - "REST API for all operations"
+      dependencies:
+        - worker-svc      # valid: worker-svc is a known service name
+    - name: worker-svc
+      kind: worker
+      responsibilities:
+        - "Async job processing"
+      # no dependencies — leaf node, no cycle possible
+
+auth:
+  strategy: oidc
+  provider: auth0
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 500
+  security:
+    pii: true
+    encryptionAtRest: true
+
+deployment:
+  cloud: aws
+
+domain:
+  entities:
+    - name: User
+      fields:
+        - name: id
+          type: uuid
+          required: true
+    - name: Order
+      fields:
+        - name: id
+          type: uuid
+          required: true
+  relationships:
+    - from: Order
+      to: User          # both entities exist → passes SEM-001
+      type: belongs-to
+
+slos:
+  services:
+    - name: api-svc      # matches architecture.services[].name → passes SEM-005
+      availability: "99.9%"
+    - name: worker-svc   # matches architecture.services[].name → passes SEM-005
+      availability: "99.5%"
+
+compliance:
+  frameworks:
+    - name: GDPR         # recognized framework → passes SEM-009
+      applicable: true
+
+resilience:
+  circuitBreaker:
+    enabled: true
+    threshold: 50        # valid: 1–99 → passes SEM-011
+  retryPolicy:
+    maxAttempts: 3       # valid: >= 1 → passes SEM-012
+    backoff: exponential

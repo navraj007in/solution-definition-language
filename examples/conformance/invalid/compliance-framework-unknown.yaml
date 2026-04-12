@@ -1,0 +1,47 @@
+sdlVersion: "1.1"
+
+# ── Conformance: SEM-009 COMPLIANCE_FRAMEWORK_UNKNOWN ─────────────────────────
+# compliance.frameworks[].name must be one of the recognized framework identifiers.
+# "ISO-9001" is not a recognized SDL compliance framework — this document must
+# fail with COMPLIANCE_FRAMEWORK_UNKNOWN.
+#
+# Recognized values: GDPR, HIPAA, SOC2, SOC2-Type2, PCI-DSS, CCPA,
+#                    ISO27001, ISO 27001, SOX, FERPA, FISMA
+
+solution:
+  name: conformance-compliance-unknown
+  description: "Conformance test — unrecognized compliance framework name"
+  stage: Growth
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 100
+
+deployment:
+  cloud: aws
+
+compliance:
+  frameworks:
+    - name: GDPR
+      applicable: true
+    - name: ISO-9001       # <-- not a recognized SDL compliance framework
+      applicable: true

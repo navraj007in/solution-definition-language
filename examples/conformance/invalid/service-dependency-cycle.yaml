@@ -1,0 +1,48 @@
+sdlVersion: "1.1"
+
+# ── Conformance: SEM-004 SERVICE_DEPENDENCY_CYCLE ─────────────────────────────
+# architecture.services[].dependencies[] must not form a cycle.
+# service-a → service-b → service-a forms a cycle — this document must fail
+# with SERVICE_DEPENDENCY_CYCLE.
+
+solution:
+  name: conformance-service-cycle
+  description: "Conformance test — circular service dependency"
+  stage: MVP
+
+product:
+  personas:
+    - name: User
+      goals: [Use the app]
+
+architecture:
+  style: microservices
+  projects:
+    backend:
+      - name: service-a
+        framework: nodejs
+      - name: service-b
+        framework: nodejs
+  services:
+    - name: service-a
+      kind: backend
+      dependencies:
+        - service-b      # <-- service-a depends on service-b
+    - name: service-b
+      kind: backend
+      dependencies:
+        - service-a      # <-- service-b depends on service-a → cycle
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+nonFunctional:
+  availability:
+    target: "99.9"
+  scaling:
+    expectedUsersMonth1: 100
+
+deployment:
+  cloud: aws
