@@ -1,0 +1,4 @@
+interface:
+  display_name: "SDL Author"
+  short_description: "Generate valid SDL from architecture inputs"
+  default_prompt: "Use $sdl-author to generate a valid SDL v1.1 document from these requirements."
