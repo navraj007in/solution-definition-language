@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/sdl
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build SDL package
         working-directory: packages/sdl
