@@ -1,0 +1,73 @@
+sdlVersion: "1.1"
+
+solution:
+  name: "Billing"
+  description: "Customer + charge persistence with consistent error envelope"
+  stage: MVP
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+  errorConventions:
+    envelope:
+      kind: object
+      fields:
+        - name: code
+          type: string
+          required: true
+          description: "Machine-readable error code (matches status_mapping.code)"
+        - name: message
+          type: string
+          required: true
+          description: "Human-readable summary"
+        - name: details
+          type: object
+          required: false
+          description: "Optional structured detail bag"
+        - name: trace_id
+          type: string
+          required: false
+          description: "Distributed-trace correlation id"
+    status_mapping:
+      - status: 400
+        code: VALIDATION_FAILED
+        retryable: false
+      - status: 401
+        code: UNAUTHENTICATED
+        retryable: false
+      - status: 403
+        code: FORBIDDEN
+        retryable: false
+      - status: 404
+        code: NOT_FOUND
+        retryable: false
+      - status: 409
+        code: CONFLICT
+        retryable: false
+      - status: 422
+        code: UNPROCESSABLE
+        retryable: false
+      - status: 429
+        code: RATE_LIMITED
+        retryable: true
+        retry_after_header: true
+      - status: 500
+        code: INTERNAL
+        retryable: true
+      - status: 503
+        code: SERVICE_UNAVAILABLE
+        retryable: true
+        retry_after_header: true
+    retry_policy:
+      max_attempts: 3
+      backoff: exponential
+      base_ms: 100
+      cap_ms: 5000
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
