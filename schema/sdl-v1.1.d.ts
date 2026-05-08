@@ -123,6 +123,71 @@ export interface Service extends ExtensionFields {
   responsibilities?: string[];
   exposes?: ServiceExposes;
   dependencies?: string[];
+  /**
+   * Typed REST endpoint contract. Drives route generation, OpenAPI
+   * emission, SDK clients, and contract tests when consumers scaffold
+   * code from this SDL.
+   */
+  endpoints?: Endpoint[];
+}
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+
+export interface EndpointParam extends ExtensionFields {
+  name: string;
+  /** Primitive (string|integer|number|boolean|uuid|date|datetime|json|text), `array<T>`, `ref:EntityName`, or trailing `?` for optional. */
+  type: string;
+  required?: boolean;
+  description?: string;
+  default?: unknown;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  /** Closed set of allowed values for enum-typed params. */
+  values?: string[];
+}
+
+export interface EndpointBody extends ExtensionFields {
+  kind: 'object' | 'ref';
+  /** Inline shape when kind=object. */
+  fields?: EndpointParam[];
+  /** Entity / named response schema when kind=ref. */
+  ref?: string;
+}
+
+export interface EndpointAuthObject extends ExtensionFields {
+  required?: boolean;
+  scopes_any?: string[];
+  scopes_all?: string[];
+}
+
+export interface EndpointResponse extends ExtensionFields {
+  status: number;
+  body?: EndpointBody;
+  description?: string;
+}
+
+export interface EndpointError extends ExtensionFields {
+  status: number;
+  code: string;
+  retryable?: boolean;
+  description?: string;
+}
+
+export interface Endpoint extends ExtensionFields {
+  /** Stable kebab-case identifier — referenced by manifests + tooling. */
+  id: string;
+  path: string;
+  method: HttpMethod;
+  summary?: string;
+  description?: string;
+  auth?: 'required' | 'optional' | 'none' | EndpointAuthObject;
+  path_params?: EndpointParam[];
+  query?: EndpointParam[];
+  request?: { body?: EndpointBody };
+  response: EndpointResponse;
+  errors?: EndpointError[];
 }
 
 export interface ServiceExposes extends ExtensionFields {
