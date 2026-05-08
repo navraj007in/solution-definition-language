@@ -626,6 +626,74 @@
               }
             }
           }
+        },
+        "errorConventions": {
+          "$ref": "#/$defs/ErrorConventions",
+          "description": "Project-wide error envelope + status mapping. Drives error middleware emission, typed SDK error classes, and OpenAPI ErrorEnvelope schemas."
+        }
+      }
+    },
+    "ErrorConventions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "description": "Cross-service error contract.",
+      "properties": {
+        "envelope": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "required": ["kind", "fields"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "object"
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "patternProperties": { "^x-": {} },
+                "required": ["name", "type"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 },
+                  "required": { "type": "boolean" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "status_mapping": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": { "^x-": {} },
+            "required": ["status", "code"],
+            "properties": {
+              "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+              "code": { "type": "string", "minLength": 1 },
+              "retryable": { "type": "boolean" },
+              "retry_after_header": { "type": "boolean" }
+            }
+          }
+        },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "required": ["max_attempts", "backoff", "base_ms", "cap_ms"],
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1 },
+            "backoff": { "type": "string", "enum": ["exponential", "linear", "constant"] },
+            "base_ms": { "type": "integer", "minimum": 0 },
+            "cap_ms": { "type": "integer", "minimum": 0 }
+          }
         }
       }
     },

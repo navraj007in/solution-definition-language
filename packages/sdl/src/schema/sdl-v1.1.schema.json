@@ -835,6 +835,83 @@
               }
             }
           }
+        },
+        "errorConventions": {
+          "$ref": "#/$defs/ErrorConventions",
+          "description": "Project-wide error envelope + status mapping. Drives error middleware emission, typed SDK error classes, and OpenAPI ErrorEnvelope schemas."
+        }
+      }
+    },
+    "ErrorConventions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "description": "Cross-service error contract.",
+      "properties": {
+        "envelope": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "required": ["kind", "fields"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "object",
+              "description": "Always 'object' for v1; reserved for future shape extensions."
+            },
+            "fields": {
+              "type": "array",
+              "description": "Field shape of every error response body. Each field defines a name, type, and optional constraints — same shape as endpoint params.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "patternProperties": { "^x-": {} },
+                "required": ["name", "type"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "type": { "type": "string", "minLength": 1 },
+                  "required": { "type": "boolean" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "status_mapping": {
+          "type": "array",
+          "description": "Error code → HTTP status table. Generators invert to runtime middleware that maps thrown errors back to envelope responses.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": { "^x-": {} },
+            "required": ["status", "code"],
+            "properties": {
+              "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+              "code": { "type": "string", "minLength": 1 },
+              "retryable": { "type": "boolean" },
+              "retry_after_header": {
+                "type": "boolean",
+                "description": "When true, the response should set Retry-After. Drives middleware emission."
+              }
+            }
+          }
+        },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "required": ["max_attempts", "backoff", "base_ms", "cap_ms"],
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1 },
+            "backoff": {
+              "type": "string",
+              "enum": ["exponential", "linear", "constant"]
+            },
+            "base_ms": { "type": "integer", "minimum": 0 },
+            "cap_ms": { "type": "integer", "minimum": 0 }
+          }
         }
       }
     },
