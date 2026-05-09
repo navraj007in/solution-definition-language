@@ -13,16 +13,15 @@ For the support level of each section (schema strictness, normalization, generat
 
 For the compact machine-first authoring guide (minimum valid document, normalization behaviour, rejected legacy values, common mistakes), see [`reference/ai-authoring.md`](ai-authoring.md).
 
-If any other prose example conflicts with this file, follow this file, the active JSON schema, and the exported runtime types in `packages/sdl/src/types.ts`.
+If any other prose example conflicts with this file, follow `spec/SDL-v1.1.md` first, then this file, then the active JSON schema and exported runtime types in `packages/sdl/src/types.ts`.
 
 ## Authority Order
 
 For the active `v1.1` contract, use these sources in order:
 
-1. `reference/canonical-contract.md`
-2. `packages/sdl/src/schema/sdl-v1.1.schema.json`
-3. `packages/sdl/src/types.ts`
-4. `spec/SDL-v1.1.md`
+1. `spec/SDL-v1.1.md` — normative specification; if anything below conflicts, the spec wins
+2. `reference/canonical-contract.md` — this document; quick-reference summary derived from the spec
+3. `packages/sdl/src/schema/sdl-v1.1.schema.json` and `packages/sdl/src/types.ts` — machine-executable derivations of the spec; may lag during active development
 
 ## Required Root Fields
 
@@ -64,6 +63,17 @@ These are the currently stable root section shapes:
 | `design` | object |
 
 Use `x-` extension fields for richer metadata that is not part of the stable contract.
+
+## Stable Architecture Sub-Shapes
+
+These nested shapes inside `architecture` are part of the stable `v1.1` contract:
+
+| Sub-shape | Canonical Form |
+|---|---|
+| `architecture.projects` | object with `frontend[]`, `backend[]`, `mobile[]` arrays |
+| `architecture.services` | array of service objects |
+| `architecture.errorConventions` | optional `ErrorConventions` object (see [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Error Conventions*) |
+| `architecture.sharedLibraries` | array |
 
 ## Canonical Enums
 
@@ -176,6 +186,16 @@ Use `x-` extension fields for richer metadata that is not part of the stable con
 - `worker`
 - `function`
 - `api-gateway`
+
+### `architecture.errorConventions.envelope.kind`
+
+- `object`  (only valid value in v1.1; reserved for future shape extensions)
+
+### `architecture.errorConventions.retry_policy.backoff`
+
+- `exponential`
+- `linear`
+- `constant`
 
 ### `auth.strategy`
 

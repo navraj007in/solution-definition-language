@@ -43,8 +43,53 @@ export interface Architecture extends ExtensionFields {
     mobile?: Record<string, unknown>[];
     [key: string]: unknown;
   };
-  services?: Record<string, unknown>[];
+  services?: Service[];
   sharedLibraries?: Record<string, unknown>[];
+  /** Project-wide error envelope + status mapping. Drives error middleware emission, typed SDK error classes, and OpenAPI ErrorEnvelope schemas. */
+  errorConventions?: ErrorConventions;
+  [key: string]: unknown;
+}
+
+export interface ErrorEnvelopeField extends ExtensionFields {
+  name: string;
+  type: string;
+  required?: boolean;
+  description?: string;
+}
+
+export interface ErrorEnvelope extends ExtensionFields {
+  /** Always 'object' for v1; reserved for future shape extensions. */
+  kind: 'object';
+  fields: ErrorEnvelopeField[];
+}
+
+export interface ErrorStatusMappingEntry extends ExtensionFields {
+  status: number;
+  code: string;
+  retryable?: boolean;
+  /** When true, the response should set Retry-After. */
+  retry_after_header?: boolean;
+}
+
+export interface ErrorRetryPolicy extends ExtensionFields {
+  max_attempts: number;
+  backoff: 'exponential' | 'linear' | 'constant';
+  base_ms: number;
+  cap_ms: number;
+}
+
+export interface ErrorConventions extends ExtensionFields {
+  envelope?: ErrorEnvelope;
+  status_mapping?: ErrorStatusMappingEntry[];
+  retry_policy?: ErrorRetryPolicy;
+}
+
+export interface Service extends ExtensionFields {
+  name: string;
+  kind?: 'backend' | 'worker' | 'function' | 'api-gateway';
+  responsibilities?: string[];
+  exposes?: Record<string, unknown>;
+  dependencies?: string[];
   [key: string]: unknown;
 }
 

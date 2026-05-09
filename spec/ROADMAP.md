@@ -30,11 +30,14 @@ The four stable and partial groups are normatively defined, validated, and norma
 **Problem:** Both sections have enforced schema shapes but are not referenced by any normative output. A language section that drives no output is metadata at best.
 
 **`contracts` specification:**
-- `contracts.apis[]` becomes the authoritative declaration of a solution's API surface
-- Normative outputs must reference `contracts.apis[]` when producing API-related artifacts
+
+SDL is intentionally **not** an API description language — that role belongs to OpenAPI, GraphQL SDL, gRPC `.proto`, and AsyncAPI. SDL's job is to record the *inventory* of API surfaces, not their per-operation contracts.
+
+- `contracts.apis[]` is the authoritative inventory of a solution's API surfaces (one entry per surface, not per operation)
 - Each entry: `name` (required), `type` (rest | graphql | grpc | webhook | asyncapi), `owner`
-- Extension fields (`x-`) accepted for richer detail (version, basePath, endpoints)
-- Tooling that generates API specs must consume `contracts.apis[]` in preference to inferring from architecture
+- Extension fields (`x-`) accepted for richer detail and pointers to external spec files (e.g. `x-spec-path: ./openapi/api-server.yaml`, `x-version`, `x-base-path`)
+- Tooling that generates API-related artifacts (catalogs, ownership reports, gateway registration) must consume `contracts.apis[]`; tooling that needs per-operation detail must consume the externally referenced OpenAPI/GraphQL/gRPC/AsyncAPI file, **not** SDL
+- Cross-cutting wire-shape decisions that apply solution-wide (e.g. error envelope, auth scheme conventions) belong under `architecture` — see `architecture.errorConventions`. Per-operation detail does not
 
 **`domain` specification:**
 - `domain.entities[]` becomes the authoritative declaration of the solution's data model

@@ -29,7 +29,11 @@ sdlVersion: "1.1"
 
 # Core required sections
 solution: {}
-architecture: {}
+architecture:
+  style: ...
+  projects: {}
+  services: []          # service inventory + responsibilities + dependencies
+  errorConventions: {}  # solution-wide error envelope, status mapping, retry policy
 data: {}
 
 # v1.1 Additions (optional but recommended)
@@ -135,7 +139,7 @@ Any key prefixed with `x-` is an extension field. Extension fields:
 
 ## NEW: API Contracts Section
 
-Current implemented shape: lightweight API contract inventory.
+`contracts.apis[]` is a lightweight **inventory** of the externally addressable API surfaces in the solution — one entry per surface — used by tooling that needs a flat catalog (API portals, ownership reports, gateway registration). It does not describe individual operations.
 
 ```yaml
 contracts:
@@ -151,10 +155,63 @@ contracts:
       owner: platform-team
 ```
 
-Future direction:
+**SDL is intentionally not an API description language.** Per-operation contracts (request/response shapes, status codes, parameter validation) live in the appropriate ecosystem standard — OpenAPI for REST, GraphQL SDL, gRPC `.proto`, AsyncAPI for events. Reference those external files from SDL via `x-` extension fields on `contracts.apis[]` entries (e.g. `x-spec-path: ./openapi/api-server.yaml`). The `Service.exposes.http.openapi: boolean` flag remains the way to declare that a service emits an OpenAPI document at runtime.
 
-- richer references to external OpenAPI, GraphQL SDL, gRPC, or AsyncAPI files can be added later
-- those shapes should not be treated as part of the stable `v1.1` contract until schema and types are expanded
+---
+
+## NEW: Error Conventions (architecture.errorConventions)
+
+`architecture.errorConventions` declares a single error envelope shape, status↔code mapping, and default retry policy that all services in the architecture honour. It is a cross-cutting architectural decision (sibling to `nonFunctional.security.encryptionAtRest`) — not a per-operation contract — so that error middleware, typed SDK error classes, and OpenAPI `ErrorEnvelope` schemas can be generated once and reused across every service in the solution.
+
+```yaml
+architecture:
+  errorConventions:
+    envelope:
+      kind: object
+      fields:
+        - name: error
+          type: object
+          required: true
+        - name: error.code
+          type: string
+          required: true
+        - name: error.message
+          type: string
+          required: true
+        - name: error.requestId
+          type: string
+          required: true
+    status_mapping:
+      - status: 400
+        code: VALIDATION_ERROR
+        retryable: false
+      - status: 401
+        code: UNAUTHORIZED
+        retryable: false
+      - status: 409
+        code: CONFLICT
+        retryable: false
+      - status: 429
+        code: RATE_LIMITED
+        retryable: true
+        retry_after_header: true
+      - status: 503
+        code: SERVICE_UNAVAILABLE
+        retryable: true
+        retry_after_header: true
+    retry_policy:
+      max_attempts: 3
+      backoff: exponential
+      base_ms: 200
+      cap_ms: 5000
+```
+
+`errorConventions` carries three optional sub-shapes: `envelope` (the wire shape of every error response — `kind: object` plus a `fields[]` array of `name` / `type` / optional `required` / optional `description`), `status_mapping[]` (each entry: `status` 100–599, `code`, optional `retryable`, optional `retry_after_header`), and `retry_policy` (`max_attempts`, `backoff: exponential | linear | constant`, `base_ms`, `cap_ms`). The full field surface and required/optional flags live in `reference/canonical-contract.md` and the JSON schema; they are not duplicated here.
+
+### Cross-document consistency
+
+- `architecture.errorConventions.retry_policy` is the **default** retry policy. Entries in `resilience.retryPolicy[]` may tighten or relax it for specific targets; they should not contradict its semantics (e.g. don't declare a target as non-retryable when the convention says it is).
+- `envelope.kind` is fixed at `object` in v1.1; the field exists so future shapes (e.g. Problem+JSON-style arrays) can be introduced without a breaking change. Authors must always set it to `object`.
 
 ---
 
@@ -618,7 +675,7 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation + 25 conditional rules
+2. **Validate** — JSON Schema validation + 27 conditional rules
 3. **Normalize** — 15+ auto-inference rules fill missing fields
 4. **Warnings** — 10+ rules detect potential issues (non-blocking)
 
@@ -632,7 +689,7 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 > Rules marked **[not yet implemented]** are normative but not yet enforced by the reference package.
 > Rules marked **[not yet implemented, field absent]** require a type contract expansion before they can be enforced.
 
-These rules catch logical inconsistencies and must pass for valid SDL (25 active rules; rules 7–9 are tombstones for removed rules):
+These rules catch logical inconsistencies and must pass for valid SDL (27 active rules; rules 7–9 are tombstones for removed rules):
 
 **Reference Integrity (7 rules):**
 1. **SLO Service References** **[enforced: SEM-005]** → every `slos.services[].name` must match a component name in `architecture.projects` or `architecture.services`
@@ -675,6 +732,10 @@ These rules catch logical inconsistencies and must pass for valid SDL (25 active
 
 **PII & Security (1 rule):**
 27. **PII Encryption** **[enforced: JSON schema allOf]** → if `nonFunctional.security.pii: true`, then `nonFunctional.security.encryptionAtRest` must also be `true`. Note: `pii` is a field on `nonFunctional.security`, not on individual entity fields (`DomainField` has no `pii` property in the current type contract).
+
+**Error Conventions (2 rules):**
+29. **Status Range** **[enforced: JSON schema range]** → `architecture.errorConventions.status_mapping[].status` must be in the range 100–599.
+30. **Retry Policy Consistency** **[not yet implemented]** → when both are present, `resilience.retryPolicy[]` entries should not contradict `architecture.errorConventions.retry_policy` (e.g. mark as non-retryable a status the convention declares retryable).
 
 ### Warning Rules
 
