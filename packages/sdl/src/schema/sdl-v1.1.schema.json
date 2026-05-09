@@ -1143,7 +1143,13 @@
         "dependencies": {
           "type": "array",
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Shorthand. Treated as { kind: 'service', ref: <string> } by validators and generators."
+              },
+              { "$ref": "#/$defs/ServiceDependency" }
+            ]
           }
         },
         "endpoints": {
@@ -2552,6 +2558,35 @@
             }
           }
         }
+      }
+    },
+    "ServiceDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["database", "service", "external", "queue", "cache"],
+          "description": "What this dependency is. Drives env-var generation, docker-compose wiring, and verifier semantics."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name resolved against the relevant slice. services[].name when kind=service, databases[].name when kind=database, integrations[].provider when kind=external."
+        },
+        "consumes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Endpoint ids consumed when kind=service. Literal verb-paths when kind=external. Validator confirms each id exists on the target service's endpoints[]."
+        },
+        "access": {
+          "type": "string",
+          "enum": ["read-only", "read-write", "producer", "consumer", "both"],
+          "description": "Access level. Drives connection-pool sizing hints, IAM policy generation, and consumer/producer wiring for queues."
+        },
+        "description": { "type": "string" }
       }
     }
   }

@@ -1,0 +1,62 @@
+sdlVersion: "1.1"
+
+solution:
+  name: "Gateway"
+  description: "API gateway with typed downstream deps"
+  stage: Growth
+
+architecture:
+  style: microservices
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+  services:
+    - name: billing-api
+      kind: backend
+      endpoints:
+        - id: list-charges
+          path: /charges
+          method: GET
+          response: { status: 200 }
+        - id: create-charge
+          path: /charges
+          method: POST
+          response: { status: 201 }
+
+    - name: gateway
+      kind: backend
+      dependencies:
+        # Bare string — back-compat shorthand for kind=service
+        - billing-api
+
+        # Typed — what's actually consumed from billing-api
+        - kind: service
+          ref: billing-api
+          consumes: [list-charges, create-charge]
+
+        # Database
+        - kind: database
+          ref: postgres-primary
+          access: read-write
+
+        # Cache (different env-var conventions than database)
+        - kind: cache
+          ref: redis-session
+          access: read-write
+
+        # External API
+        - kind: external
+          ref: stripe
+          consumes: ["POST /v1/charges", "POST /v1/refunds"]
+          access: read-write
+
+        # Queue — gateway is a producer
+        - kind: queue
+          ref: webhook-events
+          access: producer
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed

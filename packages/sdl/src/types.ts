@@ -108,12 +108,27 @@ export interface MobileProject extends ExtensionFields {
   framework: 'react-native' | 'flutter' | 'swift' | 'kotlin' | 'ionic';
 }
 
+export type DependencyKind = 'database' | 'service' | 'external' | 'queue' | 'cache';
+export type DependencyAccess = 'read-only' | 'read-write' | 'producer' | 'consumer' | 'both';
+
+export interface ServiceDependency extends ExtensionFields {
+  kind: DependencyKind;
+  ref: string;
+  /** Endpoint ids when kind=service; literal verb-paths when kind=external. */
+  consumes?: string[];
+  access?: DependencyAccess;
+  description?: string;
+}
+
+export type ServiceDependencyRef = string | ServiceDependency;
+
 export interface Service extends ExtensionFields {
   name: string;
   kind: 'backend' | 'worker' | 'function' | 'api-gateway';
   responsibilities?: string[];
   exposes?: ServiceExposes;
-  dependencies?: string[];
+  /** Each entry is either a bare service name (back-compat shorthand for kind=service) or a typed ServiceDependency. */
+  dependencies?: ServiceDependencyRef[];
 }
 
 export interface ServiceExposes extends ExtensionFields {
