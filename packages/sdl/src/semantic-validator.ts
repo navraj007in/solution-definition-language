@@ -170,11 +170,19 @@ function checkReferenceIntegrity(sdl: SDLDocument): ValidationError[] {
   // SEM-002, SEM-003, SEM-004: Service dependencies
   const servicesByName = new Map<string, string[]>();
   for (const svc of sdl.architecture.services ?? []) {
-    const deps = svc.dependencies ?? [];
-    servicesByName.set(svc.name, deps);
+    const rawDeps = svc.dependencies ?? [];
+    // Bare string => kind=service shorthand. Typed object => only counts as a service-dep
+    // for SEM checks when kind=='service'. Database/cache/queue/external deps are scoped
+    // to their own slice and don't participate in service-dependency-graph checks.
+    const serviceDeps: string[] = rawDeps
+      .map((d) =>
+        typeof d === 'string' ? d : d.kind === 'service' ? d.ref : null,
+      )
+      .filter((d): d is string => d !== null);
+    servicesByName.set(svc.name, serviceDeps);
 
     // SEM-003: Self-dependency check
-    if (deps.includes(svc.name)) {
+    if (serviceDeps.includes(svc.name)) {
       errors.push({
         type: 'error',
         code: 'SERVICE_SELF_DEPENDENCY',
@@ -184,8 +192,8 @@ function checkReferenceIntegrity(sdl: SDLDocument): ValidationError[] {
       });
     }
 
-    // SEM-002: Dependency existence check
-    for (const dep of deps) {
+    // SEM-002: Dependency existence check (service-kind only)
+    for (const dep of serviceDeps) {
       if (dep !== svc.name && !serviceNames.has(dep)) {
         errors.push({
           type: 'error',
