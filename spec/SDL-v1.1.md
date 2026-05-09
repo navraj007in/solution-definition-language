@@ -71,20 +71,51 @@ SDL documents may be split across multiple files using the `imports` key. This s
 
 ### Import Declaration
 
+`imports` is an optional array at the root of an SDL document. Each entry takes one of three forms — all three resolve through the same algorithm and may be mixed within a single `imports[]` list.
+
+**Form A — path with explicit extension** (always supported):
+
 ```yaml
-sdlVersion: "1.1"
 imports:
   - sdl/auth.sdl.yaml
   - sdl/deployment.sdl.yaml
-solution: {}
-architecture: {}
-data: {}
 ```
 
-- `imports` is an optional array of relative file paths at the root of an SDL document.
-- Imported paths must end in `.sdl.yaml` or `.sdl.yml`. Other extensions produce a warning.
-- Each imported file is itself a valid SDL fragment (it may omit `sdlVersion` and `imports`).
-- Import order is significant: modules listed earlier are treated as the base; modules listed later override scalar values in earlier modules (see merge rules below).
+**Form B — path with the extension inferred** (added in v1.2):
+
+```yaml
+imports:
+  - sdl/auth          # resolves to sdl/auth.sdl.yaml or sdl/auth.sdl.yml
+  - sdl/deployment
+```
+
+**Form C — explicit `{ name, path }` object** (added in v1.2):
+
+```yaml
+imports:
+  - name: auth
+    path: sdl/auth                 # implicit extension also works inside path
+  - name: deployment
+    path: sdl/deployment.sdl.yaml  # or be explicit
+```
+
+#### Resolution algorithm
+
+For every entry, the resolver:
+
+1. **Normalises to `{ name, path }`.** For string entries, `name` defaults to the filename stem (`auth` from `sdl/auth` or `sdl/auth.sdl.yaml`). For object entries, both fields are required.
+2. **Resolves `path` to a file:**
+   - If `path` already ends in `.sdl.yaml` or `.sdl.yml`, it is loaded as-is.
+   - If `path` ends in any other YAML-shaped extension (`.yaml`, `.yml`), a warning is emitted and the file is loaded as-is.
+   - Otherwise, the resolver tries `<path>.sdl.yaml` first, then `<path>.sdl.yml`. The first hit wins. If neither exists, a `missing-file` error is recorded.
+3. **Validates `name`:** explicit names should match `^[a-zA-Z][a-zA-Z0-9_-]*$` (a warning is emitted otherwise — kebab-case is permitted because module filenames are commonly hyphenated). Names must be unique within a single `imports[]` list; duplicates are a `conflict` error. Use Form C with explicit names to disambiguate when two paths would derive the same default stem.
+
+#### Constraints
+
+- Paths must be relative to the file containing the `imports[]` list. Absolute paths and `..`-traversal beyond the project root are rejected by the host's `readFile` adapter.
+- Each imported file is itself a valid SDL fragment (it may omit `sdlVersion` and may carry its own `imports[]`, subject to the depth limit below).
+- Import order is significant: modules listed earlier are treated as the base; modules listed later override scalar values in earlier modules (see merge rules below). The form of an entry has no effect on merge order.
+- `name` is currently used for diagnostics and to detect duplicate entries. It is reserved for future cross-module reference syntax (e.g. `$ref: <name>#/path`) — authors should pick stable names even though tooling does not yet consume them.
 
 ### Merge Rules (normative)
 

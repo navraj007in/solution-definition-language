@@ -6,6 +6,7 @@
 
 - `architecture.errorConventions` — solution-wide error envelope, status↔code mapping, and default retry policy. Cross-cutting architectural decision used to generate error middleware, typed SDK error classes, and OpenAPI `ErrorEnvelope` schemas. Spec section in `spec/SDL-v1.1.md`; canonical enums in `reference/canonical-contract.md`; full field surface in the JSON schema.
 - `Endpoint*` and `ErrorConventions` TypeScript types mirrored into `packages/sdl/src/types.ts` and `packages/sdl/src/schema/sdl-v1.1.d.ts` (the package-internal `.d.ts` had been stale).
+- **`imports[]` ergonomic forms (Form B and Form C).** Existing path entries (Form A — `sdl/services.sdl.yaml`) are unchanged. New: Form B drops the `.sdl.yaml`/`.sdl.yml` extension (`- sdl/services`); the resolver tries `.sdl.yaml` then `.sdl.yml`. Form C accepts an explicit `{ name, path }` object; `name` is reserved for future cross-module references and is currently used for diagnostics + duplicate-detection. Names should match `^[a-zA-Z][a-zA-Z0-9_-]*$` (kebab-case allowed). Forms may be mixed within one `imports[]` list. New `ImportEntry` and `NamedImport` types exported from `@sdl/core`. Spec changes in `spec/SDL-v1.1.md` § "Modular SDL and Import Semantics"; quick-reference in `reference/ai-authoring.md`. 12 new resolver tests cover the new shapes; existing multi-file showcase examples still pass through the unchanged Form A path.
 
 ### Removed
 

@@ -2,6 +2,24 @@
 
 type ExtensionFields = { [key: `x-${string}`]: unknown };
 
+// ─── Modular SDL imports ───
+
+/**
+ * Object form of a single `imports[]` entry (Form C).
+ * `path` may include the `.sdl.yaml` / `.sdl.yml` extension or omit it
+ * (the resolver will append the extension when missing).
+ */
+export interface NamedImport extends ExtensionFields {
+  name: string;
+  path: string;
+}
+
+/**
+ * Single `imports[]` entry. Either a path string (Form A or B) or a
+ * `{name, path}` object (Form C). See spec/SDL-v1.1.md § "Import Declaration".
+ */
+export type ImportEntry = string | NamedImport;
+
 // ─── Root SDL Document ───
 
 export interface SDLDocument extends ExtensionFields {

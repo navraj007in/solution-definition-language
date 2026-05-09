@@ -213,6 +213,27 @@ These were common in older examples and generated code. Do not use them.
 
 ---
 
+## Modular SDL — `imports[]`
+
+Split a large solution across files using a root `imports[]` array. Three forms — pick whichever reads cleanest, mix freely:
+
+```yaml
+imports:
+  - sdl/auth.sdl.yaml          # Form A — explicit extension
+  - sdl/services               # Form B — extension inferred (.sdl.yaml then .sdl.yml)
+  - name: deployment           # Form C — explicit name + path
+    path: sdl/deployment
+```
+
+- Paths are relative to the file declaring `imports[]`.
+- Names in Form C should match `^[a-zA-Z][a-zA-Z0-9_-]*$` (kebab-case is allowed because module filenames often are). Names must be unique within one `imports[]` list.
+- Imported modules merge in declaration order; later modules override earlier ones (last-writer-wins on scalars). The `imports[]` key itself is stripped before validation.
+- Maximum nesting depth is 3 (root → depth 1 → depth 2 → depth 3). Circular imports are an error.
+
+Full normative rules: [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) § "Modular SDL and Import Semantics".
+
+---
+
 ## Extension Fields
 
 Put metadata that does not fit the stable contract under `x-` prefixed keys at any nesting level:

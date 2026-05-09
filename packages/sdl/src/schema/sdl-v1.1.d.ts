@@ -2,7 +2,13 @@ export type ExtensionFields = { [key: `x-${string}`]: unknown };
 
 export interface SDLDocumentV11 extends ExtensionFields {
   sdlVersion: '1.1';
-  imports?: string[];
+  /**
+   * Module imports. Each entry is either:
+   *  - a path string ending in `.sdl.yaml` / `.sdl.yml` (Form A)
+   *  - a path string with the extension omitted; resolver appends `.sdl.yaml` then `.sdl.yml` (Form B)
+   *  - an explicit `{ name, path }` object (Form C); `path` may be Form A or B
+   */
+  imports?: Array<string | { name: string; path: string }>;
   solution: SolutionMetadata;
   architecture: Architecture;
   data: DataLayer;
