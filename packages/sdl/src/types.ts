@@ -529,19 +529,82 @@ export interface ContractDefinition extends ExtensionFields {
 }
 
 export interface DomainSection extends ExtensionFields {
-  entities?: DomainEntity[];
+  entities?: Entity[];
   relationships?: DomainRelationship[];
 }
 
-export interface DomainEntity extends ExtensionFields {
+/** @deprecated Use {@link Entity}. Kept as an alias for backward compatibility. */
+export type DomainEntity = Entity;
+
+/** @deprecated Use {@link EntityField}. Kept as an alias for backward compatibility. */
+export type DomainField = EntityField;
+
+export interface Entity extends ExtensionFields {
+  /** PascalCase entity name. Generators emit a TS interface with this name and a snake_case table by default. */
   name: string;
-  fields?: DomainField[];
+  description?: string;
+  /** snake_case table name override. Defaults to snake_case(name). */
+  table?: string;
+  fields?: EntityField[];
+  indexes?: EntityIndex[];
+  constraints?: EntityConstraint[];
+  relationships?: EntityRelationship[];
 }
 
-export interface DomainField extends ExtensionFields {
+export interface EntityField extends ExtensionFields {
   name: string;
+  /** Primitive (string|integer|number|boolean|uuid|date|datetime|json|text|decimal), 'array<T>', 'ref:EntityName', or trailing '?' for optional. */
   type: string;
   required?: boolean;
+  nullable?: boolean;
+  primaryKey?: boolean;
+  /** Reference to another entity's field. Either a bare field name (e.g. 'user_id') or 'EntityName.fieldName'. */
+  foreignKey?: string;
+  unique?: boolean;
+  indexed?: boolean;
+  generated?: boolean;
+  /** DB-level default; passed through unchanged. Tokens like 'now()' or 'gen_random_uuid()' emit verbatim. */
+  default?: unknown;
+  /** Closed enum (CHECK constraint at SQL level). */
+  enum?: string[];
+  length?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  precision?: number;
+  scale?: number;
+  onUpdate?: string;
+  description?: string;
+}
+
+export interface EntityIndex extends ExtensionFields {
+  name?: string;
+  /** Column names this index covers. */
+  fields: string[];
+  unique?: boolean;
+}
+
+export interface EntityConstraint extends ExtensionFields {
+  name?: string;
+  type: 'check' | 'unique';
+  /** SQL expression for type=check. */
+  expression?: string;
+  /** Columns for type=unique. */
+  fields?: string[];
+  description?: string;
+}
+
+export interface EntityRelationship extends ExtensionFields {
+  /** Relationship name (e.g. 'organization', 'owned_contacts'). */
+  name?: string;
+  /** Target entity name. */
+  target: string;
+  type?: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many';
+  /** Column name for the FK reference. */
+  foreignKey?: string;
+  /** Join table for many-to-many. */
+  via?: string;
+  description?: string;
 }
 
 export interface DomainRelationship extends ExtensionFields {

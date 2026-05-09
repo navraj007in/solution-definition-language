@@ -1,0 +1,94 @@
+sdlVersion: "1.1"
+
+solution:
+  name: "Billing"
+  description: "Customer + charge persistence with typed domain"
+  stage: MVP
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+domain:
+  entities:
+    - name: Customer
+      description: A paying customer
+      table: customers
+      fields:
+        - name: id
+          type: uuid
+          required: true
+          primaryKey: true
+          generated: true
+        - name: email
+          type: string
+          required: true
+          maxLength: 320
+          unique: true
+        - name: name
+          type: string
+          required: true
+        - name: created_at
+          type: datetime
+          required: true
+          default: now()
+      indexes:
+        - fields: [email]
+          unique: true
+
+    - name: Charge
+      table: charges
+      fields:
+        - name: id
+          type: uuid
+          primaryKey: true
+          generated: true
+        - name: customer_id
+          type: uuid
+          required: true
+          foreignKey: customer_id
+          indexed: true
+        - name: amount_cents
+          type: integer
+          required: true
+          min: 1
+        - name: currency
+          type: string
+          required: true
+          maxLength: 3
+        - name: status
+          type: string
+          required: true
+          enum: [pending, paid, failed]
+        - name: metadata
+          type: json
+        - name: created_at
+          type: datetime
+          required: true
+          default: now()
+      indexes:
+        - fields: [customer_id]
+        - fields: [customer_id, currency]
+      constraints:
+        - type: check
+          expression: "amount_cents > 0"
+        - type: unique
+          fields: [customer_id, currency]
+      relationships:
+        - name: customer
+          type: many-to-one
+          target: Customer
+          foreignKey: customer_id
+
+  relationships:
+    - from: Charge
+      to: Customer
+      type: many-to-one

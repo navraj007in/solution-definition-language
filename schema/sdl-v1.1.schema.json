@@ -112,31 +112,21 @@
       "properties": {
         "entities": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": true,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "fields": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            },
-            "required": [
-              "name"
-            ]
-          }
+          "description": "Typed entity model. Drives migration emission, ORM models, and shared TypeScript types.",
+          "items": { "$ref": "#/$defs/Entity" }
         },
         "relationships": {
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": false,
+            "patternProperties": { "^x-": {} },
+            "required": ["from", "to"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "type": { "type": "string" }
+            }
           }
         }
       }
@@ -2265,6 +2255,138 @@
               ]
             }
           }
+        }
+      }
+    },
+    "EntityField": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Primitive (string|integer|number|boolean|uuid|date|datetime|json|text|decimal), 'array<T>', 'ref:EntityName', or trailing '?' for optional."
+        },
+        "required": { "type": "boolean" },
+        "nullable": { "type": "boolean" },
+        "primaryKey": { "type": "boolean" },
+        "foreignKey": {
+          "type": "string",
+          "description": "Reference to another entity's field. Either a bare field name (e.g. 'user_id') or 'EntityName.fieldName'."
+        },
+        "unique": { "type": "boolean" },
+        "indexed": { "type": "boolean" },
+        "generated": { "type": "boolean" },
+        "default": {
+          "description": "DB-level default; passed through unchanged. Tokens like 'now()' or 'gen_random_uuid()' emit verbatim."
+        },
+        "enum": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Closed enum (CHECK constraint at SQL level)."
+        },
+        "length": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "precision": { "type": "integer", "minimum": 0 },
+        "scale": { "type": "integer", "minimum": 0 },
+        "onUpdate": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "EntityIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["fields"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Column names this index covers."
+        },
+        "unique": { "type": "boolean" }
+      }
+    },
+    "EntityConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": {
+          "type": "string",
+          "enum": ["check", "unique"],
+          "description": "Constraint kind: 'check' (SQL expression) or 'unique' (column tuple)."
+        },
+        "expression": {
+          "type": "string",
+          "description": "SQL expression for type=check."
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Columns for type=unique."
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "EntityRelationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["target"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "description": "Relationship name (e.g. 'organization', 'owned_contacts')." },
+        "target": { "type": "string", "minLength": 1, "description": "Target entity name." },
+        "type": {
+          "type": "string",
+          "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"]
+        },
+        "foreignKey": { "type": "string", "description": "Column name for the FK reference." },
+        "via": { "type": "string", "description": "Join table for many-to-many." },
+        "description": { "type": "string" }
+      }
+    },
+    "Entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9_]*$",
+          "description": "PascalCase entity name. Generators emit a TS interface with this name and a snake_case table by default."
+        },
+        "description": { "type": "string" },
+        "table": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "snake_case table name override. Defaults to snake_case(name)."
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntityField" }
+        },
+        "indexes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntityIndex" }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntityConstraint" }
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntityRelationship" }
         }
       }
     }
