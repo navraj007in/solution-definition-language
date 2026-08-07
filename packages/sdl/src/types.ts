@@ -24,6 +24,13 @@ export type ImportEntry = string | NamedImport;
 
 export interface SDLDocument extends ExtensionFields {
   sdlVersion: '1.1';
+  /**
+   * Modular SDL only. Consumed by the resolver and stripped from the merged
+   * document before validation, so a *compiled* SDLDocument never carries it.
+   * Declared here (and in the JSON schema) so that an unmerged root file is
+   * still a schema-valid SDL document.
+   */
+  imports?: ImportEntry[];
   solution: SolutionMetadata;
   product: ProductContext;
   architecture: Architecture;
@@ -147,10 +154,42 @@ export interface FrontendProject extends ExtensionFields {
   styling?: 'tailwind' | 'css-modules' | 'styled-components' | 'sass' | 'emotion';
 }
 
+/**
+ * Canonical backend framework identifiers. All are unversioned — the runtime
+ * version belongs in `BackendProject.runtimeVersion`, not in the identifier.
+ */
+export type BackendFramework =
+  | 'dotnet'
+  | 'nodejs'
+  | 'python-fastapi'
+  | 'go'
+  | 'java-spring'
+  | 'ruby-rails'
+  | 'php-laravel';
+
+/**
+ * Deprecated framework spellings still accepted on input. The normalizer
+ * rewrites each to its canonical `BackendFramework` plus a `runtimeVersion`,
+ * and records an `Inference`. Scheduled for removal in SDL v2.0.
+ *
+ * - `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`
+ */
+export type DeprecatedBackendFramework = 'dotnet-8';
+
 export interface BackendProject extends ExtensionFields {
   name: string;
   type?: 'backend' | 'worker' | 'function';
-  framework: 'dotnet-8' | 'nodejs' | 'python-fastapi' | 'go' | 'java-spring' | 'ruby-rails' | 'php-laravel';
+  framework: BackendFramework | DeprecatedBackendFramework;
+  /**
+   * Target runtime/SDK version for this service, e.g. `"10.0"` for .NET 10,
+   * `"22"` for Node 22, `"3.13"` for Python. Free-form because each ecosystem
+   * versions differently.
+   *
+   * Advisory only — nothing is rejected for targeting an unusual version. It
+   * selects the base images and CI toolchain versions the generators emit;
+   * when omitted, `DEFAULT_RUNTIME_VERSION[framework]` is used.
+   */
+  runtimeVersion?: string;
   apiStyle?: 'rest' | 'graphql' | 'grpc' | 'mixed';
   orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose';
   apiVersioning?: 'url-prefix' | 'header' | 'query-param' | 'none';

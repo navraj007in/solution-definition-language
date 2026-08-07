@@ -55,4 +55,4 @@ The current implementation is defined by `packages/sdl/src/normalizer.ts`. This 
 | `nodejs` | `mongodb` | `mongoose` |
 | `python-fastapi` | `postgres`, `mysql` | `sqlalchemy` |
 | `go` | supported databases | `gorm` when mapped |
-| `dotnet-8` | supported databases | `ef-core` when mapped |
+| `dotnet` | supported databases | `ef-core` when mapped |

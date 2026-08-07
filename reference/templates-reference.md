@@ -702,7 +702,8 @@ architecture:
         framework: "nextjs"
     backend:
       - name: "api"
-        framework: "dotnet-8"
+        framework: "dotnet"
+        runtimeVersion: "10.0"
 
 auth:
   strategy: "oidc"

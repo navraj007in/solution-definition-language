@@ -162,7 +162,7 @@ function generateBackendScaffold(be: BackendProject, doc: SDLDocument): Generate
     case 'python-fastapi':
       // Python uses requirements.txt instead
       break;
-    case 'dotnet-8':
+    case 'dotnet':
       // .NET uses .csproj
       break;
     case 'java-spring':
@@ -662,7 +662,7 @@ function backendPort(framework: string): number {
   switch (framework) {
     case 'python-fastapi': return 8000;
     case 'go': return 8080;
-    case 'dotnet-8': return 5000;
+    case 'dotnet': return 5000;
     case 'java-spring': return 8080;
     default: return 3000;
   }

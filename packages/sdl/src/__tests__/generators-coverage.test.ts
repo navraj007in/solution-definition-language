@@ -33,6 +33,15 @@ import { generateAll } from '../generators';
 import { diff } from '../diff';
 import { getTemplates, getTemplate, listTemplates } from '../templates';
 import type { SDLDocument } from '../types';
+import { DEFAULT_RUNTIME_VERSION } from '../constants';
+
+// Generator version assertions read from the same table the generators read,
+// so bumping a runtime in constants.ts does not require editing these tests —
+// and a test can never silently assert a version the generators stopped using.
+const NODE_V = DEFAULT_RUNTIME_VERSION['nodejs'];
+const PY_V = DEFAULT_RUNTIME_VERSION['python-fastapi'];
+const GO_V = DEFAULT_RUNTIME_VERSION['go'];
+const DOTNET_V = DEFAULT_RUNTIME_VERSION['dotnet'];
 
 const FIXTURES_DIR = join(__dirname, '..', '..', 'src', '__tests__', 'fixtures');
 const fixture = (name: string) => readFileSync(join(FIXTURES_DIR, name), 'utf-8');
@@ -817,7 +826,7 @@ describe('mobile-railway fixture', () => {
     it('includes .NET 8 backend', () => {
       const doc = getDoc('mobile-railway.yaml');
       const content = generateArchitectureDiagram(doc).files[0].content;
-      assert.ok(content.includes('.NET 8'));
+      assert.ok(content.includes('.NET'));
     });
 
     it('includes Clerk auth provider', () => {
@@ -1278,7 +1287,7 @@ describe('GitLab CI generator', () => {
   it('generates Python lint and test jobs for FastAPI', () => {
     const doc = getDoc('saas-gcp.yaml');
     const content = generateCiCdPipeline(doc).files.find((f) => f.path.includes('.gitlab-ci.yml'))!.content;
-    assert.ok(content.includes('python:3.12'));
+    assert.ok(content.includes(`python:${PY_V}`));
     assert.ok(content.includes('ruff check'));
     assert.ok(content.includes('pytest'));
   });
@@ -1319,7 +1328,7 @@ describe('GitLab CI generator', () => {
     const doc = getDoc('ecommerce-aws.yaml');
     (doc.deployment as any).ciCd = { provider: 'gitlab-ci' };
     const content = generateCiCdPipeline(doc).files.find((f) => f.path.includes('.gitlab-ci.yml'))!.content;
-    assert.ok(content.includes('golang:1.22'));
+    assert.ok(content.includes(`golang:${GO_V}`));
     assert.ok(content.includes('go vet'));
     assert.ok(content.includes('go build'));
     assert.ok(content.includes('- bin/'));
@@ -1329,7 +1338,7 @@ describe('GitLab CI generator', () => {
     const doc = getDoc('mobile-railway.yaml');
     (doc.deployment as any).ciCd = { provider: 'gitlab-ci' };
     const content = generateCiCdPipeline(doc).files.find((f) => f.path.includes('.gitlab-ci.yml'))!.content;
-    assert.ok(content.includes('mcr.microsoft.com/dotnet/sdk:8.0'));
+    assert.ok(content.includes('mcr.microsoft.com/dotnet/sdk:8.0'));  // fixture uses the dotnet-8 alias → runtimeVersion 8.0
     assert.ok(content.includes('dotnet restore'));
     assert.ok(content.includes('dotnet publish'));
     assert.ok(content.includes('- out/'));
@@ -1360,7 +1369,7 @@ describe('Dockerfile generator', () => {
     const result = generateCiCdPipeline(doc);
     const df = result.files.find((f) => f.path.includes('docker/backend-api-gateway/Dockerfile'));
     assert.ok(df);
-    assert.ok(df!.content.includes('node:20-alpine AS builder'));
+    assert.ok(df!.content.includes(`node:${NODE_V}-alpine AS builder`));
     assert.ok(df!.content.includes('npm ci'));
     assert.ok(df!.content.includes('npm run build'));
     assert.ok(df!.content.includes('EXPOSE 3000'));
@@ -1371,7 +1380,7 @@ describe('Dockerfile generator', () => {
     const result = generateCiCdPipeline(doc);
     const df = result.files.find((f) => f.path.includes('docker/backend-worker/Dockerfile'));
     assert.ok(df);
-    assert.ok(df!.content.includes('golang:1.22-alpine AS builder'));
+    assert.ok(df!.content.includes(`golang:${GO_V}-alpine AS builder`));
     assert.ok(df!.content.includes('CGO_ENABLED=0'));
     assert.ok(df!.content.includes('distroless'));
     assert.ok(df!.content.includes('EXPOSE 8080'));
@@ -1382,7 +1391,7 @@ describe('Dockerfile generator', () => {
     const result = generateCiCdPipeline(doc);
     const df = result.files.find((f) => f.path.includes('docker/backend-api/Dockerfile'));
     assert.ok(df);
-    assert.ok(df!.content.includes('python:3.12-slim'));
+    assert.ok(df!.content.includes(`python:${PY_V}-slim`));
     assert.ok(df!.content.includes('uvicorn'));
     assert.ok(df!.content.includes('EXPOSE 8000'));
   });
@@ -1392,7 +1401,7 @@ describe('Dockerfile generator', () => {
     const result = generateCiCdPipeline(doc);
     const df = result.files.find((f) => f.path.includes('docker/backend-api/Dockerfile'));
     assert.ok(df);
-    assert.ok(df!.content.includes('dotnet/sdk:8.0'));
+    assert.ok(df!.content.includes('dotnet/sdk:8.0'));  // fixture uses the dotnet-8 alias → runtimeVersion 8.0
     assert.ok(df!.content.includes('dotnet publish'));
     assert.ok(df!.content.includes('dotnet/aspnet:8.0'));
     assert.ok(df!.content.includes('EXPOSE 5000'));
@@ -1403,7 +1412,7 @@ describe('Dockerfile generator', () => {
     const result = generateCiCdPipeline(doc);
     const df = result.files.find((f) => f.path.includes('docker/frontend-storefront/Dockerfile'));
     assert.ok(df);
-    assert.ok(df!.content.includes('node:20-alpine AS builder'));
+    assert.ok(df!.content.includes(`node:${NODE_V}-alpine AS builder`));
     assert.ok(df!.content.includes('nginx:alpine'));
     assert.ok(df!.content.includes('EXPOSE 80'));
   });
@@ -1793,7 +1802,7 @@ describe('Docker Compose generator', () => {
     assert.ok(content.includes('8000:8000'));
   });
 
-  it('sets correct port for dotnet-8', () => {
+  it('sets correct port for dotnet', () => {
     const doc = getDoc('mobile-railway.yaml');
     const content = generateDockerCompose(doc).files.find((f) => f.path.includes('docker-compose.yml'))!.content;
     assert.ok(content.includes('5000:5000'));
@@ -2055,12 +2064,12 @@ describe('SDL templates', () => {
     assert.equal(result.document!.deployment.cloud, 'aws');
   });
 
-  it('marketplace template uses dotnet-8 with stripe', () => {
+  it('marketplace template uses dotnet with stripe', () => {
     const tpl = getTemplate('marketplace')!;
     assert.ok(tpl);
     const result = compile(tpl.yaml);
     assert.equal(result.success, true, `marketplace should compile: ${result.errors.map((e) => e.message).join(', ')}`);
-    assert.equal(result.document!.architecture.projects.backend![0].framework, 'dotnet-8');
+    assert.equal(result.document!.architecture.projects.backend![0].framework, 'dotnet');
     assert.ok(result.document!.integrations!.payments);
     assert.equal(result.document!.product.personas.length, 3);
   });

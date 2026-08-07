@@ -163,10 +163,38 @@ export interface FrontendProject extends ExtensionFields {
   styling?: 'tailwind' | 'css-modules' | 'styled-components' | 'sass' | 'emotion';
 }
 
+/**
+ * Canonical backend framework identifiers. All are unversioned — the runtime
+ * version belongs in `BackendProject.runtimeVersion`, not in the identifier.
+ */
+export type BackendFramework =
+  | 'dotnet'
+  | 'nodejs'
+  | 'python-fastapi'
+  | 'go'
+  | 'java-spring'
+  | 'ruby-rails'
+  | 'php-laravel';
+
+/**
+ * Deprecated framework spellings still accepted on input. The normalizer
+ * rewrites each to its canonical `BackendFramework` plus a `runtimeVersion`.
+ * Removed in SDL v2.0.
+ *
+ * - `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`
+ */
+export type DeprecatedBackendFramework = 'dotnet-8';
+
 export interface BackendProject extends ExtensionFields {
   name: string;
   type?: 'backend' | 'worker' | 'function';
-  framework: 'dotnet-8' | 'nodejs' | 'python-fastapi' | 'go' | 'java-spring' | 'ruby-rails' | 'php-laravel';
+  framework: BackendFramework | DeprecatedBackendFramework;
+  /**
+   * Target runtime/SDK version, e.g. `"10.0"` (.NET 10), `"22"` (Node 22),
+   * `"3.13"` (Python). Advisory: selects the base images and CI toolchain
+   * versions the generators emit. Defaults per framework when omitted.
+   */
+  runtimeVersion?: string;
   apiStyle?: 'rest' | 'graphql' | 'grpc' | 'mixed';
   orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose';
   apiVersioning?: 'url-prefix' | 'header' | 'query-param' | 'none';

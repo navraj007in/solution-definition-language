@@ -1,0 +1,35 @@
+sdlVersion: "1.1"
+
+# ── Conformance: Valid CloudFormation + AWS pairing ────────────────────────────
+# Regression guard for the cloud/IaC compatibility rule (spec rule 17).
+#
+# `deployment.infrastructure.iac: cloudformation` is legal ONLY when
+# `deployment.cloud: aws`. The negative half of this pair lives at
+# examples/single-file/azure-cloudformation.yaml, which must fail with
+# INCOMPATIBLE_CLOUD_IAC.
+#
+# Without this positive fixture the rule regressed silently: the schema's
+# `then` branch was `{"not": {}}` (unsatisfiable), so *every* use of
+# cloudformation was rejected, including on AWS, making the enum value dead.
+
+solution:
+  name: conformance-aws-cloudformation
+  description: "Conformance test — CloudFormation is valid when the cloud is AWS"
+  stage: Growth
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: api
+        framework: nodejs
+
+data:
+  primaryDatabase:
+    type: postgres
+    hosting: managed
+
+deployment:
+  cloud: aws                  # required for cloudformation to be legal
+  infrastructure:
+    iac: cloudformation       # valid here; INCOMPATIBLE_CLOUD_IAC on any other cloud

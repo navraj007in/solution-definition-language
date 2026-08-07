@@ -24,6 +24,8 @@ SDL v1.1 provides production-grade architecture details:
 
 ## Document Structure
 
+The root object is closed: every key below, plus any `x-` prefixed key, is accepted; anything else is rejected with `UNKNOWN_FIELD`.
+
 ```yaml
 sdlVersion: "1.1"
 
@@ -31,19 +33,23 @@ sdlVersion: "1.1"
 solution: {}
 architecture:
   style: ...
-  projects: {}
+  projects: {}          # frontend[], backend[], mobile[]
   services: []          # service inventory + responsibilities + dependencies
+  sharedLibraries: []
   errorConventions: {}  # solution-wide error envelope, status mapping, retry policy
 data: {}
 
+# Modular SDL (root files only) — see "Modular SDL and Import Semantics"
+imports: []          # stripped from the merged document before validation
+
 # v1.1 Additions (optional but recommended)
 contracts:
-  apis: []           # API specs (REST, GraphQL, gRPC, webhook, AsyncAPI metadata)
+  apis: []           # API surface inventory (REST, GraphQL, gRPC, webhook, AsyncAPI)
 domain: {}           # Detailed entity definitions with fields
 features: []         # Feature items (current schema shape)
 compliance: {}       # Regulatory requirements
 slos: {}             # Service level objectives per component
-resilience: {}       # Circuit breakers, retries, timeouts
+resilience: {}       # Circuit breaker, retry, timeout, rate limit defaults
 costs: {}            # Pricing model, per-component costs
 backupDr: {}         # RTO/RPO, failover strategy
 design: {}           # Design tokens, theming, component library
@@ -55,8 +61,12 @@ observability: {}
 integrations: {}
 constraints: {}
 testing: {}
-techDebt: []
+evolution: {}
+artifacts: {}        # generate[] — which artifacts the toolchain should emit
+techDebt: []         # `technicalDebt` is accepted as an equivalent spelling
 ```
+
+There is **no** root-level `mobile`, `environments`, or `navigationPatterns` key; see *Mobile/Platform Specific* below and `reference/canonical-contract.md` → *Deprecated Or Rejected Legacy Forms*.
 
 Implementation status note:
 
@@ -241,7 +251,8 @@ architecture:
 
 ### Cross-document consistency
 
-- `architecture.errorConventions.retry_policy` is the **default** retry policy. Entries in `resilience.retryPolicy[]` may tighten or relax it for specific targets; they should not contradict its semantics (e.g. don't declare a target as non-retryable when the convention says it is).
+- `architecture.errorConventions.retry_policy` is the **default** retry policy for error responses. `resilience.retryPolicy` (a single object — see *Resilience Section* below) may tighten or relax it at the transport layer; the two should not contradict each other's semantics (e.g. don't set `maxAttempts: 1` while the convention declares 429 and 503 retryable).
+- **Known vocabulary split:** the two backoff enums do not use the same spelling for a constant-delay strategy — `architecture.errorConventions.retry_policy.backoff` accepts `exponential | linear | constant`, while `resilience.retryPolicy.backoff` accepts `exponential | linear | fixed`. `constant` and `fixed` denote the same strategy. Aligning them is a breaking change to one of the two sections and is deferred to v1.2; until then, authors must use the spelling each section declares.
 - `envelope.kind` is fixed at `object` in v1.1; the field exists so future shapes (e.g. Problem+JSON-style arrays) can be introduced without a breaking change. Authors must always set it to `object`.
 
 ---
@@ -395,62 +406,50 @@ Future direction:
 
 ## NEW: Resilience Section
 
-Fault tolerance patterns, circuit breakers, retries, timeouts, and fallbacks.
+Solution-wide fault tolerance defaults: circuit breaking, retries, timeouts, and rate limiting.
+
+`resilience` declares **one default policy per pattern**, not a per-target list. Each of the four sub-keys is a single object, and each is closed (`additionalProperties: false`) apart from `x-` extension fields:
 
 ```yaml
 resilience:
   circuitBreaker:
-    - name: stripe-payment-service
-      target: external
-      failureThreshold: 5
-      successThreshold: 2
-      timeout: 30s
-      backoffMultiplier: 2
-      maxBackoff: 300s
-      fallback: "queue payment for retry"
-  
+    enabled: true
+    threshold: 50       # percent failure rate that trips the breaker; 1–99
+    timeout: 30s
+
   retryPolicy:
-    - name: external-api-calls
-      maxAttempts: 3
-      backoff:
-        type: exponential
-        initialDelayMs: 100
-        maxDelayMs: 30000
-        multiplier: 2
-      retryableErrors: [500, 502, 503, 504, timeout]
-  
+    maxAttempts: 3
+    backoff: exponential   # exponential | linear | fixed
+    initialInterval: 100ms
+
   timeout:
-    - name: api-server-response
-      ms: 30000
-      description: "Maximum time to wait for API response"
-    - name: database-query
-      ms: 5000
-      description: "Maximum time for database query"
-    - name: external-service-call
-      ms: 10000
-  
-  bulkhead:
+    default: 30s
+
+  rateLimit:
+    requestsPerMinute: 1000
+```
+
+### Per-target resilience detail
+
+The four sub-keys above are deliberately scalar defaults. Per-service or per-dependency overrides — bulkheads, fallback strategies, retryable status lists, per-endpoint budgets — are **not** part of the stable v1.1 contract and are rejected by the schema as unknown fields. Express them as extension fields:
+
+```yaml
+resilience:
+  circuitBreaker:
+    enabled: true
+    threshold: 50
+    timeout: 30s
+  x-bulkheads:
     - name: payment-processing
       threads: 20
       queue: 100
-      description: "Isolate payment processing to prevent cascading failure"
-  
-  rateLimit:
-    - name: api-server
-      rps: 1000
-      burstSize: 2000
-      perUser: 100
-      window: 1m
-  
-  fallback:
-    - service: product-service
-      failureMode: timeout
-      fallbackStrategy: "return cached data (max 1h old)"
-      
+  x-fallbacks:
     - service: recommendation-engine
       failureMode: error
-      fallbackStrategy: "return empty recommendations"
+      strategy: "return empty recommendations"
 ```
+
+This mirrors the stance taken in *API Contracts* above: SDL records the cross-cutting architectural decision, and richer per-target policy belongs either in `x-` extensions or in the resilience library's own configuration.
 
 ---
 
@@ -664,36 +663,49 @@ design:
 
 ---
 
-## NEW: Mobile/Platform Specific
+## Mobile/Platform Specific
 
-Platform-specific requirements for mobile apps.
+**There is no root-level `mobile` section.** Mobile applications are modeled as entries in `architecture.projects.mobile[]`, alongside `frontend[]` and `backend[]`. The root schema is closed (`additionalProperties: false`), so a top-level `mobile:` key is rejected with `UNKNOWN_FIELD`.
 
 ```yaml
-mobile:
-  - platform: ios
-    minVersion: "14.0"
-    notarization: required
-    appStoreOptimization:
-      - screenshots: 5
-      - keywords: [productivity, collaboration]
-  
-  - platform: android
-    minSdk: 21
-    targetSdk: 34
-    playStoreOptimization:
-      screenshots: 8
+architecture:
+  projects:
+    mobile:
+      - name: mobile-app
+        platform: cross-platform     # ios | android | cross-platform
+        framework: react-native      # react-native | flutter | swift | kotlin | ionic
 ```
+
+Store-submission and platform-version metadata (minimum OS version, notarization, target SDK, store listing assets) is not part of the stable v1.1 contract. Attach it with `x-` extension fields on the project entry:
+
+```yaml
+architecture:
+  projects:
+    mobile:
+      - name: mobile-app
+        platform: ios
+        framework: swift
+        x-min-os-version: "14.0"
+        x-notarization: required
+        x-app-store:
+          screenshots: 5
+          keywords: [productivity, collaboration]
+```
+
+See `reference/canonical-contract.md` for the full `platform` and `framework` enums.
 
 ---
 
 ## Validation Rules (v1.1)
 
-1. **Contracts** — if `architecture.projects.backend[].apiStyle === "rest"`, must have corresponding OpenAPI contract
-2. **Domain entities** — if `domain.entities[]` defined, entity `name` values must be unique
-3. **SLOs** — `slos.services[].name` entries should correspond to a component name in `architecture.projects`
-4. **Compliance** — if `compliance.frameworks[].applicable === true`, requirements must be mapped to implementation
+This is the informal summary; the authoritative list with per-rule enforcement status is *Conditional Rules (Errors)* below.
+
+1. **Contracts** — if `architecture.projects.backend[].apiStyle === "rest"`, a corresponding `contracts.apis[]` entry should exist *(not yet enforced)*
+2. **Domain entities** — if `domain.entities[]` defined, entity `name` values must be unique *(enforced: SEM-008)*
+3. **SLOs** — `slos.services[].name` entries must correspond to a name in `architecture.projects` or `architecture.services` *(enforced: SEM-005)*
+4. **Compliance** — if `compliance.frameworks[].applicable === true`, requirements should be mapped to implementation *(not yet enforced)*
 5. ~~**Features dependsOn**~~ — removed; `FeatureSection` has no `dependsOn` field in the current type contract
-6. **Resilience** — `resilience.circuitBreaker.enabled: true` requires `threshold > 0`
+6. **Resilience** — `resilience.circuitBreaker.threshold` must be between 1 and 99 when present *(enforced: SEM-011)*. The check is on `threshold` alone; it does not depend on `enabled`.
 
 ---
 
@@ -702,19 +714,21 @@ mobile:
 SDL v1.1 uses the standard validation pipeline with extended conditional rules for new sections:
 
 ```
-YAML string → parse() → validate() → normalize() → detectWarnings() → SDL document
+YAML string → parse() → validate() [→ detectWarnings()] → validateSemantics() → normalize() → SDL document
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation + 27 conditional rules
-3. **Normalize** — 15+ auto-inference rules fill missing fields
-4. **Warnings** — 10+ rules detect potential issues (non-blocking)
+2. **Validate** — JSON Schema validation (5 structural `allOf` rules) + 27 conditional rules, of which 13 are implemented as semantic checks (`SEM-*`)
+3. **Normalize** — 18 auto-inference rules fill missing fields (see [`../reference/normalization-defaults.md`](../reference/normalization-defaults.md))
+4. **Warnings** — 11 rules defined, 4 currently emitted (non-blocking)
+
+Note that `detectWarnings()` is invoked from inside `validate()`, not as a separate pipeline stage; warnings are returned on the `ValidationResult` when schema validation passes.
 
 ### Conditional Rules (Errors)
 
 > **Implementation status:** The reference package enforces these rules through two mechanisms:
 > - **JSON Schema (AJV)** — structural and type rules run during schema validation (`packages/sdl/src/validator.ts`)
-> - **Semantic validator** — cross-section relational rules run via `packages/sdl/src/semantic-validator.ts` (SEM-001 through SEM-014), invoked from the public `index.ts` API
+> - **Semantic validator** — cross-section relational rules run via `packages/sdl/src/semantic-validator.ts`, invoked from the public `index.ts` API. **13** rules are implemented, numbered SEM-001…SEM-005 and SEM-007…SEM-014. There is no SEM-006: it was retired with the removed rule 9 (*Resilience Service References*), and the identifier is a permanent tombstone so existing SEM numbers stay stable.
 >
 > Rules marked **[enforced: ...]** are active and will reject invalid documents.
 > Rules marked **[not yet implemented]** are normative but not yet enforced by the reference package.
@@ -722,7 +736,7 @@ YAML string → parse() → validate() → normalize() → detectWarnings() → 
 
 These rules catch logical inconsistencies and must pass for valid SDL (27 active rules; rules 7–9 are tombstones for removed rules):
 
-**Reference Integrity (7 rules):**
+**Reference Integrity (6 active rules, 3 tombstones):**
 1. **SLO Service References** **[enforced: SEM-005]** → every `slos.services[].name` must match a component name in `architecture.projects` or `architecture.services`
 2. **Cost Components** **[not yet implemented, field absent]** → `CostSection` currently defines only `monthly` and `notes`; a per-component cost breakdown (`costs.infrastructure[].component`) is not in the active type contract. This rule is a placeholder for when `CostSection` is expanded.
 3. **Service Dependency Integrity** **[enforced: SEM-002, SEM-003, SEM-004]** → entries in `architecture.services[].dependencies[]` must reference known service names (SEM-002); a service may not depend on itself (SEM-003); the dependency graph must be acyclic (SEM-004). Note: `dependsOn` is not a first-class field on project types; these rules apply to `architecture.services[].dependencies[]` only.
@@ -743,7 +757,7 @@ These rules catch logical inconsistencies and must pass for valid SDL (27 active
 14. **Deployable Coverage** **[not yet implemented, field absent]** → `deployable` is not a first-class field on `FrontendProject`, `BackendProject`, or `MobileProject` in the current type contract; it is an `x-` extension field. This rule applies when `x-deployable: true` is set. Formal field promotion is tracked as a future contract change.
 15. **Port Conflicts** **[not yet implemented]** → within each environment, no two components may declare the same `port`
 16. **Region Support** **[not yet implemented]** → `deployment.regions[]` values must be valid for `deployment.cloud`
-17. **CloudFormation Constraint** **[enforced: JSON schema allOf]** → `deployment.ciCd.iac: "cloudformation"` is only valid when `deployment.cloud: "aws"`
+17. **CloudFormation Constraint** **[enforced: JSON schema allOf]** → `deployment.infrastructure.iac: "cloudformation"` is only valid when `deployment.cloud: "aws"`. (The field lives under `deployment.infrastructure`, not `deployment.ciCd`.) Conformance pair: `examples/conformance/valid/aws-cloudformation.yaml` must pass, `examples/single-file/azure-cloudformation.yaml` must fail with `INCOMPATIBLE_CLOUD_IAC`.
 28. **Deployment Environment Uniqueness** **[enforced: SEM-014]** → `deployment.ciCd.environments[].name` values must be unique within the environments array
 
 **Data Model Integrity (4 rules):**
@@ -770,20 +784,22 @@ These rules catch logical inconsistencies and must pass for valid SDL (27 active
 
 ### Warning Rules
 
-These are non-blocking but flag potential issues (10+ rules):
+These are non-blocking but flag potential issues. **4 of the 11 are implemented** in `packages/sdl/src/warnings.ts`; the rest are normative but not yet emitted. The same `[enforced]` / `[not yet implemented]` convention used for conditional rules applies here.
 
-1. **Microservices with small team** — microservices style with < 3 team members
-2. **Aggressive timeline vs scope** — complex architecture with < 4 week timeline
-3. **Multi-persona without auth** — 3+ personas but no auth defined
-4. **Budget vs cost mismatch** — estimated costs exceed budget
-5. **Cross-database foreign keys** — relationships span different databases
-6. **Unused integrations** — integrations listed but not referenced in any `architecture.services[].dependencies[]`
-7. **Missing observability** — production-stage architecture without observability section
-8. **Loose SLO targets** — production SLOs < 99% availability
-9. **High cost variance** — scenarios differ by >10x between low/high
+1. **Microservices with small team** **[enforced: `COMPLEXITY_EXCEEDS_TEAM_CAPACITY`]** — `architecture.style: microservices` with < 3 developers or 0 DevOps engineers
+2. **Aggressive timeline vs scope** **[enforced: `TIMELINE_TOO_AGGRESSIVE`]** — estimated dev-weeks (projects × core flows × 1.5 ÷ developers) exceed `constraints.timeline`
+3. **Multi-persona without auth** **[enforced: `MISSING_RECOMMENDED_FIELD`]** — no `auth` section with an admin-like persona present, or more than 2 personas
+4. **Budget vs cost mismatch** **[enforced: `BUDGET_INFRASTRUCTURE_MISMATCH`]** — estimated monthly infrastructure cost exceeds the `constraints.budget` tier ceiling
+5. **Cross-database foreign keys** **[not yet implemented]** — relationships span different databases
+6. **Unused integrations** **[not yet implemented]** — integrations listed but not referenced in any `architecture.services[].dependencies[]`
+7. **Missing observability** **[not yet implemented]** — production-stage architecture without observability section
+8. **Loose SLO targets** **[not yet implemented]** — production SLOs < 99% availability
+9. **High cost variance** **[not yet implemented]** — scenarios differ by >10x between low/high
 10. ~~**Feature phase cycles**~~ — removed; `FeatureSection` has no dependency field in the current type contract.
-11. **Compliance gaps** — project stage suggests compliance need but no frameworks defined
-12. **Design section missing** → stage: `"production"` without a `design` section defined (`DesignSection` currently exposes `personality`, `colors`, and `typography`; a `tokens` sub-field is not in the active type contract)
+11. **Compliance gaps** **[not yet implemented]** — project stage suggests compliance need but no frameworks defined
+12. **Design section missing** **[not yet implemented]** → stage: `"production"` without a `design` section defined (`DesignSection` currently exposes `personality`, `colors`, and `typography`; a `tokens` sub-field is not in the active type contract)
+
+Warning codes are documented in [`../reference/error-codes.md`](../reference/error-codes.md).
 
 ---
 

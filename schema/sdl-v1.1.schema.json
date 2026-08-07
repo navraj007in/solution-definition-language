@@ -22,6 +22,39 @@
       ],
       "description": "SDL schema version"
     },
+    "imports": {
+      "type": "array",
+      "description": "Modular SDL only. Each entry is either a path string (with or without the .sdl.yaml/.sdl.yml extension) or an explicit {name, path} object. Consumed by the resolver and stripped from the merged document before validation, so a compiled SDL document never carries this key. Declared here so an unmerged root file is still schema-valid.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name",
+              "path"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
     "solution": {
       "$ref": "#/$defs/SolutionMetadata"
     },
@@ -84,21 +117,25 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string"
               },
               "type": {
-                "type": "string"
+                "type": "string",
+                "enum": ["rest", "graphql", "grpc", "webhook", "asyncapi"]
               },
               "owner": {
                 "type": "string"
               }
-            },
-            "required": [
-              "name"
-            ]
+            }
           }
         }
       }
@@ -114,29 +151,114 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
             "properties": {
               "name": {
                 "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "table": {
+                "type": "string"
+              },
+              "indexes": {
+                "type": "array"
+              },
+              "constraints": {
+                "type": "array"
+              },
+              "relationships": {
+                "type": "array"
               },
               "fields": {
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": true,
+                  "required": [
+                    "name",
+                    "type"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "nullable": {
+                      "type": "boolean"
+                    },
+                    "primaryKey": {
+                      "type": "boolean"
+                    },
+                    "foreignKey": {
+                      "type": "string"
+                    },
+                    "unique": {
+                      "type": "boolean"
+                    },
+                    "generated": {
+                      "type": "boolean"
+                    },
+                    "default": {},
+                    "enum": {
+                      "type": "array"
+                    },
+                    "maxLength": {
+                      "type": "integer"
+                    },
+                    "precision": {
+                      "type": "integer"
+                    },
+                    "scale": {
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "onUpdate": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
-            },
-            "required": [
-              "name"
-            ]
+            }
           }
         },
         "relationships": {
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -145,7 +267,13 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-": {}
+        },
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -154,36 +282,148 @@
             "type": "string"
           },
           "priority": {
-            "type": "string"
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["MVP", "Growth", "Enterprise"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "in-progress", "done", "deferred"]
           }
-        },
-        "required": [
-          "name"
-        ]
+        }
       }
     },
     "compliance": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": { "^x-": {} },
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "applicable": { "type": "boolean" },
+              "notes": { "type": "string" },
+              "requirements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "patternProperties": { "^x-": {} },
+                  "properties": {
+                    "requirement": { "type": "string" },
+                    "description": { "type": "string" },
+                    "implementation": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "certifications": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "dataResidency": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        },
+        "dataRetention": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        }
       }
     },
     "slos": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "availability": {
+                "type": "string"
+              },
+              "latencyP95": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "resilience": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
+      },
+      "properties": {
+        "circuitBreaker": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "threshold": { "type": "integer" },
+            "timeout": { "type": "string" }
+          }
+        },
+        "retryPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "maxAttempts": { "type": "integer" },
+            "backoff": { "type": "string", "enum": ["exponential", "linear", "fixed"] },
+            "initialInterval": { "type": "string" }
+          }
+        },
+        "timeout": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "default": { "type": "string" }
+          }
+        },
+        "rateLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": { "^x-": {} },
+          "properties": {
+            "requestsPerMinute": { "type": "integer" }
+          }
+        }
       }
     },
     "costs": {
+      "$comment": "maturity: placeholder — cost structures vary by team (per-service breakdown, third-party, scaling tiers); permissive until a generator consumes this section",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -191,6 +431,7 @@
       }
     },
     "backupDr": {
+      "$comment": "maturity: placeholder — backup and DR structures vary significantly (database-level, storage, site failover, recovery procedures); permissive until a generator consumes this section",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -198,6 +439,7 @@
       }
     },
     "design": {
+      "$comment": "maturity: placeholder — design system content is intentionally heterogeneous; permissive by design to accommodate varying token structures, component libraries, and theming approaches",
       "type": "object",
       "additionalProperties": true,
       "patternProperties": {
@@ -338,7 +580,18 @@
       },
       "then": {
         "errorMessage": "CloudFormation can only be used with AWS (cloud: 'aws')",
-        "not": {}
+        "properties": {
+          "deployment": {
+            "required": [
+              "cloud"
+            ],
+            "properties": {
+              "cloud": {
+                "const": "aws"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -412,7 +665,7 @@
           "type": "string",
           "minLength": 3,
           "maxLength": 50,
-          "pattern": "^[a-zA-Z0-9\\s\\-]+$",
+          "pattern": "^[a-zA-Z0-9\\s\\-_.]+$",
           "description": "Solution name"
         },
         "description": {
@@ -649,10 +902,12 @@
           "properties": {
             "kind": {
               "type": "string",
-              "const": "object"
+              "const": "object",
+              "description": "Always 'object' for v1; reserved for future shape extensions."
             },
             "fields": {
               "type": "array",
+              "description": "Field shape of every error response body. Each field defines a name, type, and optional constraints — same shape as endpoint params.",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -670,6 +925,7 @@
         },
         "status_mapping": {
           "type": "array",
+          "description": "Error code → HTTP status table. Generators invert to runtime middleware that maps thrown errors back to envelope responses.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -679,7 +935,10 @@
               "status": { "type": "integer", "minimum": 100, "maximum": 599 },
               "code": { "type": "string", "minLength": 1 },
               "retryable": { "type": "boolean" },
-              "retry_after_header": { "type": "boolean" }
+              "retry_after_header": {
+                "type": "boolean",
+                "description": "When true, the response should set Retry-After. Drives middleware emission."
+              }
             }
           }
         },
@@ -690,7 +949,10 @@
           "required": ["max_attempts", "backoff", "base_ms", "cap_ms"],
           "properties": {
             "max_attempts": { "type": "integer", "minimum": 1 },
-            "backoff": { "type": "string", "enum": ["exponential", "linear", "constant"] },
+            "backoff": {
+              "type": "string",
+              "enum": ["exponential", "linear", "constant"]
+            },
             "base_ms": { "type": "integer", "minimum": 0 },
             "cap_ms": { "type": "integer", "minimum": 0 }
           }
@@ -786,15 +1048,22 @@
         },
         "framework": {
           "type": "string",
+          "description": "Backend framework. All canonical values are unversioned — put the runtime version in `runtimeVersion`. `dotnet-8` is a deprecated alias normalized to `dotnet` + `runtimeVersion: \"8.0\"`; it is removed in SDL v2.0.",
           "enum": [
-            "dotnet-8",
+            "dotnet",
             "nodejs",
             "python-fastapi",
             "go",
             "java-spring",
             "ruby-rails",
-            "php-laravel"
+            "php-laravel",
+            "dotnet-8"
           ]
+        },
+        "runtimeVersion": {
+          "type": "string",
+          "description": "Target runtime/SDK version, e.g. \"10.0\" (.NET 10), \"22\" (Node 22), \"3.13\" (Python). Advisory: selects the base images and CI toolchain versions the generators emit. Defaults per framework when omitted.",
+          "minLength": 1
         },
         "apiStyle": {
           "type": "string",

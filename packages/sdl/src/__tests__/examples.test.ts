@@ -10,14 +10,19 @@ const templatesDir = join(repoRoot, 'templates');
 const conformanceValidDir = join(repoRoot, 'examples', 'conformance', 'valid');
 const conformanceInvalidDir = join(repoRoot, 'examples', 'conformance', 'invalid');
 
-const positiveSingleFileExamples = [
-  'taskflow.yaml',
-  'saas-gcp.yaml',
-  'ecommerce-aws.yaml',
-  'microservices-small-team.yaml',
-  'mobile-railway.yaml',
-  'minimal-noauth.yaml',
-  'canonical.sdl.yaml',
+/**
+ * Deliberately-invalid single-file examples, each demonstrating one rejection.
+ * Every OTHER file in examples/single-file/ is globbed and must compile.
+ *
+ * This list is a denylist rather than the positive set being an allowlist: an
+ * allowlist silently skips newly added examples, which is how a broken
+ * sdlang-com.sdl.yaml shipped undetected.
+ */
+const negativeSingleFileExamples: Array<{ file: string; expectedCode: string }> = [
+  { file: 'missing-required.yaml',      expectedCode: 'MISSING_REQUIRED' },
+  { file: 'pii-no-encryption.yaml',     expectedCode: 'PII_REQUIRES_ENCRYPTION' },
+  { file: 'mongodb-efcore.yaml',        expectedCode: 'INCOMPATIBLE_DATABASE_ORM' },
+  { file: 'azure-cloudformation.yaml',  expectedCode: 'INCOMPATIBLE_CLOUD_IAC' },
 ];
 
 const multiFileRoots = [
@@ -35,13 +40,34 @@ const negativeConformanceExamples: Array<{ file: string; expectedCode: string }>
 ];
 
 describe('example corpus', () => {
-  it('compiles positive single-file examples', () => {
-    for (const filename of positiveSingleFileExamples) {
+  it('compiles every single-file example that is not a negative fixture', () => {
+    const negativeNames = new Set(negativeSingleFileExamples.map(n => n.file));
+    const files = readdirSync(singleFileExamplesDir)
+      .filter(name => name.endsWith('.yaml') || name.endsWith('.yml'))
+      .filter(name => !negativeNames.has(name))
+      .sort();
+
+    assert.ok(files.length > 0, 'No positive single-file examples found');
+
+    for (const filename of files) {
       const yaml = readFileSync(join(singleFileExamplesDir, filename), 'utf-8');
       const result = compile(yaml);
       assert.equal(result.success, true, `${filename} failed: ${JSON.stringify(result.errors, null, 2)}`);
     }
   });
+
+  for (const { file, expectedCode } of negativeSingleFileExamples) {
+    it(`rejects ${file} with ${expectedCode}`, () => {
+      const yaml = readFileSync(join(singleFileExamplesDir, file), 'utf-8');
+      const result = compile(yaml);
+      assert.equal(result.success, false, `${file} should have failed but succeeded`);
+      const codes = result.errors.map(e => e.code);
+      assert.ok(
+        codes.includes(expectedCode),
+        `${file} expected error code ${expectedCode}, got: ${JSON.stringify(codes)}`,
+      );
+    });
+  }
 
   it('compiles starter templates', () => {
     const templateFiles = readdirSync(templatesDir)

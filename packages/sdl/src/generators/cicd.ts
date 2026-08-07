@@ -1,5 +1,6 @@
 import type { SDLDocument } from '../types';
 import type { RawGeneratorResult } from './types';
+import { DEFAULT_RUNTIME_VERSION, RUNTIME_BASE_IMAGE, resolveRuntimeVersion } from '../constants';
 
 /**
  * Generates infrastructure-as-code from an SDL document:
@@ -56,7 +57,7 @@ function generateGitHubActions(doc: SDLDocument): RawGeneratorResult {
   lines.push('    branches: [main]');
   lines.push('');
   lines.push('env:');
-  lines.push(`  NODE_VERSION: '20'`);
+  lines.push(`  NODE_VERSION: '${DEFAULT_RUNTIME_VERSION['nodejs']}'`);
 
   // Add database env vars for test services
   const dbType = doc.data.primaryDatabase.type;
@@ -103,7 +104,7 @@ function generateGitHubActions(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'python-fastapi') {
       lines.push('      - uses: actions/setup-python@v5');
       lines.push('        with:');
-      lines.push(`          python-version: '3.12'`);
+      lines.push(`          python-version: '${resolveRuntimeVersion(be.framework, be.runtimeVersion)}'`);
       lines.push('      - run: pip install -r requirements.txt');
       lines.push('      - run: pip install ruff pytest');
       lines.push('      - run: ruff check .');
@@ -111,7 +112,7 @@ function generateGitHubActions(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'go') {
       lines.push('      - uses: actions/setup-go@v5');
       lines.push('        with:');
-      lines.push(`          go-version: '1.22'`);
+      lines.push(`          go-version: '${resolveRuntimeVersion(be.framework, be.runtimeVersion)}'`);
       lines.push('      - run: go vet ./...');
       lines.push('      - run: go test ./...');
       lines.push('      - run: go build -o bin/server ./cmd/server');
@@ -299,7 +300,7 @@ function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
   lines.push('');
 
   lines.push('variables:');
-  lines.push('  NODE_VERSION: "20"');
+  lines.push(`  NODE_VERSION: "${DEFAULT_RUNTIME_VERSION['nodejs']}"`);
   if (dbType === 'postgres') {
     lines.push('  POSTGRES_USER: postgres');
     lines.push('  POSTGRES_PASSWORD: postgres');
@@ -352,7 +353,7 @@ function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'python-fastapi') {
       lines.push(`${prefix}-lint:`);
       lines.push('  stage: lint');
-      lines.push('  image: python:3.12');
+      lines.push(`  image: python:${resolveRuntimeVersion(be.framework, be.runtimeVersion)}`);
       lines.push('  script:');
       lines.push('    - pip install ruff');
       lines.push('    - ruff check .');
@@ -360,7 +361,7 @@ function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
 
       lines.push(`${prefix}-test:`);
       lines.push('  stage: test');
-      lines.push('  image: python:3.12');
+      lines.push(`  image: python:${resolveRuntimeVersion(be.framework, be.runtimeVersion)}`);
       appendGitLabServices(lines, dbType);
       lines.push('  script:');
       lines.push('    - pip install -r requirements.txt');
@@ -370,14 +371,14 @@ function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'go') {
       lines.push(`${prefix}-lint:`);
       lines.push('  stage: lint');
-      lines.push('  image: golang:1.22');
+      lines.push(`  image: golang:${resolveRuntimeVersion(be.framework, be.runtimeVersion)}`);
       lines.push('  script:');
       lines.push('    - go vet ./...');
       lines.push('');
 
       lines.push(`${prefix}-test:`);
       lines.push('  stage: test');
-      lines.push('  image: golang:1.22');
+      lines.push(`  image: golang:${resolveRuntimeVersion(be.framework, be.runtimeVersion)}`);
       appendGitLabServices(lines, dbType);
       lines.push('  script:');
       lines.push('    - go test ./...');
@@ -385,17 +386,17 @@ function generateGitLabCi(doc: SDLDocument): RawGeneratorResult {
 
       lines.push(`${prefix}-build:`);
       lines.push('  stage: build');
-      lines.push('  image: golang:1.22');
+      lines.push(`  image: golang:${resolveRuntimeVersion(be.framework, be.runtimeVersion)}`);
       lines.push('  script:');
       lines.push('    - go build -o bin/server ./cmd/server');
       lines.push('  artifacts:');
       lines.push('    paths:');
       lines.push('      - bin/');
       lines.push('');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       lines.push(`${prefix}-build-test:`);
       lines.push('  stage: build');
-      lines.push('  image: mcr.microsoft.com/dotnet/sdk:8.0');
+      lines.push(`  image: ${RUNTIME_BASE_IMAGE['dotnet'](resolveRuntimeVersion(be.framework, be.runtimeVersion)).builder}`);
       appendGitLabServices(lines, dbType);
       lines.push('  script:');
       lines.push('    - dotnet restore');
@@ -587,7 +588,7 @@ function generateAzureDevOps(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'python-fastapi') {
       lines.push('          - task: UsePythonVersion@0');
       lines.push('            inputs:');
-      lines.push("              versionSpec: '3.12'");
+      lines.push(`              versionSpec: '${resolveRuntimeVersion(be.framework, be.runtimeVersion)}'`);
       lines.push('          - script: pip install -r requirements.txt');
       lines.push('            displayName: Install dependencies');
       lines.push('          - script: pip install ruff pytest');
@@ -599,7 +600,7 @@ function generateAzureDevOps(doc: SDLDocument): RawGeneratorResult {
     } else if (be.framework === 'go') {
       lines.push('          - task: UseGoVersion@0');
       lines.push('            inputs:');
-      lines.push("              version: '1.22'");
+      lines.push(`              version: '${resolveRuntimeVersion(be.framework, be.runtimeVersion)}'`);
       lines.push('          - script: go vet ./...');
       lines.push('            displayName: Lint');
       lines.push('          - script: go test ./...');
@@ -609,11 +610,11 @@ function generateAzureDevOps(doc: SDLDocument): RawGeneratorResult {
       lines.push('          - publish: bin');
       lines.push(`            artifact: ${slugify(be.name)}`);
       lines.push('            displayName: Publish artifact');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       lines.push('          - task: UseDotNet@2');
       lines.push('            inputs:');
       lines.push("              packageType: 'sdk'");
-      lines.push("              version: '8.x'");
+      lines.push(`              version: '${resolveRuntimeVersion(be.framework, be.runtimeVersion)}.x'`);
       lines.push('          - script: dotnet restore');
       lines.push('            displayName: Restore');
       lines.push('          - script: dotnet build --no-restore');
@@ -827,12 +828,16 @@ function generateDockerfiles(doc: SDLDocument): GeneratedFile[] {
   return files;
 }
 
-function generateDockerfileForBackend(be: { name: string; framework: string; orm?: string }): string | null {
+function generateDockerfileForBackend(be: { name: string; framework: string; orm?: string; runtimeVersion?: string }): string | null {
   const lines: string[] = [];
+  // Version comes from the project's runtimeVersion, else the framework default
+  // in DEFAULT_RUNTIME_VERSION. Never hard-code a version below.
+  const v = resolveRuntimeVersion(be.framework, be.runtimeVersion);
+  const img = RUNTIME_BASE_IMAGE[be.framework]?.(v);
 
   if (be.framework === 'nodejs' || !be.framework) {
     lines.push('# ── Node.js Backend ──');
-    lines.push('FROM node:20-alpine AS builder');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY package*.json ./');
     lines.push('RUN npm ci');
@@ -843,7 +848,7 @@ function generateDockerfileForBackend(be: { name: string; framework: string; orm
     lines.push('COPY . .');
     lines.push('RUN npm run build');
     lines.push('');
-    lines.push('FROM node:20-alpine');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
     lines.push('COPY --from=builder /app/dist ./dist');
     lines.push('COPY --from=builder /app/node_modules ./node_modules');
@@ -855,22 +860,22 @@ function generateDockerfileForBackend(be: { name: string; framework: string; orm
     lines.push('CMD ["node", "dist/index.js"]');
   } else if (be.framework === 'python-fastapi') {
     lines.push('# ── Python FastAPI Backend ──');
-    lines.push('FROM python:3.12-slim AS builder');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY requirements.txt .');
     lines.push('RUN pip install --no-cache-dir -r requirements.txt');
     lines.push('COPY . .');
     lines.push('');
-    lines.push('FROM python:3.12-slim');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
-    lines.push('COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages');
+    lines.push(`COPY --from=builder /usr/local/lib/python${v}/site-packages /usr/local/lib/python${v}/site-packages`);
     lines.push('COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn');
     lines.push('COPY --from=builder /app .');
     lines.push('EXPOSE 8000');
     lines.push('CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]');
   } else if (be.framework === 'go') {
     lines.push('# ── Go Backend ──');
-    lines.push('FROM golang:1.22-alpine AS builder');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY go.mod go.sum ./');
     lines.push('RUN go mod download');
@@ -881,49 +886,49 @@ function generateDockerfileForBackend(be: { name: string; framework: string; orm
     lines.push('COPY --from=builder /server /server');
     lines.push('EXPOSE 8080');
     lines.push('ENTRYPOINT ["/server"]');
-  } else if (be.framework === 'dotnet-8') {
-    lines.push('# ── .NET 8 Backend ──');
-    lines.push('FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder');
+  } else if (be.framework === 'dotnet') {
+    lines.push('# ── .NET Backend ──');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY *.csproj .');
     lines.push('RUN dotnet restore');
     lines.push('COPY . .');
     lines.push('RUN dotnet publish -c Release -o /out');
     lines.push('');
-    lines.push('FROM mcr.microsoft.com/dotnet/aspnet:8.0');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
     lines.push('COPY --from=builder /out .');
     lines.push('EXPOSE 5000');
     lines.push('ENTRYPOINT ["dotnet", "Api.dll"]');
   } else if (be.framework === 'java-spring') {
     lines.push('# ── Java Spring Boot Backend ──');
-    lines.push('FROM eclipse-temurin:21-jdk AS builder');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY . .');
     lines.push('RUN ./gradlew bootJar');
     lines.push('');
-    lines.push('FROM eclipse-temurin:21-jre');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
     lines.push('COPY --from=builder /app/build/libs/*.jar app.jar');
     lines.push('EXPOSE 8080');
     lines.push('ENTRYPOINT ["java", "-jar", "app.jar"]');
   } else if (be.framework === 'ruby-rails') {
     lines.push('# ── Ruby on Rails Backend ──');
-    lines.push('FROM ruby:3.3-slim AS builder');
+    lines.push(`FROM ${img?.builder} AS builder`);
     lines.push('WORKDIR /app');
     lines.push('COPY Gemfile Gemfile.lock ./');
     lines.push('RUN bundle install --without development test');
     lines.push('COPY . .');
     lines.push('RUN SECRET_KEY_BASE=placeholder bundle exec rails assets:precompile');
     lines.push('');
-    lines.push('FROM ruby:3.3-slim');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
     lines.push('COPY --from=builder /app .');
     lines.push('EXPOSE 3000');
     lines.push('CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]');
   } else if (be.framework === 'php-laravel') {
     lines.push('# ── PHP Laravel Backend ──');
-    lines.push('FROM php:8.3-fpm');
+    lines.push(`FROM ${img?.runtime}`);
     lines.push('WORKDIR /app');
     lines.push('RUN apt-get update && apt-get install -y libzip-dev && docker-php-ext-install zip pdo pdo_mysql');
     lines.push('COPY --from=composer:latest /usr/bin/composer /usr/bin/composer');
@@ -941,7 +946,7 @@ function generateDockerfileForBackend(be: { name: string; framework: string; orm
 function generateDockerfileForFrontend(fe: { name: string; framework: string }): string {
   const lines: string[] = [];
   lines.push(`# ── Frontend (${fe.framework}) ──`);
-  lines.push('FROM node:20-alpine AS builder');
+  lines.push(`FROM node:${DEFAULT_RUNTIME_VERSION['nodejs']}-alpine AS builder`);
   lines.push('WORKDIR /app');
   lines.push('COPY package*.json ./');
   lines.push('RUN npm ci');

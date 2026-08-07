@@ -22,6 +22,39 @@
       ],
       "description": "SDL schema version"
     },
+    "imports": {
+      "type": "array",
+      "description": "Modular SDL only. Each entry is either a path string (with or without the .sdl.yaml/.sdl.yml extension) or an explicit {name, path} object. Consumed by the resolver and stripped from the merged document before validation, so a compiled SDL document never carries this key. Declared here so an unmerged root file is still schema-valid.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name",
+              "path"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
     "solution": {
       "$ref": "#/$defs/SolutionMetadata"
     },
@@ -547,7 +580,18 @@
       },
       "then": {
         "errorMessage": "CloudFormation can only be used with AWS (cloud: 'aws')",
-        "not": {}
+        "properties": {
+          "deployment": {
+            "required": [
+              "cloud"
+            ],
+            "properties": {
+              "cloud": {
+                "const": "aws"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -621,7 +665,7 @@
           "type": "string",
           "minLength": 3,
           "maxLength": 50,
-          "pattern": "^[a-zA-Z0-9\\s\\-]+$",
+          "pattern": "^[a-zA-Z0-9\\s\\-_.]+$",
           "description": "Solution name"
         },
         "description": {
@@ -1004,15 +1048,22 @@
         },
         "framework": {
           "type": "string",
+          "description": "Backend framework. All canonical values are unversioned — put the runtime version in `runtimeVersion`. `dotnet-8` is a deprecated alias normalized to `dotnet` + `runtimeVersion: \"8.0\"`; it is removed in SDL v2.0.",
           "enum": [
-            "dotnet-8",
+            "dotnet",
             "nodejs",
             "python-fastapi",
             "go",
             "java-spring",
             "ruby-rails",
-            "php-laravel"
+            "php-laravel",
+            "dotnet-8"
           ]
+        },
+        "runtimeVersion": {
+          "type": "string",
+          "description": "Target runtime/SDK version, e.g. \"10.0\" (.NET 10), \"22\" (Node 22), \"3.13\" (Python). Advisory: selects the base images and CI toolchain versions the generators emit. Defaults per framework when omitted.",
+          "minLength": 1
         },
         "apiStyle": {
           "type": "string",

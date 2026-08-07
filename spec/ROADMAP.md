@@ -4,7 +4,7 @@ This document describes the planned evolution of the Solution Design Language (S
 
 Audience: teams implementing SDL tooling, authors writing SDL documents, and contributors proposing spec changes.
 
-For implementation work on the `@arch0/sdl` reference package, see [`packages/sdl/ROADMAP.md`](../packages/sdl/ROADMAP.md).
+For delivery phases of the discovery tooling built on top of SDL, see [`ROADMAP.md`](../ROADMAP.md). (There is no separate reference-package roadmap; package work is tracked in [`CHANGELOG.md`](../CHANGELOG.md).)
 
 ---
 

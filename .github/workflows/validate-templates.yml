@@ -36,24 +36,20 @@ jobs:
         working-directory: packages/sdl
         run: npm test
 
-      - name: Validate templates
+      # Corpus validation lives in packages/sdl/src/__tests__/examples.test.ts,
+      # which `npm test` above already runs. It globs templates/, every
+      # single-file example, both multi-file roots, and the conformance corpus,
+      # and it goes through compile() — so schema AND semantic (SEM-*) rules
+      # both run.
+      #
+      # This step used to re-implement a weaker version of that inline: it
+      # looped over templates/*.sdl.yaml only (never examples/, despite this
+      # workflow triggering on examples/**) and called validate() without
+      # validateSemantics(). Keeping a second, weaker copy of the check here
+      # just gives it somewhere to drift.
+      - name: Confirm corpus coverage
         run: |
-          for file in templates/*.sdl.yaml; do
-            echo "Validating $file..."
-            node -e "
-              const { parse, validate } = require('./packages/sdl/dist');
-              const fs = require('fs');
-              const yaml = fs.readFileSync('$file', 'utf-8');
-              const { data, errors } = parse(yaml);
-              if (errors.length > 0) {
-                console.error('Parse errors:', errors);
-                process.exit(1);
-              }
-              const result = validate(data);
-              if (!result.valid) {
-                console.error('Validation errors:', result.errors);
-                process.exit(1);
-              }
-              console.log('  OK');
-            "
-          done
+          echo "SDL corpus is validated by examples.test.ts in the test step above."
+          echo "Templates:      $(ls templates/*.sdl.yaml | wc -l)"
+          echo "Examples:       $(ls examples/single-file/*.yaml | wc -l)"
+          echo "Conformance:    $(ls examples/conformance/valid/*.yaml examples/conformance/invalid/*.yaml | wc -l)"

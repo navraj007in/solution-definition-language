@@ -63,7 +63,8 @@ frontend.rendering: ssr | ssg | spa
 frontend.stateManagement: context | redux | zustand | mobx | none
 frontend.styling: tailwind | css-modules | styled-components | sass | emotion
 
-backend.framework: dotnet-8 | nodejs | python-fastapi | go | java-spring | ruby-rails | php-laravel
+backend.framework: dotnet | nodejs | python-fastapi | go | java-spring | ruby-rails | php-laravel
+backend.runtimeVersion: optional free-form string, e.g. "10.0" (.NET), "22" (Node), "3.13" (Python)
 backend.type: backend | worker | function
 backend.apiStyle: rest | graphql | grpc | mixed
 backend.orm: ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose
