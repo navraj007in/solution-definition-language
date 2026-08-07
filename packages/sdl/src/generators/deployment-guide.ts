@@ -1,5 +1,6 @@
 import type { SDLDocument } from '../types';
 import type { RawGeneratorResult } from './types';
+import { DEFAULT_RUNTIME_VERSION, resolveRuntimeVersion } from '../constants';
 
 /**
  * Generates a deployment guide (runbook) from an SDL document.
@@ -190,15 +191,16 @@ function renderGuide(doc: SDLDocument): string {
 
 function getRequiredTools(doc: SDLDocument): string[] {
   const tools: string[] = [];
-  tools.push('Node.js 20+ and npm');
+  tools.push(`Node.js ${DEFAULT_RUNTIME_VERSION['nodejs']}+ and npm`);
   tools.push('Git');
 
   const backends = doc.architecture.projects.backend || [];
   for (const be of backends) {
-    if (be.framework === 'python-fastapi') tools.push('Python 3.12+');
-    if (be.framework === 'go') tools.push('Go 1.22+');
-    if (be.framework === 'dotnet-8') tools.push('.NET 8 SDK');
-    if (be.framework === 'java-spring') tools.push('Java 21+ / Maven');
+    const v = resolveRuntimeVersion(be.framework, be.runtimeVersion);
+    if (be.framework === 'python-fastapi') tools.push(`Python ${v}+`);
+    if (be.framework === 'go') tools.push(`Go ${v}+`);
+    if (be.framework === 'dotnet') tools.push(`.NET ${v} SDK`);
+    if (be.framework === 'java-spring') tools.push(`Java ${v}+ / Maven`);
   }
 
   const cloud = doc.deployment.cloud;
@@ -320,7 +322,7 @@ function getBuildCommands(framework: string, type: 'backend' | 'frontend'): stri
       return 'pip install -r requirements.txt';
     case 'go':
       return 'go build -o bin/server ./cmd/server';
-    case 'dotnet-8':
+    case 'dotnet':
       return 'dotnet restore\ndotnet publish -c Release';
     case 'java-spring':
       return 'mvn clean package -DskipTests';
@@ -528,7 +530,7 @@ function displayName(s: string): string {
 function frameworkLabel(fw: string): string {
   const labels: Record<string, string> = {
     nextjs: 'Next.js', react: 'React', vue: 'Vue.js', angular: 'Angular', svelte: 'Svelte',
-    nodejs: 'Node.js', 'dotnet-8': '.NET 8', 'python-fastapi': 'FastAPI', go: 'Go',
+    nodejs: 'Node.js', 'dotnet': '.NET', 'python-fastapi': 'FastAPI', go: 'Go',
     'java-spring': 'Spring Boot', 'ruby-rails': 'Rails', 'php-laravel': 'Laravel',
   };
   return labels[fw] || fw;

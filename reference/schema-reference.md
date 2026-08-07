@@ -54,7 +54,11 @@ When sources conflict, resolve in this order:
 Project identity, description, stage, and optional repository/region metadata.
 
 ### `architecture`
-Architecture style plus project/component layout across frontend, backend, mobile, and related services.
+Architecture style plus project/component layout across frontend, backend, mobile, and related services. v1.1 also defines one nested cross-cutting contract under `architecture`:
+
+- `architecture.errorConventions` — solution-wide error envelope, status↔code mapping, and default retry policy. Drives error middleware, typed SDK error classes, and OpenAPI `ErrorEnvelope` schemas. See [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Error Conventions*.
+
+Per-operation API contracts are intentionally **not** part of SDL. Use `contracts.apis[]` for the inventory and point to external OpenAPI / GraphQL SDL / gRPC files via `x-` extension fields.
 
 ### `data`
 Primary database plus secondary stores, storage, cache, queues, and search providers.

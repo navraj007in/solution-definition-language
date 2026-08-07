@@ -73,7 +73,8 @@ frontend.rendering:           ssr | ssg | spa
 frontend.stateManagement:     context | redux | zustand | mobx | none
 frontend.styling:             tailwind | css-modules | styled-components | sass | emotion
 
-backend.framework:            dotnet-8 | nodejs | python-fastapi | go | java-spring | ruby-rails | php-laravel
+backend.framework:            dotnet | nodejs | python-fastapi | go | java-spring | ruby-rails | php-laravel
+backend.runtimeVersion:       free-form string, e.g. "10.0" (.NET), "22" (Node), "3.13" (Python) — optional
 backend.type:                 backend | worker | function
 backend.apiStyle:             rest | graphql | grpc | mixed
 backend.orm:                  ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose
@@ -210,6 +211,27 @@ These were common in older examples and generated code. Do not use them.
 | `features: { phase1: [...], phase2: [...] }` | `features: [{ name: ..., priority: ... }]` |
 | `slos: [...]` | `slos: { services: [...] }` |
 | custom root keys like `navigationPatterns`, `interServiceCommunication` | `x-navigationPatterns`, `x-interServiceCommunication` |
+
+---
+
+## Modular SDL — `imports[]`
+
+Split a large solution across files using a root `imports[]` array. Three forms — pick whichever reads cleanest, mix freely:
+
+```yaml
+imports:
+  - sdl/auth.sdl.yaml          # Form A — explicit extension
+  - sdl/services               # Form B — extension inferred (.sdl.yaml then .sdl.yml)
+  - name: deployment           # Form C — explicit name + path
+    path: sdl/deployment
+```
+
+- Paths are relative to the file declaring `imports[]`.
+- Names in Form C should match `^[a-zA-Z][a-zA-Z0-9_-]*$` (kebab-case is allowed because module filenames often are). Names must be unique within one `imports[]` list.
+- Imported modules merge in declaration order; later modules override earlier ones (last-writer-wins on scalars). The `imports[]` key itself is stripped before validation.
+- Maximum nesting depth is 3 (root → depth 1 → depth 2 → depth 3). Circular imports are an error.
+
+Full normative rules: [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) § "Modular SDL and Import Semantics".
 
 ---
 

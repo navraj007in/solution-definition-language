@@ -105,7 +105,7 @@ function getBackendPort(framework: string): number {
   switch (framework) {
     case 'python-fastapi': return 8000;
     case 'go': return 8080;
-    case 'dotnet-8': return 5000;
+    case 'dotnet': return 5000;
     case 'java-spring': return 8080;
     case 'ruby-rails': return 3000;
     case 'php-laravel': return 9000;

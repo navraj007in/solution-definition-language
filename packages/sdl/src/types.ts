@@ -2,10 +2,35 @@
 
 type ExtensionFields = { [key: `x-${string}`]: unknown };
 
+// ─── Modular SDL imports ───
+
+/**
+ * Object form of a single `imports[]` entry (Form C).
+ * `path` may include the `.sdl.yaml` / `.sdl.yml` extension or omit it
+ * (the resolver will append the extension when missing).
+ */
+export interface NamedImport extends ExtensionFields {
+  name: string;
+  path: string;
+}
+
+/**
+ * Single `imports[]` entry. Either a path string (Form A or B) or a
+ * `{name, path}` object (Form C). See spec/SDL-v1.1.md § "Import Declaration".
+ */
+export type ImportEntry = string | NamedImport;
+
 // ─── Root SDL Document ───
 
 export interface SDLDocument extends ExtensionFields {
   sdlVersion: '1.1';
+  /**
+   * Modular SDL only. Consumed by the resolver and stripped from the merged
+   * document before validation, so a *compiled* SDLDocument never carries it.
+   * Declared here (and in the JSON schema) so that an unmerged root file is
+   * still a schema-valid SDL document.
+   */
+  imports?: ImportEntry[];
   solution: SolutionMetadata;
   product: ProductContext;
   architecture: Architecture;
@@ -76,6 +101,42 @@ export interface Architecture extends ExtensionFields {
   projects: Projects;
   services?: Service[];
   sharedLibraries?: SharedLibrary[];
+  /** Project-wide error envelope + status mapping. Drives error middleware emission, typed SDK error classes, and OpenAPI ErrorEnvelope schemas. */
+  errorConventions?: ErrorConventions;
+}
+
+export interface ErrorEnvelopeField extends ExtensionFields {
+  name: string;
+  type: string;
+  required?: boolean;
+  description?: string;
+}
+
+export interface ErrorEnvelope extends ExtensionFields {
+  /** Always 'object' for v1; reserved for future shape extensions. */
+  kind: 'object';
+  fields: ErrorEnvelopeField[];
+}
+
+export interface ErrorStatusMappingEntry extends ExtensionFields {
+  status: number;
+  code: string;
+  retryable?: boolean;
+  /** When true, the response should set Retry-After. */
+  retry_after_header?: boolean;
+}
+
+export interface ErrorRetryPolicy extends ExtensionFields {
+  max_attempts: number;
+  backoff: 'exponential' | 'linear' | 'constant';
+  base_ms: number;
+  cap_ms: number;
+}
+
+export interface ErrorConventions extends ExtensionFields {
+  envelope?: ErrorEnvelope;
+  status_mapping?: ErrorStatusMappingEntry[];
+  retry_policy?: ErrorRetryPolicy;
 }
 
 export interface Projects extends ExtensionFields {
@@ -93,10 +154,42 @@ export interface FrontendProject extends ExtensionFields {
   styling?: 'tailwind' | 'css-modules' | 'styled-components' | 'sass' | 'emotion';
 }
 
+/**
+ * Canonical backend framework identifiers. All are unversioned — the runtime
+ * version belongs in `BackendProject.runtimeVersion`, not in the identifier.
+ */
+export type BackendFramework =
+  | 'dotnet'
+  | 'nodejs'
+  | 'python-fastapi'
+  | 'go'
+  | 'java-spring'
+  | 'ruby-rails'
+  | 'php-laravel';
+
+/**
+ * Deprecated framework spellings still accepted on input. The normalizer
+ * rewrites each to its canonical `BackendFramework` plus a `runtimeVersion`,
+ * and records an `Inference`. Scheduled for removal in SDL v2.0.
+ *
+ * - `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`
+ */
+export type DeprecatedBackendFramework = 'dotnet-8';
+
 export interface BackendProject extends ExtensionFields {
   name: string;
   type?: 'backend' | 'worker' | 'function';
-  framework: 'dotnet-8' | 'nodejs' | 'python-fastapi' | 'go' | 'java-spring' | 'ruby-rails' | 'php-laravel';
+  framework: BackendFramework | DeprecatedBackendFramework;
+  /**
+   * Target runtime/SDK version for this service, e.g. `"10.0"` for .NET 10,
+   * `"22"` for Node 22, `"3.13"` for Python. Free-form because each ecosystem
+   * versions differently.
+   *
+   * Advisory only — nothing is rejected for targeting an unusual version. It
+   * selects the base images and CI toolchain versions the generators emit;
+   * when omitted, `DEFAULT_RUNTIME_VERSION[framework]` is used.
+   */
+  runtimeVersion?: string;
   apiStyle?: 'rest' | 'graphql' | 'grpc' | 'mixed';
   orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose';
   apiVersioning?: 'url-prefix' | 'header' | 'query-param' | 'none';

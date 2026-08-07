@@ -18,11 +18,16 @@ product:
 architecture:
   style: microservices
   projects:
+    # Named distinctly from the services below. SEM-007 pools project and
+    # service names into one namespace, so reusing `service-a` / `service-b`
+    # here would also raise PROJECT_NAME_DUPLICATE and stop this fixture from
+    # isolating the single rule it exists to prove.
     backend:
-      - name: service-a
+      - name: api
         framework: nodejs
-      - name: service-b
+      - name: worker
         framework: nodejs
+        type: worker
   services:
     - name: service-a
       kind: backend

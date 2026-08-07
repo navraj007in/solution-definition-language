@@ -176,8 +176,8 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 
 ## Schema
 
-- [JSON Schema (v1.1)](schema/sdl-v1.1.schema.json) — active machine-readable validation schema for SDL v1.1
-- [TypeScript Types (v1.1)](schema/sdl-v1.1.d.ts) — active TypeScript declaration file for SDL v1.1
+- [JSON Schema (v1.1)](packages/sdl/src/schema/sdl-v1.1.schema.json) — machine-readable validation schema for SDL v1.1. This is the copy `@sdl/core` compiles and the one to validate against; [`schema/sdl-v1.1.schema.json`](schema/sdl-v1.1.schema.json) is a byte-identical published mirror kept in sync by `npm run sync:schema`
+- [TypeScript Types (v1.1)](packages/sdl/src/types.ts) — the type contract of record; [`schema/sdl-v1.1.d.ts`](schema/sdl-v1.1.d.ts) is the standalone declaration mirror for consumers who want types without the package
 
 ## SDL Discovery Agent
 
@@ -214,11 +214,11 @@ See [ROADMAP.md](ROADMAP.md) and [packages/agents/sdl-discovery/README.md](packa
 The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
 
 - **Parser** — YAML to typed SDL document
-- **Validator** — JSON Schema (AJV) + 14 semantic cross-section rules (reference integrity, uniqueness, cycle detection, config completeness, resilience thresholds, SLO ranges) + 5 structural allOf rules, all returning structured error codes
+- **Validator** — JSON Schema (AJV) + 13 semantic cross-section rules (reference integrity, uniqueness, cycle detection, config completeness, resilience thresholds, SLO ranges) + 5 structural allOf rules, all returning structured error codes
 - **Normalizer** — Auto-inference of defaults; returns `{ document, inferences }` so every filled field is visible with its reason
 - **Resolver** — Multi-file import resolution with merge semantics (array concatenation, object recursion, last-writer-wins scalars), circular import detection, and depth limit enforcement
 - **Diff** — Structural comparison of SDL versions
-- **Generators** — 12 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
+- **Generators** — 13 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
 
 ## Roadmap
@@ -230,7 +230,6 @@ The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
   - **Phase 4+** — Validation, UI integration, API service, advanced features
 
 - [SDL Language Roadmap](spec/ROADMAP.md) — planned spec evolution: section formalization, v1.2 additions, migration policy
-- [Package Implementation Roadmap](packages/sdl/ROADMAP.md) — generator wiring, CLI, test coverage, `sdl migrate`
 
 ## Version History
 

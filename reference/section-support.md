@@ -20,6 +20,7 @@ Use it to understand which sections are stable and which are still evolving, and
 | `solution` | yes | yes | strict | yes — `regions.primary` default | all generators | stable |
 | `product` | yes (types) | yes | partial | yes — `personas`, `coreFlows` defaults | `openapi`, `data-model`, `backlog`, `sequence-diagrams`, `repo-scaffold` | stable |
 | `architecture` | yes | yes | partial | yes — `projects.frontend[].type`, `projects.backend[].type` | all generators | stable |
+| `architecture.errorConventions` | no | yes | defined — `envelope`, `status_mapping[]`, `retry_policy` each with `additionalProperties: false`; `envelope.kind` fixed at `object`; `retry_policy.backoff` enum enforced | no | none yet (planned: `coding-rules` for error middleware, `openapi` for `ErrorEnvelope` schema) | minimal |
 | `auth` | no | yes | partial | no | `openapi`, `data-model`, `backlog`, `adr`, `sequence-diagrams`, `repo-scaffold`, `architecture-diagram`, `coding-rules`, `docker-compose` | stable |
 | `data` | yes | yes | partial | yes — `primaryDatabase.name`, backend ORM inference | `data-model`, `backlog`, `cost-estimate`, `adr`, `sequence-diagrams`, `repo-scaffold`, `architecture-diagram`, `coding-rules`, `docker-compose`, `monitoring` | stable |
 | `integrations` | no | yes | partial | no | `repo-scaffold`, `backlog`, `cost-estimate`, `deployment-guide`, `coding-rules` | stable |

@@ -13,7 +13,8 @@
     }
   },
   "scripts": {
-    "build": "tsc && tsc -p tsconfig.esm.json",
+    "sync:schema": "node -e \"require('fs').copyFileSync('src/schema/sdl-v1.1.schema.json','../../schema/sdl-v1.1.schema.json')\"",
+    "build": "npm run sync:schema && tsc && tsc -p tsconfig.esm.json",
     "build:cjs": "tsc",
     "build:esm": "tsc -p tsconfig.esm.json",
     "test": "node --test dist/__tests__/**/*.test.js",
@@ -46,7 +47,7 @@
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0"
   },
-  "files": ["dist"],
+  "files": ["dist", "dist-esm"],
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"

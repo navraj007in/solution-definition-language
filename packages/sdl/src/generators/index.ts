@@ -31,6 +31,8 @@ const GENERATOR_MAP: Partial<Record<ArtifactType, GeneratorFn>> = {
   'deployment-guide': generateDeploymentGuide,
   'cost-estimate': generateCostEstimate,
   'compliance-checklist': generateComplianceChecklistInternal,
+  'coding-rules': generateCodingRulesInternal,
+  'coding-rules-enforcement': generateCodingRulesEnforcementInternal,
 };
 
 /**

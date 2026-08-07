@@ -22,6 +22,39 @@
       ],
       "description": "SDL schema version"
     },
+    "imports": {
+      "type": "array",
+      "description": "Modular SDL only. Each entry is either a path string (with or without the .sdl.yaml/.sdl.yml extension) or an explicit {name, path} object. Consumed by the resolver and stripped from the merged document before validation, so a compiled SDL document never carries this key. Declared here so an unmerged root file is still schema-valid.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-": {}
+            },
+            "required": [
+              "name",
+              "path"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
     "solution": {
       "$ref": "#/$defs/SolutionMetadata"
     },
@@ -547,7 +580,18 @@
       },
       "then": {
         "errorMessage": "CloudFormation can only be used with AWS (cloud: 'aws')",
-        "not": {}
+        "properties": {
+          "deployment": {
+            "required": [
+              "cloud"
+            ],
+            "properties": {
+              "cloud": {
+                "const": "aws"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -621,7 +665,7 @@
           "type": "string",
           "minLength": 3,
           "maxLength": 50,
-          "pattern": "^[a-zA-Z0-9\\s\\-]+$",
+          "pattern": "^[a-zA-Z0-9\\s\\-_.]+$",
           "description": "Solution name"
         },
         "description": {
@@ -1004,15 +1048,22 @@
         },
         "framework": {
           "type": "string",
+          "description": "Backend framework. All canonical values are unversioned — put the runtime version in `runtimeVersion`. `dotnet-8` is a deprecated alias normalized to `dotnet` + `runtimeVersion: \"8.0\"`; it is removed in SDL v2.0.",
           "enum": [
-            "dotnet-8",
+            "dotnet",
             "nodejs",
             "python-fastapi",
             "go",
             "java-spring",
             "ruby-rails",
-            "php-laravel"
+            "php-laravel",
+            "dotnet-8"
           ]
+        },
+        "runtimeVersion": {
+          "type": "string",
+          "description": "Target runtime/SDK version, e.g. \"10.0\" (.NET 10), \"22\" (Node 22), \"3.13\" (Python). Advisory: selects the base images and CI toolchain versions the generators emit. Defaults per framework when omitted.",
+          "minLength": 1
         },
         "apiStyle": {
           "type": "string",
@@ -1145,142 +1196,7 @@
           "items": {
             "type": "string"
           }
-        },
-        "endpoints": {
-          "type": "array",
-          "description": "Typed REST endpoint contract — drives route generation, OpenAPI emission, SDK clients, and contract tests.",
-          "items": {
-            "$ref": "#/$defs/Endpoint"
-          }
         }
-      }
-    },
-    "Endpoint": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^x-": {}
-      },
-      "required": ["id", "path", "method", "response"],
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9-]{0,80}[a-z0-9]$",
-          "description": "Stable kebab-case identifier — referenced by manifests and cross-component tooling."
-        },
-        "path": { "type": "string", "minLength": 1 },
-        "method": {
-          "type": "string",
-          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
-        },
-        "summary": { "type": "string" },
-        "description": { "type": "string" },
-        "auth": {
-          "oneOf": [
-            { "type": "string", "enum": ["required", "optional", "none"] },
-            { "$ref": "#/$defs/EndpointAuthObject" }
-          ]
-        },
-        "path_params": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/EndpointParam" }
-        },
-        "query": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/EndpointParam" }
-        },
-        "request": {
-          "type": "object",
-          "additionalProperties": false,
-          "patternProperties": { "^x-": {} },
-          "properties": {
-            "body": { "$ref": "#/$defs/EndpointBody" }
-          }
-        },
-        "response": {
-          "type": "object",
-          "additionalProperties": false,
-          "patternProperties": { "^x-": {} },
-          "required": ["status"],
-          "properties": {
-            "status": { "type": "integer", "minimum": 100, "maximum": 599 },
-            "body": { "$ref": "#/$defs/EndpointBody" },
-            "description": { "type": "string" }
-          }
-        },
-        "errors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "patternProperties": { "^x-": {} },
-            "required": ["status", "code"],
-            "properties": {
-              "status": { "type": "integer", "minimum": 100, "maximum": 599 },
-              "code": { "type": "string", "minLength": 1 },
-              "retryable": { "type": "boolean" },
-              "description": { "type": "string" }
-            }
-          }
-        }
-      }
-    },
-    "EndpointParam": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": { "^x-": {} },
-      "required": ["name", "type"],
-      "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "type": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Primitive type (string|integer|number|boolean|uuid|date|datetime|json|text), `array<T>`, `ref:EntityName`, or trailing `?` for optional."
-        },
-        "required": { "type": "boolean" },
-        "description": { "type": "string" },
-        "default": {},
-        "min": { "type": "number" },
-        "max": { "type": "number" },
-        "minLength": { "type": "integer", "minimum": 0 },
-        "maxLength": { "type": "integer", "minimum": 0 },
-        "values": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Closed set of allowed values for enum-typed params."
-        }
-      }
-    },
-    "EndpointBody": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": { "^x-": {} },
-      "required": ["kind"],
-      "properties": {
-        "kind": {
-          "type": "string",
-          "enum": ["object", "ref"],
-          "description": "`object` for inline shape (use `fields[]`); `ref` to point at a shared schema (use `ref`)."
-        },
-        "fields": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/EndpointParam" },
-          "description": "Inline body fields when kind=object."
-        },
-        "ref": {
-          "type": "string",
-          "description": "Entity name or named response schema when kind=ref."
-        }
-      }
-    },
-    "EndpointAuthObject": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": { "^x-": {} },
-      "properties": {
-        "required": { "type": "boolean" },
-        "scopes_any": { "type": "array", "items": { "type": "string" } },
-        "scopes_all": { "type": "array", "items": { "type": "string" } }
       }
     },
     "Authentication": {

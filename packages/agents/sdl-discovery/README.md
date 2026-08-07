@@ -142,7 +142,7 @@ The scoring adapts to your context:
 
 ### Full Specification
 
-See [reference/complexity-scoring.md](../../reference/complexity-scoring.md) for the complete v1.0 specification with detailed dimensions, confidence model, and reduction strategies.
+See [reference/complexity-scoring.md](../../../reference/complexity-scoring.md) for the complete v1.0 specification with detailed dimensions, confidence model, and reduction strategies.
 
 ## What Gets Discovered
 
@@ -291,7 +291,7 @@ Example review items:
 
 ## Examples
 
-See [examples/discovered-sdls/](../../examples/discovered-sdls/) for generated SDL outputs.
+See [examples/multi-file/](../../../examples/multi-file/) for multi-module SDL outputs, and [examples/single-file/](../../../examples/single-file/) for single-document examples.
 
 ## Detection Coverage
 
@@ -344,13 +344,13 @@ See [HEURISTICS.md](./HEURISTICS.md) for detailed component detection rules and 
 
 ## Contributing
 
-Contributions welcome! Please see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+Contributions welcome! Please see [CONTRIBUTING.md](../../../CONTRIBUTING.md).
 
 ## Related
 
-- **SDL Specification** — [Solution Definition Language v1.1](../../spec/SDL-v1.1.md)
-- **SDL Parser & Validator** — [@arch0/sdl](../sdl/)
-- **SDL Playground** — [Interactive SDL editor](../sdl-playground/)
+- **SDL Specification** — [Solution Definition Language v1.1](../../../spec/SDL-v1.1.md)
+- **SDL Parser & Validator** — [@arch0/sdl](../../sdl/)
+- **SDL Playground** — [Interactive SDL editor](../../sdl-playground/)
 
 ## License
 

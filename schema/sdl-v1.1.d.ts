@@ -9,10 +9,35 @@
 
 export type ExtensionFields = { [key: `x-${string}`]: unknown };
 
+// ─── Modular SDL imports ───
+
+/**
+ * Object form of a single `imports[]` entry (Form C).
+ * `path` may include the `.sdl.yaml` / `.sdl.yml` extension or omit it
+ * (the resolver will append the extension when missing).
+ */
+export interface NamedImport extends ExtensionFields {
+  name: string;
+  path: string;
+}
+
+/**
+ * Single `imports[]` entry. Either a path string (Form A or B) or a
+ * `{name, path}` object (Form C). See spec/SDL-v1.1.md § "Import Declaration".
+ */
+export type ImportEntry = string | NamedImport;
+
 // ─── Root SDL Document ───
 
 export interface SDLDocument extends ExtensionFields {
   sdlVersion: '1.1';
+  /**
+   * Module imports. Each entry is either:
+   *  - a path string ending in `.sdl.yaml` / `.sdl.yml` (Form A)
+   *  - a path string with the extension omitted; resolver appends `.sdl.yaml` then `.sdl.yml` (Form B)
+   *  - an explicit `{ name, path }` object (Form C); `path` may be Form A or B
+   */
+  imports?: ImportEntry[];
   solution: SolutionMetadata;
   product: ProductContext;
   architecture: Architecture;
@@ -138,10 +163,38 @@ export interface FrontendProject extends ExtensionFields {
   styling?: 'tailwind' | 'css-modules' | 'styled-components' | 'sass' | 'emotion';
 }
 
+/**
+ * Canonical backend framework identifiers. All are unversioned — the runtime
+ * version belongs in `BackendProject.runtimeVersion`, not in the identifier.
+ */
+export type BackendFramework =
+  | 'dotnet'
+  | 'nodejs'
+  | 'python-fastapi'
+  | 'go'
+  | 'java-spring'
+  | 'ruby-rails'
+  | 'php-laravel';
+
+/**
+ * Deprecated framework spellings still accepted on input. The normalizer
+ * rewrites each to its canonical `BackendFramework` plus a `runtimeVersion`.
+ * Removed in SDL v2.0.
+ *
+ * - `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`
+ */
+export type DeprecatedBackendFramework = 'dotnet-8';
+
 export interface BackendProject extends ExtensionFields {
   name: string;
   type?: 'backend' | 'worker' | 'function';
-  framework: 'dotnet-8' | 'nodejs' | 'python-fastapi' | 'go' | 'java-spring' | 'ruby-rails' | 'php-laravel';
+  framework: BackendFramework | DeprecatedBackendFramework;
+  /**
+   * Target runtime/SDK version, e.g. `"10.0"` (.NET 10), `"22"` (Node 22),
+   * `"3.13"` (Python). Advisory: selects the base images and CI toolchain
+   * versions the generators emit. Defaults per framework when omitted.
+   */
+  runtimeVersion?: string;
   apiStyle?: 'rest' | 'graphql' | 'grpc' | 'mixed';
   orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose';
   apiVersioning?: 'url-prefix' | 'header' | 'query-param' | 'none';
@@ -159,71 +212,6 @@ export interface Service extends ExtensionFields {
   responsibilities?: string[];
   exposes?: ServiceExposes;
   dependencies?: string[];
-  /**
-   * Typed REST endpoint contract. Drives route generation, OpenAPI
-   * emission, SDK clients, and contract tests when consumers scaffold
-   * code from this SDL.
-   */
-  endpoints?: Endpoint[];
-}
-
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
-
-export interface EndpointParam extends ExtensionFields {
-  name: string;
-  /** Primitive (string|integer|number|boolean|uuid|date|datetime|json|text), `array<T>`, `ref:EntityName`, or trailing `?` for optional. */
-  type: string;
-  required?: boolean;
-  description?: string;
-  default?: unknown;
-  min?: number;
-  max?: number;
-  minLength?: number;
-  maxLength?: number;
-  /** Closed set of allowed values for enum-typed params. */
-  values?: string[];
-}
-
-export interface EndpointBody extends ExtensionFields {
-  kind: 'object' | 'ref';
-  /** Inline shape when kind=object. */
-  fields?: EndpointParam[];
-  /** Entity / named response schema when kind=ref. */
-  ref?: string;
-}
-
-export interface EndpointAuthObject extends ExtensionFields {
-  required?: boolean;
-  scopes_any?: string[];
-  scopes_all?: string[];
-}
-
-export interface EndpointResponse extends ExtensionFields {
-  status: number;
-  body?: EndpointBody;
-  description?: string;
-}
-
-export interface EndpointError extends ExtensionFields {
-  status: number;
-  code: string;
-  retryable?: boolean;
-  description?: string;
-}
-
-export interface Endpoint extends ExtensionFields {
-  /** Stable kebab-case identifier — referenced by manifests + tooling. */
-  id: string;
-  path: string;
-  method: HttpMethod;
-  summary?: string;
-  description?: string;
-  auth?: 'required' | 'optional' | 'none' | EndpointAuthObject;
-  path_params?: EndpointParam[];
-  query?: EndpointParam[];
-  request?: { body?: EndpointBody };
-  response: EndpointResponse;
-  errors?: EndpointError[];
 }
 
 export interface ServiceExposes extends ExtensionFields {

@@ -43,8 +43,100 @@ export type FileReader = (relativePath: string) => string | null;
  */
 const MAX_IMPORT_DEPTH = 3;
 const SDL_EXTENSIONS = ['.sdl.yaml', '.sdl.yml'];
+const IMPORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 
 // ─── Helpers ───
+
+/**
+ * Normalized form of a single `imports[]` entry.
+ *
+ * `path` is the path *as written* by the author — extension may be missing
+ * (Form B). `resolvedPath` is filled in once the file is located on disk.
+ *
+ * `name` defaults to the filename stem when not explicitly provided.
+ */
+interface ImportEntry {
+  name: string;
+  path: string;
+  /** True when `name` was explicitly provided (Form C); false when inferred from the stem. */
+  nameExplicit: boolean;
+}
+
+/**
+ * Strip a recognised SDL extension if present. Used to derive a default `name`
+ * from a path's filename stem.
+ */
+function stripSdlExtension(p: string): string {
+  for (const ext of SDL_EXTENSIONS) {
+    if (p.endsWith(ext)) return p.slice(0, -ext.length);
+  }
+  return p;
+}
+
+/** Last path segment of a forward-slash path, regardless of platform. */
+function basenameStem(p: string): string {
+  const noExt = stripSdlExtension(p);
+  const i = noExt.lastIndexOf('/');
+  return i === -1 ? noExt : noExt.slice(i + 1);
+}
+
+/**
+ * Normalise one entry from the raw `imports[]` array into an ImportEntry.
+ *
+ * Accepts:
+ *  - Form A — string ending in `.sdl.yaml` / `.sdl.yml`            (existing)
+ *  - Form B — string with the extension omitted                     (new in v1.2)
+ *  - Form C — `{ name, path }` object; `path` may be Form A or B    (new in v1.2)
+ *
+ * Returns null when the entry is structurally invalid.
+ */
+function normalizeImportEntry(raw: unknown): ImportEntry | null {
+  if (typeof raw === 'string') {
+    if (raw.length === 0) return null;
+    return { name: basenameStem(raw), path: raw, nameExplicit: false };
+  }
+  if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    const name = obj.name;
+    const path = obj.path;
+    if (typeof name !== 'string' || typeof path !== 'string') return null;
+    if (name.length === 0 || path.length === 0) return null;
+    return { name, path, nameExplicit: true };
+  }
+  return null;
+}
+
+/**
+ * Resolve a Form-B path (extension omitted) by trying each SDL extension in
+ * order. Returns the loaded content + the path that actually resolved, or null.
+ *
+ * Form-A paths (extension already present) are tried as-is.
+ *
+ * Looks suspicious if the path has a non-SDL yaml extension (`.yaml` / `.yml`
+ * without the `.sdl` segment) — in that case the resolver does NOT silently
+ * append another extension; it loads the file verbatim and lets the caller
+ * surface the warning.
+ */
+function loadImportFile(
+  path: string,
+  readFile: FileReader,
+): { content: string; resolvedPath: string } | null {
+  const hasSdlExt = SDL_EXTENSIONS.some(ext => path.endsWith(ext));
+  const hasOtherYamlExt = !hasSdlExt && (path.endsWith('.yaml') || path.endsWith('.yml'));
+
+  if (hasSdlExt || hasOtherYamlExt) {
+    const content = readFile(path);
+    return content === null ? null : { content, resolvedPath: path };
+  }
+
+  // Form B — try each SDL extension, .sdl.yaml first (preferred).
+  for (const ext of SDL_EXTENSIONS) {
+    const candidate = path + ext;
+    const content = readFile(candidate);
+    if (content !== null) return { content, resolvedPath: candidate };
+  }
+  return null;
+}
 
 function simpleHash(content: string): string {
   let hash = 0;
@@ -169,38 +261,80 @@ function resolveFile(
     return result;
   }
 
-  const imports = Array.isArray(parsed.imports) ? parsed.imports as string[] : [];
+  const rawImports = Array.isArray(parsed.imports) ? parsed.imports as unknown[] : [];
 
-  // Validate import paths
-  for (const imp of imports) {
-    if (typeof imp !== 'string') continue;
-    const hasValidExt = SDL_EXTENSIONS.some(ext => imp.endsWith(ext));
-    if (!hasValidExt) {
+  // Normalise every entry up-front so the rest of the resolver works with one shape.
+  const entries: ImportEntry[] = [];
+  for (const raw of rawImports) {
+    const entry = normalizeImportEntry(raw);
+    if (entry === null) {
       result.warnings.push({
         type: 'scalar-override',
         path: ['imports'],
-        message: `Import "${imp}" should end with .sdl.yaml or .sdl.yml`,
+        message: `Skipping invalid imports[] entry: must be a string or {name, path} object`,
+        sourceModule: filePath,
+      });
+      continue;
+    }
+    entries.push(entry);
+  }
+
+  // Validate names: pattern + uniqueness within this file.
+  const seenNames = new Set<string>();
+  for (const entry of entries) {
+    if (entry.nameExplicit && !IMPORT_NAME_PATTERN.test(entry.name)) {
+      result.warnings.push({
+        type: 'scalar-override',
+        path: ['imports'],
+        message: `Import name "${entry.name}" should match ${IMPORT_NAME_PATTERN.source}`,
+        sourceModule: filePath,
+      });
+    }
+    if (seenNames.has(entry.name)) {
+      result.errors.push({
+        type: 'conflict',
+        path: ['imports'],
+        message: `Duplicate import name "${entry.name}" in ${filePath}. Use explicit {name, path} entries to disambiguate.`,
+        sourceModule: filePath,
+      });
+    }
+    seenNames.add(entry.name);
+  }
+
+  // Surface a warning for paths that look like YAML but aren't `.sdl.yaml`/`.sdl.yml`.
+  // Form B (no extension) is silent — the resolver will infer the extension below.
+  for (const entry of entries) {
+    const p = entry.path;
+    const hasSdlExt = SDL_EXTENSIONS.some(ext => p.endsWith(ext));
+    const hasOtherYamlExt = !hasSdlExt && (p.endsWith('.yaml') || p.endsWith('.yml'));
+    if (hasOtherYamlExt) {
+      result.warnings.push({
+        type: 'scalar-override',
+        path: ['imports'],
+        message: `Import "${p}" should end with .sdl.yaml or .sdl.yml (or omit the extension entirely)`,
         sourceModule: filePath,
       });
     }
   }
 
   // Process imports first (they form the base)
-  if (imports.length > 0 && depth < MAX_IMPORT_DEPTH) {
-    for (const importPath of imports) {
-      if (typeof importPath !== 'string') continue;
-
-      const importContent = readFile(importPath);
-      if (importContent === null) {
+  if (entries.length > 0 && depth < MAX_IMPORT_DEPTH) {
+    for (const entry of entries) {
+      const loaded = loadImportFile(entry.path, readFile);
+      if (loaded === null) {
+        const tried = SDL_EXTENSIONS.some(ext => entry.path.endsWith(ext)) || entry.path.endsWith('.yaml') || entry.path.endsWith('.yml')
+          ? entry.path
+          : `${entry.path}.sdl.yaml | ${entry.path}.sdl.yml`;
         result.errors.push({
           type: 'missing-file',
-          message: `Imported file not found: ${importPath}`,
+          message: `Imported file not found: ${tried}`,
           sourceModule: filePath,
         });
         continue;
       }
 
-      const sub = resolveFile(importContent, readFile, importPath, visited, depth + 1);
+      const { content: importContent, resolvedPath } = loaded;
+      const sub = resolveFile(importContent, readFile, resolvedPath, visited, depth + 1);
       result.errors.push(...sub.errors);
       result.warnings.push(...sub.warnings);
       result.modules.push(...sub.modules);
@@ -208,14 +342,14 @@ function resolveFile(
       if (Object.keys(sub.document).length > 0) {
         const sections = Object.keys(sub.document).filter(k => k !== 'imports');
         result.modules.push({
-          path: importPath,
+          path: resolvedPath,
           sections,
           hash: simpleHash(JSON.stringify(sub.document)),
         });
-        deepMerge(result.document, sub.document, importPath, [], result.warnings, result.errors);
+        deepMerge(result.document, sub.document, resolvedPath, [], result.warnings, result.errors);
       }
     }
-  } else if (imports.length > 0 && depth >= MAX_IMPORT_DEPTH) {
+  } else if (entries.length > 0 && depth >= MAX_IMPORT_DEPTH) {
     result.warnings.push({
       type: 'scalar-override',
       path: ['imports'],
@@ -244,22 +378,24 @@ export function validatePerModule(
   if (!parsed) return [{ module: 'root', errors: [{ path: '', message: 'Failed to parse root YAML' }] }];
 
   const results: Array<{ module: string; errors: Array<{ path: string; message: string }> }> = [];
-  const imports = Array.isArray(parsed.imports) ? parsed.imports as string[] : [];
+  const rawImports = Array.isArray(parsed.imports) ? parsed.imports as unknown[] : [];
 
-  for (const imp of imports) {
-    if (typeof imp !== 'string') continue;
-    const content = readFile(imp);
-    if (!content) continue;
+  for (const raw of rawImports) {
+    const entry = normalizeImportEntry(raw);
+    if (entry === null) continue;
 
-    const moduleDoc = parseYaml(content);
+    const loaded = loadImportFile(entry.path, readFile);
+    if (loaded === null) continue;
+
+    const moduleDoc = parseYaml(loaded.content);
     if (!moduleDoc) {
-      results.push({ module: imp, errors: [{ path: '', message: `Failed to parse module: ${imp}` }] });
+      results.push({ module: loaded.resolvedPath, errors: [{ path: '', message: `Failed to parse module: ${loaded.resolvedPath}` }] });
       continue;
     }
 
     const validation = validateFn(moduleDoc);
     if (!validation.valid) {
-      results.push({ module: imp, errors: validation.errors });
+      results.push({ module: loaded.resolvedPath, errors: validation.errors });
     }
   }
 

@@ -1,5 +1,6 @@
 import type { SDLDocument, BackendProject, FrontendProject, MobileProject } from '../types';
 import type { RawGeneratorResult, GeneratedFile } from './types';
+import { resolveRuntimeVersion } from '../constants';
 import { type ParsedADR, adrsToCodingRules } from './adr-rules';
 
 /** AI tools that sync-ai can generate instruction files for */
@@ -358,7 +359,7 @@ function buildErrorHandlingRules(doc: SDLDocument): Rule {
       rules.push('Express: Every route handler MUST wrap logic in try/catch and call next(err) on failure.');
     } else if (be.framework === 'python-fastapi') {
       rules.push('FastAPI: Use HTTPException with proper status codes. Register global exception handlers.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('.NET: Use Result<T> or typed exceptions. Register global exception middleware.');
     }
   }
@@ -549,7 +550,7 @@ function buildCodeQualityRules(doc: SDLDocument): Rule {
       rules.push('Java: Use `Optional<T>` instead of null returns. Never call `.get()` without `.isPresent()` or use `.orElseThrow()`.');
       rules.push('Java: Use `var` for local variables where the type is obvious from the right side.');
       rules.push('Naming: camelCase for variables/methods, PascalCase for classes, UPPER_SNAKE_CASE for constants.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('C#: Use `record` for immutable DTOs. Use primary constructors where applicable.');
       rules.push('C#: Prefer pattern matching and switch expressions over if-else chains.');
       rules.push('C#: Use `async Task<T>` return types for async methods. Never use `async void` except in event handlers.');
@@ -683,7 +684,7 @@ function buildDesignPatternRules(doc: SDLDocument): Rule {
       rules.push('Keep interfaces small: 1-3 methods. The larger the interface, the weaker the abstraction. `io.Reader` has 1 method — that is the goal.');
       rules.push('Use struct embedding for composition, not inheritance. Embed interfaces in structs for partial implementation.');
       rules.push('Use functional options pattern (`WithTimeout(5s)`) for configurable constructors instead of large config structs.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('');
       rules.push('### C#/.NET Design');
       rules.push('Use the built-in DI container. Register services with appropriate lifetimes: Transient for stateless, Scoped for per-request, Singleton for shared state.');
@@ -773,7 +774,7 @@ function buildFileSizeStructureRules(doc: SDLDocument): Rule {
     } else if (be.framework === 'go') {
       rules.push('Go: Files MUST NOT exceed 500 lines. Split into multiple files within the same package by concern.');
       rules.push('Go: Interfaces MUST stay small (1-5 methods). If an interface grows beyond 5 methods, split into focused interfaces.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('C#: One class per file. Controllers MUST NOT exceed 200 lines — use partial classes or sub-controllers.');
       rules.push('C#: If a service class exceeds 500 lines, apply the mediator pattern or extract strategy classes.');
     }
@@ -886,7 +887,7 @@ function buildTestingQualityRules(doc: SDLDocument): Rule {
     } else if (be.framework === 'java-spring') {
       rules.push('Test files: same package structure under `src/test/java`. Use `@Nested` classes for grouping.');
       rules.push('Use `@MockBean` for Spring context mocks, `@Mock` + `@InjectMocks` for unit tests without Spring.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('Test files: separate test project mirroring source structure. Use `[Theory]` + `[InlineData]` for parametric tests.');
       rules.push('Use `Moq` or `NSubstitute` for mocking. Verify mock interactions only when side effects matter.');
     }
@@ -1262,7 +1263,7 @@ function buildDocumentationRules(doc: SDLDocument): Rule {
     } else if (be.framework === 'java-spring') {
       rules.push('Java: Use Javadoc on all public methods and classes. Include `@param`, `@return`, `@throws`.');
       rules.push('Spring: Controller methods MUST have Swagger/OpenAPI annotations (`@Operation`, `@ApiResponse`).');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('C#: Use XML doc comments (`///`) on all public members. Include `<summary>`, `<param>`, `<returns>`.');
       rules.push('C#: Enable `<GenerateDocumentationFile>` in csproj to enforce documentation on public APIs.');
     }
@@ -1407,7 +1408,7 @@ function buildResilienceRules(doc: SDLDocument): Rule {
     } else if (be.framework === 'go') {
       rules.push('');
       rules.push('Go: Use `context.WithTimeout` for all external calls. Propagate context through the call chain. Check `ctx.Err()` before expensive operations.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('');
       rules.push('C#: Use Polly for retry policies, circuit breakers, and timeout policies. Register policies via `IHttpClientFactory` for HTTP clients.');
     }
@@ -1462,7 +1463,7 @@ function buildInputValidationRules(doc: SDLDocument): Rule {
       rules.push('### Go Validation');
       rules.push('Use `go-playground/validator` with struct tags for input validation. Validate at the handler level before passing to services.');
       rules.push('Return structured validation errors as a slice. Never return generic "invalid input" — tell the caller which field and why.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('');
       rules.push('### C# Validation');
       rules.push('Use FluentValidation for complex rules. Use Data Annotations for simple constraints. Register validators via DI.');
@@ -1642,7 +1643,7 @@ function buildConcurrencyRules(doc: SDLDocument): Rule {
       rules.push('Use channels for goroutine communication. Use `sync.Mutex` only when channels are inappropriate (protecting shared data structures).');
       rules.push('Always use `sync.WaitGroup` or `errgroup.Group` to wait for goroutines. Never fire-and-forget goroutines without tracking them.');
       rules.push('Use `context.Context` for cancellation propagation. Every goroutine that does I/O must accept and respect a context.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('');
       rules.push('### C# Concurrency');
       rules.push('Use `Task.WhenAll()` for independent async operations. Use `SemaphoreSlim` for concurrency limiting.');
@@ -1702,7 +1703,7 @@ function buildConfigurationRules(doc: SDLDocument): Rule {
       rules.push('');
       rules.push('### Go Configuration');
       rules.push('Load config into a struct at startup. Use `envconfig`, `viper`, or `koanf`. Validate all required fields. Pass the config struct (or sub-structs) to constructors — never read `os.Getenv` in business logic.');
-    } else if (be.framework === 'dotnet-8') {
+    } else if (be.framework === 'dotnet') {
       rules.push('');
       rules.push('### C# Configuration');
       rules.push('Use `IOptions<T>` pattern with typed config classes. Bind config sections in `Program.cs`. Use Data Annotations for validation. Never inject `IConfiguration` directly into services.');
@@ -1933,8 +1934,8 @@ function getBackendFileRules(be: BackendProject): string[] {
     rules.push('Routes: `app/routes/<entity>.py`. Services: `app/services/<entity>.py`. Models: `app/models/<entity>.py`.');
     rules.push('Schemas (Pydantic): `app/schemas/<entity>.py`. Dependencies: `app/dependencies.py`.');
     rules.push('No business logic in route handlers. Routes only validate input, call service, return response.');
-  } else if (fw === 'dotnet-8') {
-    rules.push('Backend: .NET 8. Use C# with nullable reference types enabled.');
+  } else if (fw === 'dotnet') {
+    rules.push(`Backend: .NET ${resolveRuntimeVersion('dotnet', be?.runtimeVersion)}. Use C# with nullable reference types enabled.`);
     rules.push('Controllers: `Controllers/<Entity>Controller.cs`. Services: `Services/<Entity>Service.cs`.');
     rules.push('Models: `Models/<Entity>.cs`. DTOs: `DTOs/<Entity>Dto.cs`. Repositories: `Repositories/<Entity>Repository.cs`.');
     rules.push('Use dependency injection for all services. Register in `Program.cs`.');
@@ -2119,7 +2120,7 @@ const FRAMEWORK_LABELS: Record<string, string> = {
   svelte: 'SvelteKit',
   solid: 'SolidJS',
   nodejs: 'Node.js (Express/TypeScript)',
-  'dotnet-8': '.NET 8 (C#)',
+  'dotnet': '.NET (C#)',
   'python-fastapi': 'Python (FastAPI)',
   go: 'Go',
   'java-spring': 'Java (Spring Boot)',

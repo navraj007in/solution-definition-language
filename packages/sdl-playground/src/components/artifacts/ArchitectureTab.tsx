@@ -9,6 +9,9 @@ const FRAMEWORK_COLORS: Record<string, string> = {
   vue: 'bg-green-900/50 text-green-300',
   nodejs: 'bg-lime-900/50 text-lime-300',
   'python-fastapi': 'bg-teal-900/50 text-teal-300',
+  dotnet: 'bg-purple-900/50 text-purple-300',
+  // Deprecated alias — still keyed so a pasted pre-migration SDL renders with
+  // the right colour before normalization rewrites it to `dotnet`.
   'dotnet-8': 'bg-purple-900/50 text-purple-300',
   go: 'bg-blue-900/50 text-blue-300',
   'java-spring': 'bg-orange-900/50 text-orange-300',

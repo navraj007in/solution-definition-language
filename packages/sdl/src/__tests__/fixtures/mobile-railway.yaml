@@ -38,6 +38,9 @@ architecture:
         framework: "react-native"
     backend:
       - name: "api"
+        # Deliberately uses the deprecated `dotnet-8` alias: this fixture is the
+        # regression guard for alias normalization (-> framework "dotnet" plus
+        # runtimeVersion "8.0"). Do not migrate it to the canonical spelling.
         framework: "dotnet-8"
 
 auth:

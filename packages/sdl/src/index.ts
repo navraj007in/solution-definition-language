@@ -98,6 +98,8 @@ export type {
   ValidationWarning,
   ValidationSummary,
   CompileResult,
+  ImportEntry,
+  NamedImport,
 } from './types';
 
 import { parse } from './parser';

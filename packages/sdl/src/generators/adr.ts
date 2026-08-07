@@ -236,7 +236,7 @@ function buildBackendFrameworkADR(doc: SDLDocument, be: { name: string; framewor
       { option: 'Node.js (Express)', pros: 'Large ecosystem, JavaScript fullstack, fast iteration', cons: 'Single-threaded, callback complexity' },
       { option: 'Python (FastAPI)', pros: 'Async, auto-docs, type hints, great for ML', cons: 'Slower than compiled languages' },
       { option: 'Go', pros: 'Fast, compiled, excellent concurrency', cons: 'Verbose, smaller web ecosystem' },
-      { option: '.NET 8', pros: 'Enterprise-grade, strong typing, high performance', cons: 'Microsoft ecosystem, steeper learning curve' },
+      { option: '.NET', pros: 'Enterprise-grade, strong typing, high performance', cons: 'Microsoft ecosystem, steeper learning curve' },
     ],
   };
 }
@@ -372,7 +372,7 @@ function frameworkLabel(fw: string): string {
     svelte: 'Svelte',
     solid: 'SolidJS',
     nodejs: 'Node.js (Express)',
-    'dotnet-8': '.NET 8',
+    'dotnet': '.NET',
     'python-fastapi': 'Python (FastAPI)',
     go: 'Go',
     'java-spring': 'Java (Spring Boot)',
@@ -493,7 +493,7 @@ function backendConsequences(fw: string): string {
       return 'Async Python with automatic API documentation. Type hints for validation. Great for ML integration.';
     case 'go':
       return 'Compiled language with excellent concurrency. Fast builds. Verbose but explicit.';
-    case 'dotnet-8':
+    case 'dotnet':
       return 'High performance, strong typing, excellent tooling. Microsoft ecosystem.';
     case 'java-spring':
       return 'Enterprise-grade framework. Massive ecosystem. Higher memory footprint.';

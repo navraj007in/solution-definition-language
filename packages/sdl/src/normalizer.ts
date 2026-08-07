@@ -3,6 +3,7 @@ import {
   CLOUD_RUNTIME_MAP,
   FRAMEWORK_ORM_MAP,
   AVAILABILITY_BY_STAGE,
+  DEPRECATED_FRAMEWORK_ALIASES,
 } from './constants';
 
 export interface NormalizeResult {
@@ -25,6 +26,9 @@ export function normalize(sdl: SDLDocument): NormalizeResult {
   const document = structuredClone(sdl);
   const inferences: Inference[] = [];
 
+  // Alias rewriting runs first: every rule below reads the canonical framework
+  // value, so nothing downstream needs to know about deprecated spellings.
+  applyFrameworkAliases(document, inferences);
   applyLegacySectionDefaults(document, inferences);
   applyRegionDefaults(document, inferences);
   applyDatabaseNameDefault(document, inferences);
@@ -40,6 +44,41 @@ export function normalize(sdl: SDLDocument): NormalizeResult {
   applyObservabilityDefaults(document, inferences);
 
   return { document, inferences };
+}
+
+/**
+ * Rewrites deprecated backend `framework` values to their canonical form and
+ * materialises the version they carried into `runtimeVersion`.
+ *
+ * `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`.
+ *
+ * An explicitly authored `runtimeVersion` always wins: a document saying
+ * `framework: dotnet-8` with `runtimeVersion: "10.0"` is contradictory, and the
+ * explicit field is the more specific statement of intent.
+ */
+function applyFrameworkAliases(sdl: SDLDocument, inf: Inference[]): void {
+  const backends = sdl.architecture?.projects?.backend ?? [];
+
+  backends.forEach((be, index) => {
+    const alias = DEPRECATED_FRAMEWORK_ALIASES[be.framework];
+    if (!alias) return;
+
+    setProperty(be, 'framework', alias.framework);
+    inf.push({
+      path: `architecture.projects.backend[${index}].framework`,
+      value: alias.framework,
+      reason: `'${be.name}' used deprecated framework alias — canonical value is '${alias.framework}' with the version in runtimeVersion (alias removed in SDL v2.0)`,
+    });
+
+    if (be.runtimeVersion === undefined) {
+      setProperty(be, 'runtimeVersion', alias.runtimeVersion);
+      inf.push({
+        path: `architecture.projects.backend[${index}].runtimeVersion`,
+        value: alias.runtimeVersion,
+        reason: `version recovered from the deprecated framework alias`,
+      });
+    }
+  });
 }
 
 function applyLegacySectionDefaults(sdl: SDLDocument, inf: Inference[]): void {
@@ -259,7 +298,7 @@ function applyOrmDefaults(sdl: SDLDocument, inf: Inference[]): void {
 const FRAMEWORK_TEST_MAP: Record<string, string> = {
   nodejs: 'vitest',
   'python-fastapi': 'pytest',
-  'dotnet-8': 'xunit',
+  'dotnet': 'xunit',
   go: 'go-test',
   'java-spring': 'junit',
   'ruby-rails': 'rspec',
@@ -287,7 +326,7 @@ function applyTestingDefaults(sdl: SDLDocument, inf: Inference[]): void {
 const FRAMEWORK_LOGGING_MAP: Record<string, string> = {
   nodejs: 'pino',
   'python-fastapi': 'structured',
-  'dotnet-8': 'serilog',
+  'dotnet': 'serilog',
   go: 'zerolog',
   'java-spring': 'log4j',
 };
