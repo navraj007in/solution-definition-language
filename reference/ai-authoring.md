@@ -43,7 +43,7 @@ These four sections — `sdlVersion`, `solution`, `architecture`, `data` — are
 | Section | Required fields |
 |---|---|
 | `solution` | `name`, `description`, `stage` |
-| `architecture` | `style`, `projects` (at least one project) |
+| `architecture` | `style`, `projects` — at least one project in any category, or at least one entry in `architecture.services` (enforced by SEM-015 / `ARCHITECTURE_EMPTY`) |
 | `architecture.projects.frontend[]` | `name`, `framework` |
 | `architecture.projects.backend[]` | `name`, `framework` |
 | `architecture.projects.mobile[]` | `name`, `platform`, `framework` |
@@ -77,7 +77,7 @@ backend.framework:            dotnet | nodejs | python-fastapi | go | java-sprin
 backend.runtimeVersion:       free-form string, e.g. "10.0" (.NET), "22" (Node), "3.13" (Python) — optional
 backend.type:                 backend | worker | function
 backend.apiStyle:             rest | graphql | grpc | mixed
-backend.orm:                  ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose
+backend.orm:                  ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose | hibernate
 backend.apiVersioning:        url-prefix | header | query-param | none
 
 mobile.platform:              ios | android | cross-platform
@@ -111,8 +111,8 @@ integrations.custom[].authMethod: api-key | oauth2 | basic | none
 deployment.cloud:             azure | aws | gcp | cloudflare | vercel | railway | render | fly-io
 deployment.ciCd.provider:     github-actions | gitlab-ci | azure-devops | circleci | jenkins
 deployment.infrastructure.iac: terraform | bicep | pulumi | cdk | cloudformation
-deployment.runtime.frontend:  static-web-apps | vercel | cloudflare-pages | s3+cloudfront | app-service | netlify
-deployment.runtime.backend:   container-apps | ecs | cloud-run | kubernetes | app-service | lambda | cloud-functions
+deployment.runtime.frontend:  static-web-apps | vercel | cloudflare-pages | s3+cloudfront | app-service | netlify | railway
+deployment.runtime.backend:   container-apps | ecs | cloud-run | kubernetes | app-service | lambda | cloud-functions | railway | vercel
 
 constraints.budget:           startup | scaleup | enterprise | custom
 nonFunctional.security.auditLogging: none | basic | detailed | compliance
@@ -173,7 +173,7 @@ Do not set these fields if you have no concrete value. The normalizer fills them
 
 ## Valid Artifact Types (for `artifacts.generate[]`)
 
-Only these 13 values are valid in `artifacts.generate`. Unknown values are skipped at generation time (not validation errors, but produce no output).
+Only these 13 values are valid in `artifacts.generate`. The list below is the schema enum: any other value is an `INVALID_ENUM` validation error and the document will not compile.
 
 ```
 architecture-diagram

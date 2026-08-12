@@ -138,9 +138,9 @@ function checkBudgetVsInfrastructure(sdl: SDLDocument): ValidationWarning[] {
     estimatedCost += 100;
   }
 
-  // Kubernetes-based runtimes
+  // Kubernetes-based runtimes (backend/worker only — no frontend runtime is k8s)
   const runtime = sdl.deployment?.runtime;
-  if (runtime?.backend === 'kubernetes' || runtime?.frontend === 'kubernetes') {
+  if (runtime?.backend === 'kubernetes' || runtime?.worker === 'kubernetes') {
     estimatedCost += 300;
   }
 

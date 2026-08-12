@@ -1,3 +1,4 @@
+import { resolveRuntimeVersion } from '../constants';
 /**
  * Generates enforcement tooling configs from an SDL document.
  * Produces ESLint config, dependency-cruiser rules, pre-commit hooks,
@@ -15,7 +16,7 @@ export function generateCodingRulesEnforcement(doc) {
     const hasPython = backends.some(b => b.framework === 'python-fastapi');
     const hasGo = backends.some(b => b.framework === 'go');
     const hasJava = backends.some(b => b.framework === 'java-spring');
-    const hasDotnet = backends.some(b => b.framework === 'dotnet-8');
+    const hasDotnet = backends.some(b => b.framework === 'dotnet');
     // ESLint config for TypeScript projects
     if (hasTs) {
         files.push({
@@ -700,6 +701,15 @@ function buildDotnetArchTests(doc) {
     return lines.join('\n');
 }
 // ─── CI Enforcement Workflow ───
+/**
+ * Version of `framework` to pin in CI: the first backend project using that
+ * framework wins, otherwise the framework default. Never hard-code versions in
+ * the workflow strings below — DEFAULT_RUNTIME_VERSION is the source of truth.
+ */
+function ciVersion(doc, framework) {
+    const be = (doc.architecture.projects.backend ?? []).find(b => b.framework === framework);
+    return resolveRuntimeVersion(framework, be?.runtimeVersion);
+}
 function buildCiEnforcementWorkflow(doc, langs) {
     const coverage = doc.testing?.coverage?.target || 80;
     const hasBoundaries = doc.architecture.style === 'modular-monolith' || doc.architecture.style === 'microservices';
@@ -722,7 +732,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
         lines.push('      - uses: actions/checkout@v4');
         lines.push('      - uses: actions/setup-node@v4');
         lines.push('        with:');
-        lines.push("          node-version: '20'");
+        lines.push(`          node-version: '${ciVersion(doc, 'nodejs')}'`);
         lines.push('          cache: npm');
         lines.push('      - run: npm ci');
         lines.push('      - name: ESLint (SDL rules)');
@@ -743,7 +753,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
         lines.push('      - uses: actions/checkout@v4');
         lines.push('      - uses: actions/setup-python@v5');
         lines.push('        with:');
-        lines.push("          python-version: '3.12'");
+        lines.push(`          python-version: '${ciVersion(doc, 'python-fastapi')}'`);
         lines.push('      - run: pip install ruff mypy pytest pytest-cov');
         lines.push('      - run: pip install -r requirements.txt');
         lines.push('      - name: Ruff Lint');
@@ -764,7 +774,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
         lines.push('      - uses: actions/checkout@v4');
         lines.push('      - uses: actions/setup-go@v5');
         lines.push('        with:');
-        lines.push("          go-version: '1.22'");
+        lines.push(`          go-version: '${ciVersion(doc, 'go')}'`);
         lines.push('      - name: golangci-lint');
         lines.push('        uses: golangci/golangci-lint-action@v4');
         lines.push('        with:');
@@ -787,7 +797,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
         lines.push('      - uses: actions/checkout@v4');
         lines.push('      - uses: actions/setup-java@v4');
         lines.push('        with:');
-        lines.push("          java-version: '21'");
+        lines.push(`          java-version: '${ciVersion(doc, 'java-spring')}'`);
         lines.push("          distribution: 'temurin'");
         lines.push('      - name: Build & Test');
         lines.push('        run: ./mvnw verify');
@@ -801,7 +811,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
         lines.push('      - uses: actions/checkout@v4');
         lines.push('      - uses: actions/setup-dotnet@v4');
         lines.push('        with:');
-        lines.push("          dotnet-version: '8.0.x'");
+        lines.push(`          dotnet-version: '${ciVersion(doc, 'dotnet')}.x'`);
         lines.push('      - run: dotnet restore');
         lines.push('      - run: dotnet test tests/Architecture.Tests/');
         lines.push('');
@@ -817,7 +827,7 @@ function buildCiEnforcementWorkflow(doc, langs) {
     lines.push('          fetch-depth: 0');
     lines.push('      - uses: actions/setup-node@v4');
     lines.push('        with:');
-    lines.push("          node-version: '20'");
+    lines.push(`          node-version: '${ciVersion(doc, 'nodejs')}'`);
     lines.push('      - run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD');
     return lines.join('\n');
 }

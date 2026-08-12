@@ -1,6 +1,10 @@
+import type { BackendProject, BackendRuntime, FrontendRuntime } from './types';
+
 // ─── Cloud → Runtime Mapping ───
 
-export const CLOUD_RUNTIME_MAP: Record<string, { frontend?: string; backend?: string }> = {
+// Typed against the runtime unions so a mapping outside the schema enums is a
+// compile error, not a schema-invalid normalized document.
+export const CLOUD_RUNTIME_MAP: Record<string, { frontend?: FrontendRuntime; backend?: BackendRuntime }> = {
   'vercel':   { frontend: 'vercel',            backend: 'vercel' },
   'aws':      { frontend: 's3+cloudfront',     backend: 'ecs' },
   'railway':  { frontend: 'railway',           backend: 'railway' },
@@ -10,7 +14,7 @@ export const CLOUD_RUNTIME_MAP: Record<string, { frontend?: string; backend?: st
 
 // ─── Framework + DB → ORM Mapping ───
 
-export const FRAMEWORK_ORM_MAP: Record<string, Record<string, string>> = {
+export const FRAMEWORK_ORM_MAP: Record<string, Record<string, NonNullable<BackendProject['orm']>>> = {
   'nodejs':         { postgres: 'prisma', mysql: 'prisma', sqlserver: 'prisma', mongodb: 'mongoose' },
   'python-fastapi': { postgres: 'sqlalchemy', mysql: 'sqlalchemy', sqlserver: 'sqlalchemy' },
   'dotnet':         { postgres: 'ef-core', mysql: 'ef-core', sqlserver: 'ef-core' },

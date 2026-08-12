@@ -423,7 +423,7 @@ function displayName(s) {
 function frameworkLabel(fw) {
     const labels = {
         nextjs: 'Next.js', react: 'React', vue: 'Vue.js', angular: 'Angular', svelte: 'Svelte',
-        nodejs: 'Node.js (Express)', 'dotnet-8': '.NET 8', 'python-fastapi': 'FastAPI', go: 'Go',
+        nodejs: 'Node.js (Express)', 'dotnet': '.NET', 'python-fastapi': 'FastAPI', go: 'Go',
         'java-spring': 'Spring Boot', 'ruby-rails': 'Rails', 'php-laravel': 'Laravel',
     };
     return labels[fw] || fw;

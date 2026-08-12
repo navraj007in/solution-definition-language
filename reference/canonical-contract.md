@@ -69,6 +69,17 @@ Use `x-` extension fields for richer metadata that is not part of the stable con
 
 `imports` is an array and is the one root key that is **not** a document section. It is consumed by the resolver and stripped from the merged document before validation, so it never appears in a compiled SDL document. Full semantics in [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Modular SDL and Import Semantics*.
 
+## Canonical Locations for Overlapping Declarations
+
+Some concerns can be declared in more than one place. One location is canonical — the one downstream consumers read — and the normalizer reconciles the others into it.
+
+| Concern | Canonical location | Other accepted locations | Reconciliation |
+|---|---|---|---|
+| Technical debt | `technicalDebt[]` | `techDebt[]` (equivalent alias, same shape) | Normalizer mirrors `techDebt` entries into `technicalDebt` (deduplicated by `id`). Consumers (e.g. the `coding-rules` generator) read `technicalDebt` only. |
+| Compliance | `compliance.frameworks[]` (structured entries) | `nonFunctional.compliance.frameworks[]`, `constraints.compliance[]` (lowercase identifier shorthands) | When the canonical section is absent, the normalizer lifts the union of the shorthands into it as `{name, applicable: true}` entries. An authored canonical section always wins. Consumers (`compliance-checklist`, `coding-rules`) read the canonical section. |
+| Backup / DR | `nonFunctional.backup` (enforced shape: frequency, retention, point-in-time recovery) | `backupDr` (placeholder: procedural DR content, open shape) | No normalization — they are different concerns. Tooling that needs backup posture reads `nonFunctional.backup`; `backupDr` is free-form until it gains a normative shape. |
+| Cost | `constraints.budget` (validated tier, consumed by budget warnings) | `evolution.costProjection`, `costs` (advisory / placeholder) | No normalization — `constraints.budget` is the only machine-consumed location; the others are advisory narrative. |
+
 ## Constrained Scalar Fields
 
 Fields whose value is restricted beyond its type:
@@ -198,6 +209,9 @@ Defaults live in `DEFAULT_RUNTIME_VERSION` in `packages/sdl/src/constants.ts`, w
 - `gorm`
 - `sequelize`
 - `mongoose`
+- `hibernate`
+
+`orm` is only defined on `architecture.projects.backend[]` entries. `architecture.services[]` entries (`kind: backend | worker | function | api-gateway`) carry no `framework` or `orm` field, so neither the ORM inference rule nor the ORM–database pair rule (spec rule 10) applies to them; attach persistence details to a service with `x-` extension fields if needed.
 
 ### `architecture.projects.backend[].apiVersioning`
 
@@ -321,8 +335,11 @@ Defaults live in `DEFAULT_RUNTIME_VERSION` in `packages/sdl/src/constants.ts`, w
 - `s3+cloudfront`
 - `app-service`
 - `netlify`
+- `railway`
 
 ### `deployment.runtime.backend`
+
+Also the enum for `deployment.runtime.worker`.
 
 - `container-apps`
 - `ecs`
@@ -331,6 +348,8 @@ Defaults live in `DEFAULT_RUNTIME_VERSION` in `packages/sdl/src/constants.ts`, w
 - `app-service`
 - `lambda`
 - `cloud-functions`
+- `railway`
+- `vercel`
 
 ### `deployment.ciCd.provider`
 

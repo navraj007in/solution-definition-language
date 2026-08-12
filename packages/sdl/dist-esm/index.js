@@ -1,5 +1,6 @@
 export { parse } from './parser';
 export { validate } from './validator';
+export { validateSemantics } from './semantic-validator';
 export { normalize } from './normalizer';
 export { detectWarnings } from './warnings';
 // Resolver (modular SDL imports)
@@ -25,6 +26,7 @@ export { deriveVerificationSpec } from './progress';
 export { getTemplates, getTemplate, listTemplates } from './templates';
 import { parse } from './parser';
 import { validate } from './validator';
+import { validateSemantics } from './semantic-validator';
 import { normalize } from './normalizer';
 import { parseWithImports } from './resolver';
 /**
@@ -33,7 +35,10 @@ import { parseWithImports } from './resolver';
  */
 export function compileWithImports(rootYaml, readFile, rootPath = 'root') {
     const resolved = parseWithImports(rootYaml, readFile, rootPath);
-    if (resolved.errors.length > 0 && Object.keys(resolved.document).length === 0) {
+    // Any resolution error fails the compile. A missing or cyclic import means the
+    // merged document is incomplete; compiling it anyway would silently drop
+    // architecture the author declared.
+    if (resolved.errors.length > 0) {
         return {
             success: false,
             errors: resolved.errors.map(e => ({
@@ -57,6 +62,21 @@ export function compileWithImports(rootYaml, readFile, rootPath = 'root') {
         return {
             success: false,
             errors: validationResult.errors,
+            warnings: [],
+            document: null,
+            summary: null,
+            inferences: [],
+            modules: resolved.modules,
+            resolveWarnings: resolved.warnings,
+            resolveErrors: resolved.errors,
+        };
+    }
+    // Semantic validation (cross-section relational checks)
+    const semanticErrors = validateSemantics(resolved.document);
+    if (semanticErrors.length > 0) {
+        return {
+            success: false,
+            errors: semanticErrors,
             warnings: [],
             document: null,
             summary: null,
@@ -104,6 +124,18 @@ export function compile(yamlString) {
         return {
             success: false,
             errors: validationResult.errors,
+            warnings: [],
+            document: null,
+            summary: null,
+            inferences: [],
+        };
+    }
+    // 2.5. Semantic validation (cross-section relational checks)
+    const semanticErrors = validateSemantics(parseResult.data);
+    if (semanticErrors.length > 0) {
+        return {
+            success: false,
+            errors: semanticErrors,
             warnings: [],
             document: null,
             summary: null,

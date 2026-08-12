@@ -91,7 +91,7 @@ imports:
   - sdl/deployment.sdl.yaml
 ```
 
-**Form B — path with the extension inferred** (added in v1.2):
+**Form B — path with the extension inferred** (v1.1 amendment):
 
 ```yaml
 imports:
@@ -99,7 +99,7 @@ imports:
   - sdl/deployment
 ```
 
-**Form C — explicit `{ name, path }` object** (added in v1.2):
+**Form C — explicit `{ name, path }` object** (v1.1 amendment):
 
 ```yaml
 imports:
@@ -122,7 +122,8 @@ For every entry, the resolver:
 
 #### Constraints
 
-- Paths must be relative to the file containing the `imports[]` list. Absolute paths and `..`-traversal beyond the project root are rejected by the host's `readFile` adapter.
+- Paths must be relative to the file containing the `imports[]` list. The resolver joins each nested module's directory onto the paths it declares, so the host's `readFile` adapter always receives paths relative to the root file's directory. Absolute paths and `..`-traversal beyond the project root are rejected by the host's `readFile` adapter.
+- Any resolution error (`missing-file`, `circular-import`, `parse-error`, `conflict`) fails compilation. Implementations must not return a successfully compiled document when any declared import could not be fully resolved — a partially merged architecture silently drops content the author declared.
 - Each imported file is itself a valid SDL fragment (it may omit `sdlVersion` and may carry its own `imports[]`, subject to the depth limit below).
 - Import order is significant: modules listed earlier are treated as the base; modules listed later override scalar values in earlier modules (see merge rules below). The form of an entry has no effect on merge order.
 - `name` is currently used for diagnostics and to detect duplicate entries. It is reserved for future cross-module reference syntax (e.g. `$ref: <name>#/path`) — authors should pick stable names even though tooling does not yet consume them.
@@ -132,7 +133,7 @@ For every entry, the resolver:
 When the resolver merges an imported module into the accumulating document, it applies the following rules in order for each key:
 
 1. **Key absent in base** — the value from the imported module is adopted without conflict.
-2. **Both values are arrays** — arrays are concatenated. Deduplication is not applied; consumers must handle duplicate entries.
+2. **Both values are arrays** — concatenable arrays are concatenated with no deduplication; identity-keyed arrays (`domain.entities[]`, `integrations.custom[]`, `features[]`) merge by `name` with a `duplicate-array-item` warning on collision (see *Array Merge Semantics* below).
 3. **Both values are non-null objects** — merge recursively, applying these same rules.
 4. **Scalar conflict** (both values are scalars, or one is a scalar and the other is an object/array) — the imported module's value wins (*last writer wins*). A `scalar-override` warning is emitted. This is intentional: it allows modules to specialize or override defaults set by earlier modules.
 5. **`imports` key** — never merged. Each file's `imports` list is only used to queue further resolution; it is stripped from the accumulated document.
@@ -141,7 +142,7 @@ When the resolver merges an imported module into the accumulating document, it a
 
 **Portability limit:** Implementations must support at least **3** levels of import nesting (root → depth 1 → depth 2 → depth 3). Imports beyond depth 3 may be skipped; when skipped, a warning must be emitted.
 
-This is an implementation portability requirement, not a semantic property of SDL itself. The SDL language does not assign meaning to nesting depth; the limit exists so that conformant implementations can be built without unbounded recursion guards. Circular imports (file A imports file B which imports file A) are always an error regardless of depth; detect them via a visited-file set.
+This is an implementation portability requirement, not a semantic property of SDL itself. The SDL language does not assign meaning to nesting depth; the limit exists so that conformant implementations can be built without unbounded recursion guards. Circular imports (file A imports file B which imports file A) are always an error regardless of depth; detect them via the resolution stack (the chain of files currently being resolved), not a global visited set. A module reachable through two non-cyclic branches (a diamond dependency: root imports A and B, both import shared) is **not** a cycle — it must be loaded and merged exactly once, with subsequent encounters skipped silently.
 
 Practical note: most SDL documents need at most 2 levels. Depth 3 is reserved for large architectures with nested module trees (e.g. a monorepo root → service-group module → per-service detail).
 
@@ -154,7 +155,7 @@ Not all arrays should be blindly concatenated across modules. The spec distingui
 - `architecture.projects.*[]` — components from different modules describe different parts of the system
 
 **Identity-keyed arrays** — each entry has a logical identity field; importing the same entry twice is a modeling error:
-- `domain.entities[]` — keyed by `name`; two entries with the same `name` in different modules is a conflict, not an append
+- `domain.entities[]` — keyed by `name`; two entries with the same `name` in different modules is a duplicate identity, not an append (see the rule below)
 - `integrations.custom[]` — keyed by `name`
 - `features[]` — keyed by `name` (`FeatureSection` has no `id` field); duplicate `name` values across modules should produce a warning
 
@@ -718,11 +719,25 @@ YAML string → parse() → validate() [→ detectWarnings()] → validateSemant
 ```
 
 1. **Parse** — YAML to JavaScript object
-2. **Validate** — JSON Schema validation (5 structural `allOf` rules) + 27 conditional rules, of which 13 are implemented as semantic checks (`SEM-*`)
-3. **Normalize** — 18 auto-inference rules fill missing fields (see [`../reference/normalization-defaults.md`](../reference/normalization-defaults.md))
+2. **Validate** — JSON Schema validation (5 structural `allOf` rules) + 28 conditional rules, of which 14 are implemented as semantic checks (`SEM-*`)
+3. **Normalize** — 20 auto-inference rules fill missing fields and canonicalise aliases (see [`../reference/normalization-defaults.md`](../reference/normalization-defaults.md))
+
+**Normalized-validity invariant (normative):** the normalizer's output must itself be a valid SDL document — `validate(normalize(validInput).document)` passes schema validation and `validateSemantics` returns no errors. Every default the normalizer emits (runtimes, ORMs, fabricated sections) must stay inside the schema's enums and constraints. This invariant is enforced by the conformance suite (`audit-conformance.test.ts`) across every example and template.
 4. **Warnings** — 11 rules defined, 4 currently emitted (non-blocking)
 
 Note that `detectWarnings()` is invoked from inside `validate()`, not as a separate pipeline stage; warnings are returned on the `ValidationResult` when schema validation passes.
+
+### Normalization Closure (normative)
+
+`normalize()` runs **after** `validate()`, and normalizer output is not re-validated. This means every auto-inference rule must be *closed over the validation rules*: an inference may never produce a document that `validate()` would have rejected had the inferred value been authored explicitly.
+
+Concretely for the ORM inference (see [`../reference/normalization-defaults.md`](../reference/normalization-defaults.md) § Backend ORM Mapping):
+
+- Inference is keyed on the **pair** of backend `framework` and `data.primaryDatabase.type`. There is no unconditional per-framework default; a framework/database pair that is not in the mapping table infers nothing and leaves `orm` unset.
+- Because rule 10 below forbids `mongodb` + `ef-core`, the mapping table must never contain (and does not contain) an `ef-core` entry for `mongodb`. The only ORM inferable when the primary database is `mongodb` is `mongoose` (for `nodejs` backends).
+- Every inferred value must be a member of the corresponding enum in the canonical contract (e.g. every ORM value in the mapping table, including `hibernate` for `java-spring`, is in the `orm` enum).
+
+A conformant implementation that adds a new inference rule, or a new row to an inference mapping, must check it against the conditional rules in this section before shipping it.
 
 ### Conditional Rules (Errors)
 
@@ -734,7 +749,7 @@ Note that `detectWarnings()` is invoked from inside `validate()`, not as a separ
 > Rules marked **[not yet implemented]** are normative but not yet enforced by the reference package.
 > Rules marked **[not yet implemented, field absent]** require a type contract expansion before they can be enforced.
 
-These rules catch logical inconsistencies and must pass for valid SDL (27 active rules; rules 7–9 are tombstones for removed rules):
+These rules catch logical inconsistencies and must pass for valid SDL (28 active rules; rules 7–9 are tombstones for removed rules):
 
 **Reference Integrity (6 active rules, 3 tombstones):**
 1. **SLO Service References** **[enforced: SEM-005]** → every `slos.services[].name` must match a component name in `architecture.projects` or `architecture.services`
@@ -748,7 +763,7 @@ These rules catch logical inconsistencies and must pass for valid SDL (27 active
 9. ~~**Resilience Service References**~~ — removed; `resilience.circuitBreaker` is a single configuration object.
 
 **Type Compatibility (3 rules):**
-10. **ORM-Database Pair** **[enforced: JSON schema allOf]** → `data.primaryDatabase.type: "mongodb"` is incompatible with `architecture.projects.backend[*].orm: "ef-core"`. Other ORM-database incompatibilities are not yet checked.
+10. **ORM-Database Pair** **[enforced: JSON schema allOf]** → `data.primaryDatabase.type: "mongodb"` is incompatible with `architecture.projects.backend[*].orm: "ef-core"`. Other ORM-database incompatibilities are not yet checked. Two scope notes: (a) because validation precedes normalization, this rule checks *authored* `orm` values; the normalizer is required by *Normalization Closure* (above) to never infer a value this rule would reject. (b) The rule covers `architecture.projects.backend[]` only — `architecture.services[]` entries carry no `framework` or `orm` field, so services-style architectures declare persistence per backend *project*, not per service.
 11. **Framework-Language** **[not yet implemented, field absent for `.language`]** → `architecture.projects[*][].framework` compatibility with the project language cannot be checked until `.language` is a typed field on project types.
 12. **Auth Provider Integration** **[not yet implemented]** → if `auth.provider` names a third-party value (`auth0`, `clerk`, `cognito`, `firebase`, `supabase`), it should also appear in `integrations`
 
@@ -761,15 +776,16 @@ These rules catch logical inconsistencies and must pass for valid SDL (27 active
 28. **Deployment Environment Uniqueness** **[enforced: SEM-014]** → `deployment.ciCd.environments[].name` values must be unique within the environments array
 
 **Data Model Integrity (4 rules):**
-18. **Primary Key Required** **[not yet implemented, field absent]** → `DomainField` currently defines `name`, `type`, and `required` only; `primaryKey` is not in the active type contract. This rule is a placeholder for when `DomainField` is expanded.
+18. **Primary Key Required** **[not yet implemented]** → `DomainField` includes `primaryKey` in the active contract (alongside `nullable`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`); the check that each entity declares exactly one `primaryKey: true` field is not yet enforced.
 19. **Cross-Database Foreign Keys** **[not yet implemented]** → FK relationships (`domain.relationships[].to`) that span databases should be flagged as warnings, not errors
 20. **Unique Component Names** **[enforced: SEM-007, SEM-008]** → project and service `name` values must be globally unique across all `architecture.projects` categories and `architecture.services` (SEM-007); domain entity names must be unique within `domain.entities` (SEM-008)
 21. **Entity Ownership** **[not yet implemented, field absent]** → `DomainEntity` currently defines only `name` and `fields[]`; an `owner` field is not in the active type contract. This rule is a placeholder for when `DomainEntity` is expanded.
 
-**Configuration Completeness (3 rules):**
+**Configuration Completeness (4 rules):**
 22. **Deployable Component Fields** **[not yet implemented, field absent]** → depends on `deployable` being a first-class field (see rule 14); when `x-deployable: true` is set, the component should also declare `x-path` or have a `framework` that implies a known runtime
 23. **Auth Strategy Provider** **[enforced: JSON schema allOf + SEM-010]** → `auth.strategy: "oidc"` requires `auth.provider` to be set (JSON schema allOf); `auth.strategy: "passwordless"` or `"magic-link"` also requires `auth.provider` (SEM-010)
 24. **Compliance Framework Validity** **[enforced: SEM-009]** → `compliance.frameworks[].name` must be one of: `GDPR`, `HIPAA`, `SOC2`, `SOC2-Type2`, `PCI-DSS`, `CCPA`, `ISO27001`, `ISO 27001`, `SOX`, `FERPA`, `FISMA`
+31. **Architecture Non-Empty** **[enforced: SEM-015]** → `architecture` must declare at least one component: a project in any `architecture.projects` category (frontend/backend/mobile) or an entry in `architecture.services`. Fails with `ARCHITECTURE_EMPTY`.
 
 **Resilience & Performance (2 rules):**
 25. **Resilience Thresholds** **[enforced: SEM-011, SEM-012]** → `resilience.circuitBreaker.threshold` must be between 1 and 99 (SEM-011); `resilience.retryPolicy.maxAttempts` must be ≥ 1 (SEM-012)
@@ -780,7 +796,7 @@ These rules catch logical inconsistencies and must pass for valid SDL (27 active
 
 **Error Conventions (2 rules):**
 29. **Status Range** **[enforced: JSON schema range]** → `architecture.errorConventions.status_mapping[].status` must be in the range 100–599.
-30. **Retry Policy Consistency** **[not yet implemented]** → when both are present, `resilience.retryPolicy[]` entries should not contradict `architecture.errorConventions.retry_policy` (e.g. mark as non-retryable a status the convention declares retryable).
+30. **Retry Policy Consistency** **[not yet implemented]** → when both are present, `resilience.retryPolicy` (a single object) should not contradict `architecture.errorConventions.retry_policy` (e.g. mark as non-retryable a status the convention declares retryable).
 
 ### Warning Rules
 
@@ -792,12 +808,12 @@ These are non-blocking but flag potential issues. **4 of the 11 are implemented*
 4. **Budget vs cost mismatch** **[enforced: `BUDGET_INFRASTRUCTURE_MISMATCH`]** — estimated monthly infrastructure cost exceeds the `constraints.budget` tier ceiling
 5. **Cross-database foreign keys** **[not yet implemented]** — relationships span different databases
 6. **Unused integrations** **[not yet implemented]** — integrations listed but not referenced in any `architecture.services[].dependencies[]`
-7. **Missing observability** **[not yet implemented]** — production-stage architecture without observability section
-8. **Loose SLO targets** **[not yet implemented]** — production SLOs < 99% availability
+7. **Missing observability** **[not yet implemented]** — stage `Growth` or `Enterprise` without an observability section
+8. **Loose SLO targets** **[not yet implemented]** — stage `Growth` or `Enterprise` with SLOs < 99% availability
 9. **High cost variance** **[not yet implemented]** — scenarios differ by >10x between low/high
 10. ~~**Feature phase cycles**~~ — removed; `FeatureSection` has no dependency field in the current type contract.
 11. **Compliance gaps** **[not yet implemented]** — project stage suggests compliance need but no frameworks defined
-12. **Design section missing** **[not yet implemented]** → stage: `"production"` without a `design` section defined (`DesignSection` currently exposes `personality`, `colors`, and `typography`; a `tokens` sub-field is not in the active type contract)
+12. **Design section missing** **[not yet implemented]** → stage `"Enterprise"` without a `design` section defined (`DesignSection` currently exposes `personality`, `colors`, and `typography`; a `tokens` sub-field is not in the active type contract)
 
 Warning codes are documented in [`../reference/error-codes.md`](../reference/error-codes.md).
 
@@ -805,5 +821,5 @@ Warning codes are documented in [`../reference/error-codes.md`](../reference/err
 
 ## Version Strategy
 
-- **v1.1** — Complete specification (production-grade)
+- **v1.1** — Active specification. Amendments folded into v1.1 after initial publication: import Forms B and C, identity-keyed array merge semantics, the `compliance-checklist` artifact type, and the normalized-validity invariant. Documents do not need to distinguish amendment levels — `sdlVersion: "1.1"` covers all of them.
 - **Future**: later versions may extend cloud-native, tracing, and event-driven modeling

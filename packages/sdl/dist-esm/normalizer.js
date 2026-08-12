@@ -1,4 +1,4 @@
-import { CLOUD_RUNTIME_MAP, FRAMEWORK_ORM_MAP, AVAILABILITY_BY_STAGE, } from './constants';
+import { CLOUD_RUNTIME_MAP, FRAMEWORK_ORM_MAP, AVAILABILITY_BY_STAGE, DEPRECATED_FRAMEWORK_ALIASES, } from './constants';
 // Helper to set optional properties on typed objects without Record<string, unknown> casts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setProperty(obj, key, value) {
@@ -12,6 +12,11 @@ function setProperty(obj, key, value) {
 export function normalize(sdl) {
     const document = structuredClone(sdl);
     const inferences = [];
+    // Alias rewriting runs first: every rule below reads the canonical framework
+    // value, so nothing downstream needs to know about deprecated spellings.
+    applyFrameworkAliases(document, inferences);
+    applyTechDebtAlias(document, inferences);
+    applyComplianceCanonicalization(document, inferences);
     applyLegacySectionDefaults(document, inferences);
     applyRegionDefaults(document, inferences);
     applyDatabaseNameDefault(document, inferences);
@@ -26,6 +31,115 @@ export function normalize(sdl) {
     applyTestingDefaults(document, inferences);
     applyObservabilityDefaults(document, inferences);
     return { document, inferences };
+}
+/**
+ * Rewrites deprecated backend `framework` values to their canonical form and
+ * materialises the version they carried into `runtimeVersion`.
+ *
+ * `dotnet-8` → `framework: 'dotnet'`, `runtimeVersion: '8.0'`.
+ *
+ * An explicitly authored `runtimeVersion` always wins: a document saying
+ * `framework: dotnet-8` with `runtimeVersion: "10.0"` is contradictory, and the
+ * explicit field is the more specific statement of intent.
+ */
+function applyFrameworkAliases(sdl, inf) {
+    const backends = sdl.architecture?.projects?.backend ?? [];
+    backends.forEach((be, index) => {
+        const alias = DEPRECATED_FRAMEWORK_ALIASES[be.framework];
+        if (!alias)
+            return;
+        setProperty(be, 'framework', alias.framework);
+        inf.push({
+            path: `architecture.projects.backend[${index}].framework`,
+            value: alias.framework,
+            reason: `'${be.name}' used deprecated framework alias — canonical value is '${alias.framework}' with the version in runtimeVersion (alias removed in SDL v2.0)`,
+        });
+        if (be.runtimeVersion === undefined) {
+            setProperty(be, 'runtimeVersion', alias.runtimeVersion);
+            inf.push({
+                path: `architecture.projects.backend[${index}].runtimeVersion`,
+                value: alias.runtimeVersion,
+                reason: `version recovered from the deprecated framework alias`,
+            });
+        }
+    });
+}
+/**
+ * `techDebt` and `technicalDebt` are equivalent root keys (both validate
+ * against the same TechDebt shape). `technicalDebt` is the canonical location
+ * that downstream consumers read (e.g. the coding-rules generator), so entries
+ * authored under the `techDebt` alias are mirrored into it. The alias key is
+ * left in place — the compiled document preserves what the author wrote.
+ */
+function applyTechDebtAlias(sdl, inf) {
+    if (!sdl.techDebt || sdl.techDebt.length === 0)
+        return;
+    if (!sdl.technicalDebt || sdl.technicalDebt.length === 0) {
+        setProperty(sdl, 'technicalDebt', sdl.techDebt);
+        inf.push({
+            path: 'technicalDebt',
+            value: sdl.techDebt,
+            reason: `tech debt authored under the 'techDebt' alias — mirrored to canonical 'technicalDebt' (the key consumers read)`,
+        });
+    }
+    else {
+        // Dedup by id so re-normalizing an already-compiled document (which
+        // carries the mirrored entries in both keys) is a no-op.
+        const existing = new Set(sdl.technicalDebt.map(t => t.id));
+        const additions = sdl.techDebt.filter(t => !existing.has(t.id));
+        if (additions.length === 0)
+            return;
+        const merged = [...sdl.technicalDebt, ...additions];
+        setProperty(sdl, 'technicalDebt', merged);
+        inf.push({
+            path: 'technicalDebt',
+            value: merged,
+            reason: `both 'technicalDebt' and its alias 'techDebt' were authored — concatenated into canonical 'technicalDebt' so no entry is dropped`,
+        });
+    }
+}
+/** Shorthand compliance identifiers → canonical framework names (SEM-009 vocabulary). */
+const COMPLIANCE_NAME_MAP = {
+    'gdpr': 'GDPR',
+    'hipaa': 'HIPAA',
+    'sox': 'SOX',
+    'pci-dss': 'PCI-DSS',
+    'iso27001': 'ISO27001',
+    'soc2': 'SOC2',
+};
+/**
+ * Compliance can be authored in three places: canonical root
+ * `compliance.frameworks[]` (structured entries), and two shorthands —
+ * `nonFunctional.compliance.frameworks[]` and `constraints.compliance[]`
+ * (lowercase identifier arrays). When the canonical section is absent, lift
+ * the union of the shorthands into it so every consumer (compliance-checklist,
+ * coding-rules) reads one location. An authored root section always wins:
+ * shorthands are never merged into an explicit canonical declaration.
+ */
+function applyComplianceCanonicalization(sdl, inf) {
+    if (sdl.compliance?.frameworks && sdl.compliance.frameworks.length > 0)
+        return;
+    const shorthand = new Set([
+        ...(sdl.nonFunctional?.compliance?.frameworks ?? []),
+        ...(sdl.constraints?.compliance ?? []),
+    ]);
+    if (shorthand.size === 0)
+        return;
+    const frameworks = [...shorthand].map(id => ({
+        name: COMPLIANCE_NAME_MAP[id] ?? id.toUpperCase(),
+        applicable: true,
+    }));
+    if (!sdl.compliance) {
+        setProperty(sdl, 'compliance', { frameworks });
+    }
+    else {
+        setProperty(sdl.compliance, 'frameworks', frameworks);
+    }
+    inf.push({
+        path: 'compliance.frameworks',
+        value: frameworks,
+        reason: `compliance declared only in shorthand locations (nonFunctional.compliance.frameworks / constraints.compliance) — lifted to canonical root compliance.frameworks`,
+    });
 }
 function applyLegacySectionDefaults(sdl, inf) {
     if (!sdl.product) {
@@ -224,7 +338,7 @@ function applyOrmDefaults(sdl, inf) {
 const FRAMEWORK_TEST_MAP = {
     nodejs: 'vitest',
     'python-fastapi': 'pytest',
-    'dotnet-8': 'xunit',
+    'dotnet': 'xunit',
     go: 'go-test',
     'java-spring': 'junit',
     'ruby-rails': 'rspec',
@@ -249,7 +363,7 @@ function applyTestingDefaults(sdl, inf) {
 const FRAMEWORK_LOGGING_MAP = {
     nodejs: 'pino',
     'python-fastapi': 'structured',
-    'dotnet-8': 'serilog',
+    'dotnet': 'serilog',
     go: 'zerolog',
     'java-spring': 'log4j',
 };

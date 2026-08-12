@@ -740,7 +740,6 @@
       "properties": {
         "personas": {
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -1083,7 +1082,8 @@
             "sqlalchemy",
             "gorm",
             "sequelize",
-            "mongoose"
+            "mongoose",
+            "hibernate"
           ]
         },
         "apiVersioning": {
@@ -1874,7 +1874,8 @@
                 "cloudflare-pages",
                 "s3+cloudfront",
                 "app-service",
-                "netlify"
+                "netlify",
+                "railway"
               ]
             },
             "backend": {
@@ -1886,7 +1887,9 @@
                 "kubernetes",
                 "app-service",
                 "lambda",
-                "cloud-functions"
+                "cloud-functions",
+                "railway",
+                "vercel"
               ]
             },
             "worker": {
@@ -1898,7 +1901,9 @@
                 "kubernetes",
                 "app-service",
                 "lambda",
-                "cloud-functions"
+                "cloud-functions",
+                "railway",
+                "vercel"
               ]
             }
           }
@@ -2275,7 +2280,6 @@
       "properties": {
         "generate": {
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "string",
             "enum": [
@@ -2290,7 +2294,8 @@
               "deployment-guide",
               "cost-estimate",
               "coding-rules",
-              "coding-rules-enforcement"
+              "coding-rules-enforcement",
+              "compliance-checklist"
             ]
           }
         },

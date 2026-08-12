@@ -196,7 +196,7 @@ export interface BackendProject extends ExtensionFields {
    */
   runtimeVersion?: string;
   apiStyle?: 'rest' | 'graphql' | 'grpc' | 'mixed';
-  orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose';
+  orm?: 'ef-core' | 'prisma' | 'typeorm' | 'sqlalchemy' | 'gorm' | 'sequelize' | 'mongoose' | 'hibernate';
   apiVersioning?: 'url-prefix' | 'header' | 'query-param' | 'none';
 }
 
@@ -404,10 +404,30 @@ export interface Deployment extends ExtensionFields {
   infrastructure?: DeploymentInfrastructure;
 }
 
+export type FrontendRuntime =
+  | 'static-web-apps'
+  | 'vercel'
+  | 'cloudflare-pages'
+  | 's3+cloudfront'
+  | 'app-service'
+  | 'netlify'
+  | 'railway';
+
+export type BackendRuntime =
+  | 'container-apps'
+  | 'ecs'
+  | 'cloud-run'
+  | 'kubernetes'
+  | 'app-service'
+  | 'lambda'
+  | 'cloud-functions'
+  | 'railway'
+  | 'vercel';
+
 export interface DeploymentRuntime extends ExtensionFields {
-  frontend?: string;
-  backend?: string;
-  worker?: string;
+  frontend?: FrontendRuntime;
+  backend?: BackendRuntime;
+  worker?: BackendRuntime;
 }
 
 export interface DeploymentNetworking extends ExtensionFields {
@@ -601,6 +621,18 @@ export interface DomainField extends ExtensionFields {
   name: string;
   type: string;
   required?: boolean;
+  nullable?: boolean;
+  primaryKey?: boolean;
+  foreignKey?: string;
+  unique?: boolean;
+  generated?: boolean;
+  default?: unknown;
+  enum?: unknown[];
+  maxLength?: number;
+  precision?: number;
+  scale?: number;
+  description?: string;
+  onUpdate?: string;
 }
 
 export interface DomainRelationship extends ExtensionFields {
@@ -660,19 +692,29 @@ export interface ResilienceRetryPolicy extends ExtensionFields {
   initialInterval?: string;
 }
 
+/**
+ * Placeholder-maturity section (see spec/ROADMAP.md): the schema deliberately
+ * accepts arbitrary properties until a generator consumes it, so these types
+ * carry an open index signature alongside the fields tooling recognises today.
+ */
 export interface CostSection extends ExtensionFields {
   monthly?: string;
   notes?: string[];
+  [key: string]: unknown;
 }
 
+/** Placeholder-maturity section — open shape, see {@link CostSection}. */
 export interface BackupDrSection extends ExtensionFields {
   backups?: Array<{ target: string; frequency?: string; retention?: string }>;
+  [key: string]: unknown;
 }
 
+/** Placeholder-maturity section — open shape, see {@link CostSection}. */
 export interface DesignSection extends ExtensionFields {
   personality?: string;
   colors?: Record<string, string>;
   typography?: Record<string, string>;
+  [key: string]: unknown;
 }
 
 // ─── Validation Types ───

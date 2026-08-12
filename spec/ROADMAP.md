@@ -15,11 +15,11 @@ SDL v1.1 is the active specification. It defines 23 root sections across four ma
 | Maturity | Sections |
 |---|---|
 | **stable** | `solution`, `product`, `architecture`, `auth`, `data`, `integrations`, `nonFunctional`, `deployment`, `artifacts` |
-| **partial** | `testing`, `observability`, `constraints`, `techDebt`, `evolution` |
-| **minimal** | `contracts`, `domain`, `features`, `slos` |
-| **placeholder** | `compliance`, `resilience`, `costs`, `backupDr`, `design` |
+| **partial** | `testing`, `observability`, `constraints`, `techDebt`, `evolution`, `contracts`, `domain`, `slos`, `compliance`, `resilience` |
+| **minimal** | `features` |
+| **placeholder** | `costs`, `backupDr`, `design` |
 
-The four stable and partial groups are normatively defined, validated, and normalized. The minimal group has enforced schema shapes but no normative outputs yet. The placeholder group accepts any content and has no enforcement or outputs.
+The stable and partial groups are normatively defined, validated, and consumed by at least one generator (`contracts` → `openapi`, `domain` → `data-model`, `slos` → `monitoring`, `compliance` → `compliance-checklist`, `resilience` → `coding-rules`). The minimal group has enforced schema shapes but no generator consumer yet. The placeholder group accepts any content and has no enforcement or outputs. This table matches [`reference/section-support.md`](../reference/section-support.md), which is the row-by-row source of truth.
 
 ---
 
@@ -27,7 +27,7 @@ The four stable and partial groups are normatively defined, validated, and norma
 
 ### 1. Close the leverage loop on `contracts` and `domain`
 
-**Problem:** Both sections have enforced schema shapes but are not referenced by any normative output. A language section that drives no output is metadata at best.
+**Status: partially delivered in v1.1.** The `openapi` generator consumes `contracts.apis[]` (tags and API type annotation) and the `data-model` generator consumes `domain.entities[]` as its authoritative entity source. Both sections are `partial` maturity today. What remains for v1.2 is the promotion to `stable`: richer server stubs, security schemes, and path groupings from `contracts.apis[]`, and fully entity-driven ORM schemas and ERDs from `domain.entities[]` without fallback inference.
 
 **`contracts` specification:**
 
@@ -46,7 +46,7 @@ SDL is intentionally **not** an API description language — that role belongs t
 - Field attributes: `nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `onUpdate`, `description`
 - Tooling that generates ORM schemas must consume `domain.entities[]` in preference to inferring from personas or flows
 
-**Promotion:** Both sections move from `minimal` to `partial` in the section support matrix.
+**Promotion:** ~~Both sections move from `minimal` to `partial` in the section support matrix.~~ Done in v1.1. The v1.2 target is `partial` → `stable`.
 
 ---
 
@@ -56,10 +56,10 @@ Each placeholder section must pass a test before being promoted to `minimal`:
 
 > Can a useful, deterministic or inferred output be produced from this section? If yes, define the normative shape. If no, document the section as out of scope for this version.
 
-**`slos` — promote to minimal**
-The current `services[]` shape (`name`, `availability`, `latencyP95`) is sufficient to drive alert threshold configuration in monitoring tooling. This is the clearest short path from placeholder to value.
+**`slos` — promoted to `partial` in v1.1**
+The `services[]` shape (`name`, `availability`, `latencyP95`) drives alert threshold configuration in the `monitoring` generator today.
 
-Normative shape (stable in v1.2):
+Normative shape (already enforced):
 ```yaml
 slos:
   services:
@@ -69,10 +69,10 @@ slos:
       x-*: ...              # extension fields for richer SLO detail
 ```
 
-**`resilience` — define normative shape, promote to minimal**
-Resilience patterns (circuit breaker, retry, timeout, bulkhead, rate limit) are well-understood and can drive coding conventions and deployment runbook content.
+**`resilience` — promoted to `partial` in v1.1**
+The `coding-rules` generator emits resilience pattern rules from circuit breaker, retry, timeout, and rate limit config today.
 
-Normative shape (stable in v1.2):
+Normative shape (already enforced):
 ```yaml
 resilience:
   circuitBreaker:
@@ -90,10 +90,10 @@ resilience:
   x-*: ...
 ```
 
-**`compliance` — define normative shape, promote to minimal**
-Compliance frameworks drive security and operational requirements that other sections (nonFunctional.security, deployment) should be consistent with.
+**`compliance` — promoted to `partial` in v1.1**
+The `compliance-checklist` generator consumes `compliance.frameworks[]` today, and the normalizer lifts the shorthand declarations (`nonFunctional.compliance.frameworks`, `constraints.compliance`) into this canonical section.
 
-Normative shape (stable in v1.2):
+Normative shape (already enforced):
 ```yaml
 compliance:
   frameworks:

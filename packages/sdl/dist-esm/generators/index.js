@@ -28,6 +28,8 @@ const GENERATOR_MAP = {
     'deployment-guide': generateDeploymentGuide,
     'cost-estimate': generateCostEstimate,
     'compliance-checklist': generateComplianceChecklistInternal,
+    'coding-rules': generateCodingRulesInternal,
+    'coding-rules-enforcement': generateCodingRulesEnforcementInternal,
 };
 /**
  * Confidence tier for each registry-backed artifact type.

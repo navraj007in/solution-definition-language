@@ -75,9 +75,10 @@ function entitiesFromDomain(doc) {
         seen.add('user');
     }
     for (const domainEntity of doc.domain.entities) {
-        if (seen.has(domainEntity.name.toLowerCase()))
+        const safeName = domainEntity.name.split(/[\s_-]+/).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('');
+        if (seen.has(safeName.toLowerCase()))
             continue;
-        seen.add(domainEntity.name.toLowerCase());
+        seen.add(safeName.toLowerCase());
         const fields = [];
         for (const f of domainEntity.fields ?? []) {
             fields.push({
@@ -93,7 +94,7 @@ function entitiesFromDomain(doc) {
         if (!fields.some((f) => f.pk)) {
             fields.unshift({ name: 'id', type: 'uuid', pk: true, required: true });
         }
-        entities.push({ name: domainEntity.name, fields });
+        entities.push({ name: safeName, fields });
     }
     return entities;
 }
@@ -160,6 +161,7 @@ function inferEntities(doc) {
     }
     return entities;
 }
+/** Extract a single entity name from a persona goal string. */
 function extractEntityName(goal) {
     const patterns = [
         /^(?:create|add|manage|view|edit|update|delete|remove|list|browse|search|submit|assign|track)\s+(.+)$/i,
@@ -168,7 +170,15 @@ function extractEntityName(goal) {
     for (const pattern of patterns) {
         const match = goal.match(pattern);
         if (match) {
-            return singularize(capitalize(match[1].trim()));
+            let phrase = match[1].trim();
+            // Drop leading conjunctions: "and search products" → "products"
+            phrase = phrase.replace(/^(?:and|or|the|a|an)\s+/i, '');
+            // If still multi-word, keep only the last word (the primary noun)
+            const words = phrase.split(/\s+/);
+            const noun = words[words.length - 1];
+            if (!noun)
+                return null;
+            return singularize(capitalize(noun));
         }
     }
     return null;
@@ -188,8 +198,10 @@ function extractEntityFromFlow(flowName) {
     return null;
 }
 function buildDomainEntity(name) {
+    // Sanitize to PascalCase identifier — no spaces or special chars
+    const safeName = name.split(/[\s_-]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
     return {
-        name,
+        name: safeName,
         fields: [
             { name: 'id', type: 'uuid', pk: true, required: true },
             { name: 'title', type: 'varchar', required: true },

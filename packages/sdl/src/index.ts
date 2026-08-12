@@ -131,7 +131,10 @@ export function compileWithImports(
 ): CompileWithImportsResult {
   const resolved = parseWithImports(rootYaml, readFile, rootPath);
 
-  if (resolved.errors.length > 0 && Object.keys(resolved.document).length === 0) {
+  // Any resolution error fails the compile. A missing or cyclic import means the
+  // merged document is incomplete; compiling it anyway would silently drop
+  // architecture the author declared.
+  if (resolved.errors.length > 0) {
     return {
       success: false,
       errors: resolved.errors.map(e => ({

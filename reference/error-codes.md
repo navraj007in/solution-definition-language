@@ -28,8 +28,17 @@ Emitted by `compileWithImports()` / `parseWithImports()` when resolving modular 
 | Code | Cause |
 |---|---|
 | `MISSING_IMPORT` | An `imports[]` entry resolved to no file (neither `<path>.sdl.yaml` nor `<path>.sdl.yml`) |
-| `CIRCULAR_IMPORT` | A file appears twice on the same import chain |
+| `CIRCULAR_IMPORT` | A file appears twice on the same import chain (a module reachable through two *different* branches — a diamond dependency — is not circular; it is loaded once and later encounters are skipped) |
 | `PARSE_ERROR` | An imported module failed to parse as YAML |
+
+Any of these fails `compileWithImports()` — a document with unresolved imports never compiles successfully.
+
+The resolver also emits non-fatal warnings on the merge itself:
+
+| Warning type | Cause |
+|---|---|
+| `scalar-override` | A later module overrode a scalar value set by an earlier module (last writer wins) |
+| `duplicate-array-item` | Two modules declared the same identity in an identity-keyed array (`domain.entities[]`, `integrations.custom[]`, `features[]`, keyed by `name`); the later entry replaces the earlier one |
 
 ## Conditional Validation Rules (schema `allOf`)
 
@@ -47,7 +56,7 @@ All five are enforced by JSON Schema conditionals and mapped to stable codes in 
 
 ## Semantic Validation Errors (`SEM-*`)
 
-Cross-section relational checks from `packages/sdl/src/semantic-validator.ts`, run after schema validation passes. 13 rules are implemented; SEM-006 is a permanent tombstone (see `spec/SDL-v1.1.md` → *Conditional Rules*).
+Cross-section relational checks from `packages/sdl/src/semantic-validator.ts`, run after schema validation passes. 14 rules are implemented; SEM-006 is a permanent tombstone (see `spec/SDL-v1.1.md` → *Conditional Rules*).
 
 | Rule | Code | Condition |
 |---|---|---|
@@ -64,6 +73,7 @@ Cross-section relational checks from `packages/sdl/src/semantic-validator.ts`, r
 | SEM-012 | `RESILIENCE_RETRY_ATTEMPTS_INVALID` | `resilience.retryPolicy.maxAttempts` < 1 |
 | SEM-013 | `SLO_AVAILABILITY_OUT_OF_RANGE` | `slos.services[].availability` outside 90.0–99.999%, or not parseable as a percentage |
 | SEM-014 | `DEPLOYMENT_ENV_NAME_DUPLICATE` | `deployment.ciCd.environments[].name` is not unique |
+| SEM-015 | `ARCHITECTURE_EMPTY` | `architecture` declares no projects in any category and no services |
 
 ## Normalization Rules
 

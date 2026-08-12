@@ -1,9 +1,10 @@
 /**
  * Semantic validation layer for SDL documents.
  *
- * Runs after AJV schema validation passes, implementing 14 cross-section
+ * Runs after AJV schema validation passes, implementing the cross-section
  * relational rules that AJV cannot check (reference integrity, uniqueness,
- * cycle detection, etc.).
+ * cycle detection, etc.). Rules are numbered SEM-001–SEM-015; 14 are active
+ * (SEM-006 is a permanent tombstone).
  *
  * These rules are defined in spec/SDL-v1.1.md under "Conditional Rules (Errors)".
  */
@@ -24,6 +25,7 @@ export function validateSemantics(sdl: SDLDocument): ValidationError[] {
   errors.push(...checkConfigCompleteness(sdl));
   errors.push(...checkResiliencePerformance(sdl));
   errors.push(...checkDeploymentIntegrity(sdl));
+  errors.push(...checkArchitectureNonEmpty(sdl));
 
   return errors;
 }
@@ -440,4 +442,30 @@ function checkDeploymentIntegrity(sdl: SDLDocument): ValidationError[] {
   }
 
   return errors;
+}
+
+/**
+ * SEM-015: The architecture must declare at least one component — a project in
+ * any `architecture.projects` category, or an entry in `architecture.services`.
+ * An architecture with neither describes nothing and no generator can produce
+ * output from it.
+ */
+function checkArchitectureNonEmpty(sdl: SDLDocument): ValidationError[] {
+  const projectCount =
+    (sdl.architecture.projects.frontend?.length ?? 0) +
+    (sdl.architecture.projects.backend?.length ?? 0) +
+    (sdl.architecture.projects.mobile?.length ?? 0);
+  const serviceCount = sdl.architecture.services?.length ?? 0;
+
+  if (projectCount === 0 && serviceCount === 0) {
+    return [{
+      type: 'error',
+      code: 'ARCHITECTURE_EMPTY',
+      path: 'architecture.projects',
+      message: 'architecture declares no projects and no services — at least one component is required',
+      fix: 'Add at least one project under architecture.projects (frontend/backend/mobile) or an entry in architecture.services',
+    }];
+  }
+
+  return [];
 }

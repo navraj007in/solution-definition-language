@@ -357,7 +357,7 @@ function displayName(s) {
 function frameworkLabel(fw) {
     const labels = {
         nextjs: 'Next.js', react: 'React', vue: 'Vue.js', angular: 'Angular', svelte: 'Svelte',
-        nodejs: 'Node.js', 'dotnet-8': '.NET 8', 'python-fastapi': 'FastAPI', go: 'Go',
+        nodejs: 'Node.js', 'dotnet': '.NET', 'python-fastapi': 'FastAPI', go: 'Go',
     };
     return labels[fw] || fw;
 }

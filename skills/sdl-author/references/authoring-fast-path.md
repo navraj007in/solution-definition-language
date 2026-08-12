@@ -67,7 +67,7 @@ backend.framework: dotnet | nodejs | python-fastapi | go | java-spring | ruby-ra
 backend.runtimeVersion: optional free-form string, e.g. "10.0" (.NET), "22" (Node), "3.13" (Python)
 backend.type: backend | worker | function
 backend.apiStyle: rest | graphql | grpc | mixed
-backend.orm: ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose
+backend.orm: ef-core | prisma | typeorm | sqlalchemy | gorm | sequelize | mongoose | hibernate
 backend.apiVersioning: url-prefix | header | query-param | none
 
 mobile.platform: ios | android | cross-platform
@@ -101,8 +101,8 @@ integrations.custom[].authMethod: api-key | oauth2 | basic | none
 deployment.cloud: azure | aws | gcp | cloudflare | vercel | railway | render | fly-io
 deployment.ciCd.provider: github-actions | gitlab-ci | azure-devops | circleci | jenkins
 deployment.infrastructure.iac: terraform | bicep | pulumi | cdk | cloudformation
-deployment.runtime.frontend: static-web-apps | vercel | cloudflare-pages | s3+cloudfront | app-service | netlify
-deployment.runtime.backend: container-apps | ecs | cloud-run | kubernetes | app-service | lambda | cloud-functions
+deployment.runtime.frontend: static-web-apps | vercel | cloudflare-pages | s3+cloudfront | app-service | netlify | railway
+deployment.runtime.backend: container-apps | ecs | cloud-run | kubernetes | app-service | lambda | cloud-functions | railway | vercel
 
 constraints.budget: startup | scaleup | enterprise | custom
 nonFunctional.security.auditLogging: none | basic | detailed | compliance

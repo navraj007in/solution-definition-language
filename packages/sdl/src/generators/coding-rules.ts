@@ -469,10 +469,14 @@ function buildSecurityRules(doc: SDLDocument): Rule {
     rules.push(`Audit logging: ${security.auditLogging}. Security-sensitive operations MUST produce audit log entries.`);
   }
 
-  // Compliance frameworks
-  const compliance = doc.nonFunctional.compliance?.frameworks || [];
+  // Compliance frameworks — canonical root compliance.frameworks first (the
+  // normalizer lifts the shorthand locations into it), shorthand as fallback
+  // for documents that bypassed normalization.
+  const canonical = (doc.compliance?.frameworks ?? []).map(f => f.name);
+  const shorthand = (doc.nonFunctional.compliance?.frameworks || []).map(f => f.toUpperCase());
+  const compliance = canonical.length > 0 ? canonical : shorthand;
   if (compliance.length > 0) {
-    rules.push(`Compliance frameworks: ${compliance.join(', ').toUpperCase()}. All code changes must maintain compliance. Do not introduce patterns that violate these frameworks.`);
+    rules.push(`Compliance frameworks: ${compliance.join(', ')}. All code changes must maintain compliance. Do not introduce patterns that violate these frameworks.`);
   }
 
   return { category: 'Security', rules };

@@ -32,7 +32,13 @@ export interface ResolvedSdl {
   errors: ResolveError[];
 }
 
-/** Function that reads a file given its path relative to the root. */
+/**
+ * Function that reads a file given its path relative to the root file's
+ * directory. The resolver joins each nested module's directory onto the paths
+ * it declares, so `readFile` always receives root-relative paths — hosts never
+ * need to track which module is asking. Per the spec, hosts should reject
+ * absolute paths and `..`-traversal that escapes the project root.
+ */
 export type FileReader = (relativePath: string) => string | null;
 
 /**
@@ -44,6 +50,19 @@ export type FileReader = (relativePath: string) => string | null;
 const MAX_IMPORT_DEPTH = 3;
 const SDL_EXTENSIONS = ['.sdl.yaml', '.sdl.yml'];
 const IMPORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+
+/**
+ * Arrays merged by logical identity rather than concatenation.
+ * See spec/SDL-v1.1.md "Array Merge Semantics: Concatenable vs. Identity-Keyed".
+ * A duplicate identity across modules emits a `duplicate-array-item` warning
+ * and the later module's entry replaces the earlier one (last writer wins,
+ * consistent with the scalar rule).
+ */
+const IDENTITY_KEYED_ARRAYS: ReadonlyArray<{ path: string; key: string }> = [
+  { path: 'domain.entities', key: 'name' },
+  { path: 'integrations.custom', key: 'name' },
+  { path: 'features', key: 'name' },
+];
 
 // ─── Helpers ───
 
@@ -80,13 +99,39 @@ function basenameStem(p: string): string {
   return i === -1 ? noExt : noExt.slice(i + 1);
 }
 
+/** Directory of a forward-slash path ('' when the path has no directory). */
+function dirnameOf(p: string): string {
+  const i = p.lastIndexOf('/');
+  return i === -1 ? '' : p.slice(0, i);
+}
+
+/**
+ * Join a module's directory with a path it declares, collapsing `.` and `..`
+ * segments. Pure string manipulation — no Node path module, so the resolver
+ * stays portable to browser/API contexts. Leading `..` segments are preserved;
+ * rejecting escapes from the project root is the host `readFile`'s job.
+ */
+function joinPath(dir: string, rel: string): string {
+  const segments = (dir === '' ? rel : `${dir}/${rel}`).split('/');
+  const out: string[] = [];
+  for (const seg of segments) {
+    if (seg === '' || seg === '.') continue;
+    if (seg === '..' && out.length > 0 && out[out.length - 1] !== '..') {
+      out.pop();
+    } else {
+      out.push(seg);
+    }
+  }
+  return out.join('/');
+}
+
 /**
  * Normalise one entry from the raw `imports[]` array into an ImportEntry.
  *
  * Accepts:
  *  - Form A — string ending in `.sdl.yaml` / `.sdl.yml`            (existing)
- *  - Form B — string with the extension omitted                     (new in v1.2)
- *  - Form C — `{ name, path }` object; `path` may be Form A or B    (new in v1.2)
+ *  - Form B — string with the extension omitted                     (v1.1 amendment)
+ *  - Form C — `{ name, path }` object; `path` may be Form A or B    (v1.1 amendment)
  *
  * Returns null when the entry is structurally invalid.
  */
@@ -182,7 +227,10 @@ function deepMerge(
     if (targetVal === undefined) {
       target[key] = sourceVal;
     } else if (Array.isArray(targetVal) && Array.isArray(sourceVal)) {
-      target[key] = [...targetVal, ...sourceVal];
+      const identity = IDENTITY_KEYED_ARRAYS.find(e => e.path === currentPath.join('.'));
+      target[key] = identity
+        ? mergeIdentityKeyed(targetVal, sourceVal, identity.key, currentPath, sourceModule, warnings)
+        : [...targetVal, ...sourceVal];
     } else if (
       targetVal !== null && sourceVal !== null &&
       typeof targetVal === 'object' && typeof sourceVal === 'object' &&
@@ -209,14 +257,70 @@ function deepMerge(
   }
 }
 
+/**
+ * Merge an identity-keyed array: entries whose `idKey` value matches an
+ * existing entry replace it (with a `duplicate-array-item` warning); new
+ * identities append. Entries without a usable identity value fall back to
+ * plain append.
+ */
+function mergeIdentityKeyed(
+  base: unknown[],
+  incoming: unknown[],
+  idKey: string,
+  path: string[],
+  sourceModule: string,
+  warnings: ResolveWarning[],
+): unknown[] {
+  const out = [...base];
+  for (const item of incoming) {
+    const id = item !== null && typeof item === 'object'
+      ? (item as Record<string, unknown>)[idKey]
+      : undefined;
+    const idx = typeof id === 'string'
+      ? out.findIndex(e => e !== null && typeof e === 'object' && (e as Record<string, unknown>)[idKey] === id)
+      : -1;
+    if (idx >= 0) {
+      warnings.push({
+        type: 'duplicate-array-item',
+        path: [...path, id as string],
+        message: `"${path.join('.')}" entry "${id}" redefined by ${sourceModule} — the later module's entry replaces the earlier one (identity-keyed merge)`,
+        sourceModule,
+      });
+      out[idx] = item;
+    } else {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
 // ─── Public API ───
+
+/**
+ * Shared resolution state threaded through the recursive walk.
+ *
+ * `stack` holds the chain of files currently being resolved (root → … → leaf);
+ * a file importing one of its own ancestors is a genuine cycle. `loaded` holds
+ * every file already merged; hitting one again through a *different* branch
+ * (a diamond dependency) is legal and is skipped silently — its content is
+ * already in the accumulated document.
+ */
+interface ResolveContext {
+  stack: Set<string>;
+  loaded: Set<string>;
+}
 
 /**
  * Resolve imports from a root SDL document.
  * Accepts a `readFile` function so it works in both filesystem and API contexts.
  *
+ * Import paths are resolved relative to the file that declares them (per the
+ * spec's import constraints): the resolver prefixes each nested module's
+ * directory, so `readFile` always receives paths relative to the root file's
+ * directory.
+ *
  * @param rootYaml - The root SDL YAML string
- * @param readFile - Function that reads an imported file by relative path (returns null if not found)
+ * @param readFile - Function that reads an imported file by root-relative path (returns null if not found)
  * @param rootPath - Identifier for the root file (for error messages)
  */
 export function parseWithImports(
@@ -224,14 +328,16 @@ export function parseWithImports(
   readFile: FileReader,
   rootPath: string = 'root',
 ): ResolvedSdl {
-  return resolveFile(rootYaml, readFile, rootPath, new Set(), 0);
+  const ctx: ResolveContext = { stack: new Set([rootPath]), loaded: new Set([rootPath]) };
+  return resolveFile(rootYaml, readFile, rootPath, '', ctx, 0);
 }
 
 function resolveFile(
   yaml: string,
   readFile: FileReader,
   filePath: string,
-  visited: Set<string>,
+  baseDir: string,
+  ctx: ResolveContext,
   depth: number,
 ): ResolvedSdl {
   const result: ResolvedSdl = {
@@ -240,16 +346,6 @@ function resolveFile(
     warnings: [],
     errors: [],
   };
-
-  if (visited.has(filePath)) {
-    result.errors.push({
-      type: 'circular-import',
-      message: `Circular import detected: ${filePath}`,
-      sourceModule: filePath,
-    });
-    return result;
-  }
-  visited.add(filePath);
 
   const parsed = parseYaml(yaml);
   if (!parsed) {
@@ -320,11 +416,14 @@ function resolveFile(
   // Process imports first (they form the base)
   if (entries.length > 0 && depth < MAX_IMPORT_DEPTH) {
     for (const entry of entries) {
-      const loaded = loadImportFile(entry.path, readFile);
-      if (loaded === null) {
-        const tried = SDL_EXTENSIONS.some(ext => entry.path.endsWith(ext)) || entry.path.endsWith('.yaml') || entry.path.endsWith('.yml')
-          ? entry.path
-          : `${entry.path}.sdl.yaml | ${entry.path}.sdl.yml`;
+      // Paths are declared relative to the importing file; join its directory
+      // so readFile receives a root-relative path.
+      const joinedPath = joinPath(baseDir, entry.path);
+      const loadedFile = loadImportFile(joinedPath, readFile);
+      if (loadedFile === null) {
+        const tried = SDL_EXTENSIONS.some(ext => joinedPath.endsWith(ext)) || joinedPath.endsWith('.yaml') || joinedPath.endsWith('.yml')
+          ? joinedPath
+          : `${joinedPath}.sdl.yaml | ${joinedPath}.sdl.yml`;
         result.errors.push({
           type: 'missing-file',
           message: `Imported file not found: ${tried}`,
@@ -333,8 +432,26 @@ function resolveFile(
         continue;
       }
 
-      const { content: importContent, resolvedPath } = loaded;
-      const sub = resolveFile(importContent, readFile, resolvedPath, visited, depth + 1);
+      const { content: importContent, resolvedPath } = loadedFile;
+
+      if (ctx.stack.has(resolvedPath)) {
+        result.errors.push({
+          type: 'circular-import',
+          message: `Circular import detected: ${resolvedPath} is already being resolved (import chain: ${[...ctx.stack].join(' → ')})`,
+          sourceModule: filePath,
+        });
+        continue;
+      }
+      if (ctx.loaded.has(resolvedPath)) {
+        // Diamond dependency: the module was already merged through another
+        // branch. Legal — skip silently rather than double-merging.
+        continue;
+      }
+
+      ctx.stack.add(resolvedPath);
+      ctx.loaded.add(resolvedPath);
+      const sub = resolveFile(importContent, readFile, resolvedPath, dirnameOf(resolvedPath), ctx, depth + 1);
+      ctx.stack.delete(resolvedPath);
       result.errors.push(...sub.errors);
       result.warnings.push(...sub.warnings);
       result.modules.push(...sub.modules);

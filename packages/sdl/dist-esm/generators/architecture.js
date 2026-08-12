@@ -119,7 +119,7 @@ function frameworkLabel(fw) {
     const map = {
         nextjs: 'Next.js', react: 'React', vue: 'Vue.js', angular: 'Angular',
         svelte: 'Svelte', solid: 'SolidJS', nodejs: 'Node.js',
-        'python-fastapi': 'FastAPI', 'dotnet-8': '.NET 8', go: 'Go',
+        'python-fastapi': 'FastAPI', 'dotnet': '.NET', go: 'Go',
         'java-spring': 'Spring', 'ruby-rails': 'Rails', 'php-laravel': 'Laravel',
         'react-native': 'React Native', flutter: 'Flutter', swift: 'Swift',
         kotlin: 'Kotlin', ionic: 'Ionic',

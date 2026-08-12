@@ -157,7 +157,6 @@ function inferEntities(doc) {
     return entities;
 }
 function extractEntityFromGoal(goal) {
-    // "Create tasks" → "Task", "Manage orders" → "Order", "View reports" → "Report"
     const patterns = [
         /^(?:create|add|manage|view|edit|update|delete|remove|list|browse|search|submit|assign|track)\s+(.+)$/i,
         /^(?:mark|set|toggle)\s+(.+?)(?:\s+(?:as|to|complete|done|active|inactive).*)?$/i,
@@ -165,7 +164,13 @@ function extractEntityFromGoal(goal) {
     for (const pattern of patterns) {
         const match = goal.match(pattern);
         if (match) {
-            return singularize(capitalize(match[1].trim()));
+            let phrase = match[1].trim();
+            phrase = phrase.replace(/^(?:and|or|the|a|an)\s+/i, '');
+            const words = phrase.split(/\s+/);
+            const noun = words[words.length - 1];
+            if (!noun)
+                return null;
+            return singularize(capitalize(noun));
         }
     }
     return null;

@@ -618,7 +618,7 @@ function marketplaceTemplate() {
     return {
         id: 'marketplace',
         name: 'Two-Sided Marketplace',
-        description: 'Buyer/seller marketplace with Stripe Connect split payments, moderation, and analytics. .NET 8 backend, Next.js storefront, AWS.',
+        description: 'Buyer/seller marketplace with Stripe Connect split payments, moderation, and analytics. .NET backend, Next.js storefront, AWS.',
         stage: 'MVP',
         tags: ['marketplace', 'dotnet', 'stripe-connect', 'payments', 'aws'],
         yaml: `sdlVersion: "1.1"
@@ -658,7 +658,7 @@ architecture:
         framework: "nextjs"
     backend:
       - name: "api"
-        framework: "dotnet-8"
+        framework: "dotnet"
 
 auth:
   strategy: "oidc"
