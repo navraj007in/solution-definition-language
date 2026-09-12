@@ -1,0 +1,5464 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-contracts-draft
+cases:
+  - id: contract-local-openapi
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-002
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        target: contracts/api.yaml
+        pointer: ""
+        externalFormatValidated: false
+  - id: contract-inventory-without-reference
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+    expected:
+      outcome: accept
+      meaning:
+        externalReference: null
+  - id: contract-missing-path
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-missing-format
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-missing-version
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-missing-type
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-format-type-mismatch
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: graphql
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-unsupported-format
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api
+              format: swagger
+              version: "2.0"
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-version-8
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api
+              format: openapi
+              version: ""
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-version-9
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api
+              format: openapi
+              version: " 3.1.1"
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-version-10
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api
+              format: openapi
+              version: |
+                3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-version-11
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api
+              format: openapi
+              version: 3.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-unknown-reference-field
+    scope: contracts
+    rules:
+      - EC-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              url: https://example.invalid
+    expected:
+      outcome: reject
+      violations:
+        - EC-001
+  - id: contract-extension-not-promoted
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            x-spec-path: missing.yaml
+    expected:
+      outcome: accept
+      meaning:
+        externalReads: []
+  - id: contract-path-14
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: /tmp/api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-15
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: ../api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-16
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: ./api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-17
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: a//api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-18
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: a\api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-19
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: https://example.invalid/api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-20
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api.yaml#part
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-21
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: api.yaml?x
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-path-22
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: a/../api.yaml
+              format: openapi
+              version: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-literal-percent-path
+    scope: contracts
+    rules:
+      - EC-002
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api%20v1.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api%20v1.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        target: contracts/api%20v1.yaml
+  - id: contract-missing-file
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-permission-failure
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resourceFailures:
+      contracts/api.yaml: permission-denied
+    expected:
+      outcome: resource-failure
+      violations:
+        - EC-002
+      partialResultIsConformant: false
+  - id: contract-read-limit
+    scope: contracts
+    rules:
+      - EC-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resourceFailures:
+      contracts/api.yaml: limit-exceeded
+    expected:
+      outcome: resource-failure
+      violations:
+        - EC-002
+      partialResultIsConformant: false
+  - id: contract-shared-reference-read-once
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-002
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: One
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+          - name: Two
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        externalReads:
+          - contracts/api.yaml
+  - id: contract-pointer-escaped
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /a~1b/~0x
+    resources:
+      contracts/api.yaml: |
+        a/b:
+          ~x:
+            openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        selected:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+  - id: contract-pointer-decode-order
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /~01
+    resources:
+      contracts/api.yaml: |
+        ~1:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        selected:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+  - id: contract-pointer-array
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /apis/0
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        selected:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+  - id: contract-pointer-literal-percent
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /a%20b
+    resources:
+      contracts/api.yaml: |
+        a%20b:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        selected:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+  - id: contract-pointer-empty-key
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /
+    resources:
+      contracts/api.yaml: |
+        "":
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        selected:
+          openapi: 3.1.1
+          info:
+            title: Example
+            version: "7.0"
+          paths: {}
+  - id: contract-pointer-33
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: "#/apis/0"
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-34
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /apis/01
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-35
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /apis/-
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-36
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /missing
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-37
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /bad~2
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-38
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /apis/0/info/title
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-pointer-39
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+              pointer: /apis/0/info
+    resources:
+      contracts/api.yaml: |
+        apis:
+          - openapi: 3.1.1
+            info:
+              title: Example
+              version: "7.0"
+            paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-marker-mismatch
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.0
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-product-version-not-format
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: "7.0"
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-duplicate-external-key
+    scope: contracts
+    rules:
+      - EC-003
+      - IN-002
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        openapi: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-multiple-external-documents
+    scope: contracts
+    rules:
+      - EC-003
+      - IN-001
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        ---
+        openapi: 3.1.1
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-asyncapi
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: asyncapi
+            spec:
+              path: events.json
+              format: asyncapi
+              version: 3.0.0
+    resources:
+      events.json: '{"asyncapi":"3.0.0","info":{"title":"Events","version":"1.0.0"},"channels":{}}'
+    expected:
+      outcome: accept
+      meaning:
+        formatMarker: 3.0.0
+  - id: contract-graphql
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: graphql
+            spec:
+              path: contracts/source.txt
+              format: graphql
+              version: October2021
+    resources:
+      contracts/source.txt: "type Query { ping: String! }"
+    expected:
+      outcome: accept
+      meaning:
+        externalFormatValidated: false
+        declaredVersion: October2021
+  - id: contract-graphql-pointer
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: graphql
+            spec:
+              path: contracts/source.txt
+              format: graphql
+              version: October2021
+              pointer: ""
+    resources:
+      contracts/source.txt: "type Query { ping: String! }"
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-graphql-empty
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: graphql
+            spec:
+              path: contracts/source.txt
+              format: graphql
+              version: October2021
+    resources:
+      contracts/source.txt: |+
+         
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-protobuf
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: grpc
+            spec:
+              path: contracts/source.txt
+              format: protobuf
+              version: proto3
+    resources:
+      contracts/source.txt: |-
+        syntax = "proto3";
+        message Ping {}
+    expected:
+      outcome: accept
+      meaning:
+        externalFormatValidated: false
+        declaredVersion: proto3
+  - id: contract-protobuf-pointer
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: grpc
+            spec:
+              path: contracts/source.txt
+              format: protobuf
+              version: proto3
+              pointer: ""
+    resources:
+      contracts/source.txt: |-
+        syntax = "proto3";
+        message Ping {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-protobuf-empty
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: grpc
+            spec:
+              path: contracts/source.txt
+              format: protobuf
+              version: proto3
+    resources:
+      contracts/source.txt: |+
+         
+    expected:
+      outcome: reject
+      violations:
+        - EC-003
+  - id: contract-external-refs-not-sdl-imports
+    scope: contracts
+    rules:
+      - EC-003
+    value:
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            spec:
+              path: contracts/api.yaml
+              format: openapi
+              version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+        components:
+          schemas:
+            Remote:
+              $ref: https://example.invalid/schema.json
+    expected:
+      outcome: accept
+      meaning:
+        externalReads:
+          - contracts/api.yaml
+        externalFormatValidated: false
+  - id: contract-standard-managed-project
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: accept
+      meaning:
+        standardApis:
+          - API
+  - id: contract-standard-managed-service
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+        services:
+          - name: logical
+            implementation:
+              kind: projects
+              projects:
+                - api
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: logical
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: accept
+      meaning:
+        standardApis:
+          - API
+  - id: contract-standard-external-service
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+        services:
+          - name: remote
+            implementation:
+              kind: external
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: remote
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-unspecified-service
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+        services:
+          - name: remote
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: remote
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-protocol-graphql
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: graphql
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-protocol-grpc
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: grpc
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-protocol-asyncapi
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: asyncapi
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-missing-envelope
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-standard-missing-component
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-no-implicit-applicability
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: accept
+      meaning:
+        standardApis: []
+  - id: contract-external-applicability
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: external
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: accept
+      meaning:
+        standardApis: []
+  - id: contract-unknown-applicability
+    scope: contracts
+    rules:
+      - EC-004
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: inherit
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-004
+  - id: contract-envelope-parent-order
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error.message
+                type: string
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error
+                type: object
+                required: true
+            codeField: error.code
+    expected:
+      outcome: accept
+      meaning:
+        paths:
+          - error
+          - error.code
+          - error.message
+  - id: contract-field-path-65
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error..code
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-path-66
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: .error
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-path-67
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error.0
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-path-68
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error.*
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-path-69
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error[0].code
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-path-70
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: ""
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-type-uuid
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: uuid
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-type-json
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: json
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-field-type-x-custom
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: x-custom
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-missing-object-parent
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error.code
+                type: string
+                required: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-traverse-array
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: array
+              - name: error.code
+                type: string
+                required: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-traverse-string
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: string
+              - name: error.code
+                type: string
+                required: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-duplicate-field
+    scope: contracts
+    rules:
+      - EC-005
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+              - name: error.code
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-005
+  - id: contract-empty-minimum-envelope
+    scope: contracts
+    rules:
+      - EC-005
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields: []
+    payload:
+      anything:
+        - null
+        - 1
+        - x
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-optional-parent-missing
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: object
+              - name: detail.message
+                type: string
+                required: true
+    payload: {}
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-optional-parent-present-missing-child
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: object
+              - name: detail.message
+                type: string
+                required: true
+    payload:
+      detail: {}
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: false
+  - id: contract-optional-parent-valid
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: object
+              - name: detail.message
+                type: string
+                required: true
+    payload:
+      detail:
+        message: ok
+        extra: 1
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-optional-parent-null
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: object
+              - name: detail.message
+                type: string
+                required: true
+    payload:
+      detail: null
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: false
+  - id: contract-nullable-parent
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: detail
+                type: object
+                nullable: true
+              - name: detail.message
+                type: string
+                required: true
+    payload:
+      detail: null
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-nullable-required-child
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: message
+                type: string
+                required: true
+                nullable: true
+    payload:
+      message: null
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-required-nullable-still-required
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: message
+                type: string
+                required: true
+                nullable: true
+    payload: {}
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: false
+  - id: contract-array-elements-unconstrained
+    scope: contracts
+    rules:
+      - EC-005
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: details
+                type: array
+    payload:
+      details:
+        - 1
+        - null
+        - any: true
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: true
+  - id: contract-boolean-is-not-integer
+    scope: contracts
+    rules:
+      - EC-005
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: count
+                type: integer
+    payload:
+      count: true
+    expected:
+      outcome: accept
+      meaning:
+        payloadConforms: false
+  - id: contract-code-selector-optional-parent
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-code-selector-nullable-parent
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+                nullable: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-code-selector-optional-code
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-code-selector-nullable-code
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+                nullable: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-code-selector-nonstring-code
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: integer
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-code-selector-missing-code
+    scope: contracts
+    rules:
+      - EC-006
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.other
+    expected:
+      outcome: reject
+      violations:
+        - EC-006
+  - id: contract-multiple-codes-one-status
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: RESTARTING
+              retryable: true
+            - status: 503
+              code: PERMANENT
+              retryable: false
+    expected:
+      outcome: accept
+      meaning:
+        codes:
+          RESTARTING: 503
+          PERMANENT: 503
+  - id: contract-status-399
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 399
+              code: ERROR
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-status-600
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 600
+              code: ERROR
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-status-200
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 200
+              code: ERROR
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-status-503-5
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503.5
+              code: ERROR
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-status-boundary-400
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 400
+              code: ERROR
+    expected:
+      outcome: accept
+      meaning:
+        status: 400
+  - id: contract-status-boundary-599
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 599
+              code: ERROR
+    expected:
+      outcome: accept
+      meaning:
+        status: 599
+  - id: contract-duplicate-code-503
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+            - status: 503
+              code: UNAVAILABLE
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-duplicate-code-429
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+            - status: 429
+              code: UNAVAILABLE
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-invalid-code
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: not a code
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-mapping-needs-code-selector
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-empty-mapping-no-envelope
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          status_mapping: []
+    expected:
+      outcome: accept
+      meaning:
+        codeFieldRequired: false
+  - id: contract-header-needs-retryable-false
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 429
+              code: LIMIT
+              retry_after_header: true
+              retryable: false
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-header-needs-retryable-undefined
+    scope: contracts
+    rules:
+      - EC-007
+    value:
+      architecture:
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 429
+              code: LIMIT
+              retry_after_header: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-incomplete-resilience-maxattempts
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      resilience:
+        retryPolicy:
+          backoff: fixed
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-resilience-backoff
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-resilience-initialinterval
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-empty-resilience
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      resilience:
+        retryPolicy: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-error-max-attempts
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-error-backoff
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            max_attempts: 4
+            base_ms: 200
+            cap_ms: 500
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-error-base-ms
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            cap_ms: 500
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-incomplete-error-cap-ms
+    scope: contracts
+    rules:
+      - EC-008
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-inverted-error-cap
+    scope: contracts
+    rules:
+      - EC-008
+      - SC-003
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 501
+            cap_ms: 500
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-error-fixed-alias
+    scope: contracts
+    rules:
+      - EC-008
+      - SC-004
+    value:
+      architecture:
+        errorConventions:
+          retry_policy:
+            max_attempts: 4
+            backoff: fixed
+            base_ms: 200
+            cap_ms: 500
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-resilience-constant-alias
+    scope: contracts
+    rules:
+      - EC-008
+      - SC-004
+    value:
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: constant
+          initialInterval: 300ms
+    expected:
+      outcome: reject
+      violations:
+        - EC-008
+  - id: contract-retry-both
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+  - id: contract-retry-second-delay
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 2
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 400
+  - id: contract-retry-budget-exhausted
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        maxExecutions: 3
+        reason: budget-exhausted
+  - id: contract-retry-false-denies
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: false
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-unknown-denies
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-unmapped-code
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: OTHER
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-status-mismatch
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 429
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-missing-code
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: null
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-unsafe-operation
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: false
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-unknown-replay-safety
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: null
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-external-api
+    scope: contracts
+    rules:
+      - EC-004
+      - EC-009
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: external
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: outside-standard-convention
+  - id: contract-retry-no-policy
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        maxExecutions: 1
+        reason: no-policy
+  - id: contract-retry-error-only
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 200
+  - id: contract-retry-resilience-only
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+  - id: contract-retry-one-attempt-compatible
+    scope: contracts
+    rules:
+      - EC-007
+      - EC-008
+      - EC-009
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 1
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        maxExecutions: 1
+        reason: budget-exhausted
+  - id: contract-retry-does-not-multiply
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 3
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        maxExecutions: 3
+        reason: budget-exhausted
+  - id: contract-retry-code-change-does-not-reset
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+            - status: 429
+              code: LIMIT
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 429
+      code: LIMIT
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        maxExecutions: 3
+        reason: budget-exhausted
+  - id: contract-retry-error-constant
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: constant
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 200
+  - id: contract-retry-error-linear
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: linear
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 500
+  - id: contract-retry-error-exponential
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 500
+  - id: contract-retry-resilience-fixed
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 4
+          backoff: fixed
+          initialInterval: 0.125s
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 125
+  - id: contract-retry-resilience-linear
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 4
+          backoff: linear
+          initialInterval: 0.125s
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 375
+  - id: contract-retry-resilience-exponential
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 4
+          backoff: exponential
+          initialInterval: 0.125s
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 500
+  - id: contract-retry-zero-base
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 0
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience: {}
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 3
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 4
+        minimumDelayMs: 0
+  - id: contract-retry-cap-not-global
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 2s
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+  - id: contract-retry-fractional-millisecond
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 0.0005s
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 0.5
+  - id: contract-retry-timeout-does-not-limit-wait
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - SC-001
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 1s
+        timeout:
+          default: 10ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 1000
+  - id: contract-retry-header-seconds
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "2"
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+        producerConventionViolation: false
+  - id: contract-retry-header-zero
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "0"
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: false
+  - id: contract-retry-header-missing
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter: []
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: true
+  - id: contract-retry-header-fractional
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "0.5"
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: true
+  - id: contract-retry-header-negative
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "-1"
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: true
+  - id: contract-retry-header-repeated
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "1"
+        - "2"
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: true
+  - id: contract-retry-header-whitespace
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - " \t2\t "
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+        producerConventionViolation: false
+  - id: contract-retry-header-future-date
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - Fri, 11 Sep 2026 00:00:02 GMT
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+        producerConventionViolation: false
+  - id: contract-retry-header-past-date
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - Thu, 10 Sep 2026 23:59:59 GMT
+      responseReceivedAt: 2026-09-11T00:00:00.000Z
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 300
+        producerConventionViolation: false
+  - id: contract-retry-header-honored-when-optional
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "2"
+    expected:
+      outcome: accept
+      meaning:
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+  - id: contract-retry-header-cannot-enable
+    scope: contracts
+    rules:
+      - EC-007
+      - EC-009
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: false
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "2"
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: ineligible
+  - id: contract-retry-deadline-stops
+    scope: contracts
+    rules:
+      - EC-009
+      - EC-010
+      - EC-011
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        errorConventions:
+          envelope:
+            kind: object
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+            codeField: error.code
+          status_mapping:
+            - status: 503
+              code: UNAVAILABLE
+              retryable: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: API
+            type: rest
+            component: api
+            errorConventions: standard
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+    observation:
+      api: API
+      status: 503
+      code: UNAVAILABLE
+      replaySafe: true
+      failedExecution: 1
+      retryAfter:
+        - "2"
+      remainingDeadlineMs: 1000
+    expected:
+      outcome: accept
+      meaning:
+        retry: false
+        reason: deadline
+        minimumDelayMs: 2000
+  - id: contract-compose-root-relative-reference
+    scope: composition
+    rules:
+      - EC-012
+      - EC-002
+      - EC-003
+      - IM-004
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - modules/apis.sdl.yaml
+      modules/apis.sdl.yaml: |
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+                format: openapi
+                version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: accept
+      meaning:
+        target: contracts/api.yaml
+        externalReads:
+          - contracts/api.yaml
+  - id: contract-compose-does-not-rebase
+    scope: composition
+    rules:
+      - EC-002
+      - EC-012
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - modules/apis.sdl.yaml
+      modules/apis.sdl.yaml: |
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+                format: openapi
+                version: 3.1.1
+    resources:
+      modules/contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-002
+  - id: contract-compose-assembled-policy
+    scope: composition
+    rules:
+      - EC-008
+      - EC-012
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - policy.sdl.yaml
+        resilience:
+          retryPolicy:
+            initialInterval: 250ms
+      policy.sdl.yaml: |
+        resilience:
+          retryPolicy:
+            maxAttempts: 3
+            backoff: linear
+    expected:
+      outcome: accept
+      meaning:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: linear
+          initialInterval: 250ms
+  - id: contract-compose-assembled-envelope-parents
+    scope: composition
+    rules:
+      - EC-005
+      - EC-006
+      - EC-012
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - fields.sdl.yaml
+        architecture:
+          errorConventions:
+            envelope:
+              kind: object
+              fields:
+                - name: error
+                  type: object
+                  required: true
+              codeField: error.code
+      fields.sdl.yaml: |
+        architecture:
+          errorConventions:
+            envelope:
+              fields:
+                - name: error.code
+                  type: string
+                  required: true
+    expected:
+      outcome: accept
+      meaning:
+        codeField: error.code
+  - id: contract-compose-duplicate-codes
+    scope: composition
+    rules:
+      - EC-007
+      - EC-012
+      - IM-004
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - mapping.sdl.yaml
+        architecture:
+          errorConventions:
+            envelope:
+              kind: object
+              fields:
+                - name: error
+                  type: object
+                  required: true
+                - name: error.code
+                  type: string
+                  required: true
+                - name: error.message
+                  type: string
+                  required: true
+              codeField: error.code
+            status_mapping:
+              - status: 503
+                code: UNAVAILABLE
+                retryable: true
+      mapping.sdl.yaml: |
+        architecture:
+          errorConventions:
+            envelope:
+              kind: object
+              fields:
+                - name: error
+                  type: object
+                  required: true
+                - name: error.code
+                  type: string
+                  required: true
+                - name: error.message
+                  type: string
+                  required: true
+              codeField: error.code
+            status_mapping:
+              - status: 503
+                code: UNAVAILABLE
+                retryable: true
+    expected:
+      outcome: reject
+      violations:
+        - EC-007
+  - id: contract-compose-duplicate-api
+    scope: composition
+    rules:
+      - EC-012
+      - ID-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - api.sdl.yaml
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+                format: openapi
+                version: 3.1.1
+      api.sdl.yaml: |
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+                format: openapi
+                version: 3.1.1
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-012
+  - id: contract-compose-incomplete-reference-item
+    scope: composition
+    rules:
+      - EC-012
+      - EC-001
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - api.sdl.yaml
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+                format: openapi
+                version: 3.1.1
+      api.sdl.yaml: |
+        contracts:
+          apis:
+            - name: API
+              type: rest
+              spec:
+                path: contracts/api.yaml
+    resources:
+      contracts/api.yaml: |
+        openapi: 3.1.1
+        info:
+          title: Example
+          version: "7.0"
+        paths: {}
+    expected:
+      outcome: reject
+      violations:
+        - EC-012
+  - id: contract-worked-example
+    scope: contracts
+    rules:
+      - EC-001
+      - EC-002
+      - EC-003
+      - EC-004
+      - EC-005
+      - EC-006
+      - EC-007
+      - EC-008
+      - EC-009
+      - EC-010
+      - EC-011
+      - EC-012
+      - OB-001
+      - OB-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        teams:
+          - name: platform
+      architecture:
+        projects:
+          backend:
+            - name: status-api
+              framework: nodejs
+              language: typescript
+              path: apps/status
+              owner: platform
+        errorConventions:
+          envelope:
+            kind: object
+            codeField: error.code
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+              - name: error.detail
+                type: object
+              - name: error.detail.requestId
+                type: string
+                required: true
+          status_mapping:
+            - status: 503
+              code: SERVICE_UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+      contracts:
+        apis:
+          - name: Status API
+            type: rest
+            owner: platform
+            component: status-api
+            errorConventions: standard
+            spec:
+              path: contracts/status.openapi.yaml
+              format: openapi
+              version: 3.1.1
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+        timeout:
+          default: 2s
+    sourceFile: ../examples/contracts-errors.sdl.yaml
+    resources:
+      contracts/status.openapi.yaml: |
+        openapi: "3.1.1"
+        info:
+          title: Status API
+          version: "1.0.0"
+        paths:
+          /status:
+            get:
+              operationId: getStatus
+              responses:
+                "200":
+                  description: Service is available.
+                "503":
+                  description: A transient service failure; follows the SDL standard error convention.
+                  headers:
+                    Retry-After:
+                      description: Required by this API's SDL convention; delay-seconds or HTTP-date.
+                      schema:
+                        type: string
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/UnavailableError"
+        components:
+          schemas:
+            UnavailableError:
+              type: object
+              required: [error]
+              properties:
+                error:
+                  type: object
+                  required: [code, message]
+                  properties:
+                    code:
+                      type: string
+                      const: SERVICE_UNAVAILABLE
+                    message:
+                      type: string
+                    detail:
+                      type: object
+                      required: [requestId]
+                      properties:
+                        requestId:
+                          type: string
+    resourceFiles:
+      contracts/status.openapi.yaml: ../examples/contracts/status.openapi.yaml
+    observation:
+      api: Status API
+      status: 503
+      code: SERVICE_UNAVAILABLE
+      failedExecution: 1
+      replaySafe: true
+      retryAfter:
+        - "2"
+    expected:
+      outcome: accept
+      meaning:
+        target: contracts/status.openapi.yaml
+        retry: true
+        maxExecutions: 3
+        minimumDelayMs: 2000
+        producerConventionViolation: false

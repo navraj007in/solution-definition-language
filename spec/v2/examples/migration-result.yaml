@@ -1,0 +1,35 @@
+format: sdl-migration-result/v1
+plan: sdl-v1.1-to-v2.0-draft.1
+sourceBaseline: sdl-v1.1-2026-09-12
+targetBaseline: sdl-v2.0-draft.1
+outcome: migrated
+document:
+  sdlVersion: "2.0"
+  solution:
+    name: Status
+    description: A public service status application.
+    stage: MVP
+  architecture:
+    style: modular-monolith
+    projects:
+      frontend:
+        - name: web
+          framework: react
+  data:
+    primaryDatabase:
+      id: primary
+      type: postgres
+      hosting: managed
+changes:
+  - record: MIG-001
+    operation: set-value
+    path: [sdlVersion]
+    before: {present: true, value: "1.1"}
+    after: {present: true, value: "2.0"}
+  - record: MIG-013
+    operation: add
+    path: [data, primaryDatabase, id]
+    before: {present: false}
+    after: {present: true, value: primary}
+decisions: []
+diagnostics: []

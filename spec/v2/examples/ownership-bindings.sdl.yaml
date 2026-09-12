@@ -1,0 +1,185 @@
+sdlVersion: "2.0"
+solution:
+  name: Binding Example
+  description: An illustrative billing system for reviewing ownership and hosting bindings.
+  stage: Growth
+  teams:
+    - name: platform
+      displayName: Platform Engineering
+    - name: billing
+      displayName: Billing Product
+  regions:
+    primary: us-east-1
+    secondary: [eu-west-1]
+
+architecture:
+  style: modular-monolith
+  projects:
+    backend:
+      - name: billing-app
+        owner: platform
+        path: apps/billing
+        framework: nodejs
+        language: typescript
+        usesIntegrations: [builtin/payments]
+        dataAccess:
+          - database: operational
+            mode: read-write
+          - database: analytics
+            mode: read
+      - name: reporting-worker
+        owner: platform
+        path: apps/reporting
+        framework: nodejs
+        language: typescript
+        type: worker
+        usesIntegrations: [custom/warehouse]
+        dataAccess:
+          - database: analytics
+            mode: write
+  services:
+    - name: billing
+      owner: billing
+      kind: backend
+      implementation:
+        kind: projects
+        projects: [billing-app]
+      dependencies: [identity]
+      usesIntegrations: [builtin/payments]
+      dataAccess:
+        - database: operational
+          mode: read-write
+    - name: checkout
+      owner: billing
+      kind: backend
+      implementation:
+        kind: projects
+        projects: [billing-app]
+      dependencies: [billing, identity]
+    - name: reporting
+      owner: billing
+      kind: worker
+      implementation:
+        kind: projects
+        projects: [billing-app, reporting-worker]
+      usesIntegrations: [custom/warehouse]
+      dataAccess:
+        - database: analytics
+          mode: read-write
+    - name: identity
+      owner: platform
+      kind: backend
+      implementation:
+        kind: external
+      usesIntegrations: [builtin/auth]
+
+auth:
+  strategy: oidc
+  provider: auth0
+  owner: platform
+
+integrations:
+  payments:
+    provider: stripe
+    owner: billing
+  custom:
+    - name: warehouse
+      apiType: rest
+      owner: platform
+
+contracts:
+  apis:
+    - name: Billing API
+      type: rest
+      owner: billing
+      component: billing-app
+
+data:
+  primaryDatabase:
+    id: operational
+    name: billing_db
+    owner: platform
+    type: postgres
+    hosting: managed
+  secondaryDatabases:
+    - id: analytics
+      name: reporting_db
+      owner: platform
+      type: postgres
+      hosting: managed
+
+domain:
+  entities:
+    - name: Invoice
+      owner: billing
+      managedBy: billing
+      database: operational
+      fields:
+        - name: id
+          type: uuid
+          primaryKey: true
+    - name: RevenueRecord
+      owner: billing
+      managedBy: reporting
+      database: analytics
+      fields:
+        - name: id
+          type: uuid
+          primaryKey: true
+        - name: invoiceId
+          type: uuid
+          foreignKey: Invoice.id
+
+deployment:
+  targets:
+    - name: east
+      owner: platform
+      cloud: aws
+      region: us-east-1
+    - name: west
+      owner: platform
+      cloud: aws
+      region: eu-west-1
+  environments:
+    - name: staging
+      owner: platform
+      projects: [billing-app, reporting-worker]
+      services: [billing, checkout, reporting, identity]
+      placements:
+        - project: billing-app
+          target: east
+          runtime: ecs
+          ports:
+            - number: 8080
+              protocol: tcp
+        - project: reporting-worker
+          target: east
+          runtime: ecs
+          ports:
+            - number: 8080
+              protocol: tcp
+    - name: production
+      owner: platform
+      projects: [billing-app, reporting-worker]
+      services: [billing, checkout, reporting, identity]
+      requiresTests: true
+      placements:
+        - project: billing-app
+          target: east
+          runtime: ecs
+          ports:
+            - number: 8080
+              protocol: tcp
+        - project: billing-app
+          target: west
+          runtime: ecs
+          ports:
+            - number: 8080
+              protocol: tcp
+        - project: reporting-worker
+          target: east
+          runtime: ecs
+  ciCd:
+    provider: github-actions
+  infrastructure:
+    iac: terraform

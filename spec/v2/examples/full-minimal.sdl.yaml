@@ -1,0 +1,14 @@
+# Complete SDL v2 draft example.
+sdlVersion: "2.0"
+solution:
+  name: Status
+  description: A public service status application.
+  stage: MVP
+architecture:
+  style: serverless
+  projects:
+    frontend:
+      - name: web
+        framework: react
+data:
+  databaseMode: none

@@ -1,0 +1,60 @@
+# Scoped v2 example: API bindings, references, shared errors, and retry semantics.
+sdlVersion: "2.0"
+solution:
+  teams:
+    - name: platform
+architecture:
+  projects:
+    backend:
+      - name: status-api
+        framework: nodejs
+        language: typescript
+        path: apps/status
+        owner: platform
+  errorConventions:
+    envelope:
+      kind: object
+      codeField: error.code
+      fields:
+        - name: error
+          type: object
+          required: true
+        - name: error.code
+          type: string
+          required: true
+        - name: error.message
+          type: string
+          required: true
+        - name: error.detail
+          type: object
+        - name: error.detail.requestId
+          type: string
+          required: true
+    status_mapping:
+      - status: 503
+        code: SERVICE_UNAVAILABLE
+        retryable: true
+        retry_after_header: true
+    retry_policy:
+      max_attempts: 4
+      backoff: exponential
+      base_ms: 200
+      cap_ms: 500
+contracts:
+  apis:
+    - name: Status API
+      type: rest
+      owner: platform
+      component: status-api
+      errorConventions: standard
+      spec:
+        path: contracts/status.openapi.yaml
+        format: openapi
+        version: "3.1.1"
+resilience:
+  retryPolicy:
+    maxAttempts: 3
+    backoff: fixed
+    initialInterval: 300ms
+  timeout:
+    default: 2s

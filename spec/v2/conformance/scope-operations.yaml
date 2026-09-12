@@ -1,0 +1,3717 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-scope-operations-draft
+cases:
+  - id: scope-database-none
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: none
+    expected:
+      outcome: accept
+      meaning:
+        databases: 0
+        statelessnessVerified: false
+  - id: scope-empty-data-unknown
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data: {}
+    expected:
+      outcome: accept
+      meaning:
+        databaseCompleteness: unspecified
+  - id: scope-secondary-only
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: declared
+        secondaryDatabases:
+          - id: audit
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      meaning:
+        primaryInferred: false
+  - id: scope-none-with-primary
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        databaseMode: none
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-001
+  - id: scope-none-with-empty-secondary
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: none
+        secondaryDatabases: []
+    expected:
+      outcome: accept
+      meaning:
+        databases: 0
+  - id: scope-declared-without-database
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: declared
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+    expected:
+      outcome: reject
+      violations:
+        - SO-001
+  - id: scope-none-with-orm
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: none
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              orm: prisma
+    expected:
+      outcome: reject
+      violations:
+        - SO-001
+  - id: scope-none-with-domain
+    scope: scope-operations
+    rules:
+      - SO-001
+      - DM-001
+    value:
+      data:
+        databaseMode: none
+      domain:
+        entities:
+          - name: Result
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+    expected:
+      outcome: accept
+      meaning:
+        logicalEntities: 1
+  - id: scope-storage-only
+    scope: scope-operations
+    rules:
+      - SO-001
+      - SO-002
+    value:
+      data:
+        databaseMode: none
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+    expected:
+      outcome: accept
+      meaning:
+        databases: 0
+        resources:
+          - storage/uploads
+  - id: scope-cache-not-statelessness-claim
+    scope: scope-operations
+    rules:
+      - SO-001
+    value:
+      data:
+        databaseMode: none
+        cache:
+          type: redis
+    expected:
+      outcome: accept
+      meaning:
+        databaseFree: true
+        cacheDurabilityUnspecified: true
+  - id: scope-empty-storage
+    scope: scope-operations
+    rules:
+      - SO-002
+    value:
+      data:
+        storage: {}
+    expected:
+      outcome: accept
+      meaning:
+        storageResources: 0
+  - id: scope-storage-empty-slot
+    scope: scope-operations
+    rules:
+      - SO-002
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs: {}
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-002
+  - id: scope-storage-missing-provider
+    scope: scope-operations
+    rules:
+      - SO-002
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs:
+            id: uploads
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-002
+  - id: scope-storage-duplicate-id
+    scope: scope-operations
+    rules:
+      - SO-002
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs:
+            id: same
+            provider: s3
+          files:
+            id: same
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-002
+  - id: scope-resource-separate-namespaces
+    scope: scope-operations
+    rules:
+      - SO-002
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs:
+            id: main
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: accept
+      meaning:
+        resources:
+          - database/main
+          - storage/main
+  - id: scope-storage-owner-reference
+    scope: scope-operations
+    rules:
+      - SO-002
+      - OB-001
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+            owner: missing
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-002
+  - id: scope-replica
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: replica
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+                maxLag: 0s
+    expected:
+      outcome: accept
+      meaning:
+        primary: db
+        replica: replica
+        maxLagMs: 0
+  - id: scope-topology-missing-primary
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: replica
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-topology-two-primaries
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: other
+                resource: database/main
+                target: west
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-topology-unknown-resource
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/missing
+                target: east
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-topology-unknown-target
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: missing
+                role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-topology-primary-has-lag
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+                maxLag: 1s
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-topology-primary-has-source
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+                replicatesFrom: db
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-replica-chain
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: r1
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+              - name: r2
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: r1
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-replica-other-resource
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: uploads
+                resource: storage/uploads
+                target: west
+                role: replica
+                replicatesFrom: db
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-same-target-replica
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: replica
+                resource: database/main
+                target: east
+                role: replica
+                replicatesFrom: db
+    expected:
+      outcome: accept
+      meaning:
+        physicalFailureIndependenceInferred: false
+  - id: scope-instance-name-per-environment
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+          - name: staging
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+    expected:
+      outcome: accept
+      meaning:
+        instanceNames:
+          - prod/db
+          - staging/db
+  - id: scope-omitted-topology
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+    expected:
+      outcome: accept
+      meaning:
+        coverage: unspecified
+  - id: scope-selected-access-covered
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: node
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+    expected:
+      outcome: accept
+      meaning:
+        databaseCoverage: true
+  - id: scope-selected-access-uncovered
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: node
+            dataInstances: []
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-unselected-access-no-coverage
+    scope: scope-operations
+    rules:
+      - SO-003
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances: []
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+    expected:
+      outcome: accept
+      meaning:
+        databaseCoverage: true
+  - id: scope-instance-region-policy
+    scope: scope-operations
+    rules:
+      - SO-003
+      - OB-011
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      solution:
+        regions:
+          primary: us-west-2
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-instance-cloudformation
+    scope: scope-operations
+    rules:
+      - SO-003
+      - OB-011
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: gcp
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+        infrastructure:
+          iac: cloudformation
+    expected:
+      outcome: reject
+      violations:
+        - SO-003
+  - id: scope-periodic-plan
+    scope: scope-operations
+    rules:
+      - SO-004
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: accept
+      meaning:
+        covered:
+          - prod/database/main
+        protected: true
+  - id: scope-continuous-zero-rpo
+    scope: scope-operations
+    rules:
+      - SO-004
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: continuous
+            rto: 0s
+            rpo: 0s
+            retention: 7d
+            destination: west
+    expected:
+      outcome: accept
+      meaning:
+        rtoMs: 0
+        rpoMs: 0
+        feasibilityVerified: false
+  - id: scope-explicit-exception
+    scope: scope-operations
+    rules:
+      - SO-004
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: disposable
+            environment: prod
+            resource: database/main
+            method: none
+            reason: Rebuilt from source
+    expected:
+      outcome: accept
+      meaning:
+        covered: true
+        protected: false
+  - id: scope-periodic-missing-rto
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-missing-rpo
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-missing-retention
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-missing-destination
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-missing-interval
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-rpo-too-small
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 59m
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-periodic-retention-too-small
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 59m
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-continuous-has-interval
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: continuous
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-exception-blank-reason
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: skip
+            environment: prod
+            resource: database/main
+            method: none
+            reason: |+
+               
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-exception-has-objective
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: skip
+            environment: prod
+            resource: database/main
+            method: none
+            reason: Disposable
+            rpo: 0s
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-plan-orphan
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances: []
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-plan-duplicate-pair
+    scope: scope-operations
+    rules:
+      - SO-004
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+          - name: second
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-destination-region
+    scope: scope-operations
+    rules:
+      - SO-004
+      - OB-011
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+      solution:
+        regions:
+          primary: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-replica-covered-by-resource-plan
+    scope: scope-operations
+    rules:
+      - SO-003
+      - SO-004
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: replica
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: accept
+      meaning:
+        planCount: 1
+        coveredInstances: 2
+  - id: scope-empty-plans-missing-coverage
+    scope: scope-operations
+    rules:
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans: []
+    expected:
+      outcome: reject
+      violations:
+        - SO-005
+  - id: scope-omitted-plans-no-claim
+    scope: scope-operations
+    rules:
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr: {}
+    expected:
+      outcome: accept
+      meaning:
+        coverage: unspecified
+  - id: scope-empty-plans-no-instances
+    scope: scope-operations
+    rules:
+      - SO-005
+    value:
+      data:
+        databaseMode: none
+      backupDr:
+        plans: []
+    expected:
+      outcome: accept
+      meaning:
+        coveredResourceCount: 0
+  - id: scope-unmodeled-environment-excluded
+    scope: scope-operations
+    rules:
+      - SO-005
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+          - name: unknown
+            projects: []
+            services: []
+            placements: []
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+    expected:
+      outcome: accept
+      meaning:
+        coveredEnvironments:
+          - prod
+        unspecifiedEnvironments:
+          - unknown
+  - id: scope-backup-requirements-met
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          frequency: daily
+          retention: 7d
+          pointInTimeRecovery: false
+    expected:
+      outcome: accept
+      meaning:
+        inheritedFields: []
+        requirementsSatisfied: true
+  - id: scope-global-weaker-retention
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          retention: 8d
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-global-weaker-pitr
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          pointInTimeRecovery: true
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-global-frequency-weaker
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 2h
+            interval: 2h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          frequency: hourly
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-continuous-satisfies-frequency
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: continuous
+            rto: 1h
+            rpo: 1h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          frequency: hourly
+          pointInTimeRecovery: true
+    expected:
+      outcome: accept
+      meaning:
+        requirementsSatisfied: true
+  - id: scope-global-needs-plans
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      nonFunctional:
+        backup:
+          frequency: daily
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-global-needs-all-topologies
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+          - name: unknown
+            projects: []
+            services: []
+            placements: []
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+      nonFunctional:
+        backup:
+          frequency: daily
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-global-no-resources
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        databaseMode: none
+      nonFunctional:
+        backup:
+          frequency: daily
+      backupDr:
+        plans: []
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-empty-backup-policy
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      nonFunctional:
+        backup: {}
+    expected:
+      outcome: accept
+      meaning:
+        requirements: 0
+  - id: scope-exception-versus-global
+    scope: scope-operations
+    rules:
+      - SO-006
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      backupDr:
+        plans:
+          - name: skip
+            environment: prod
+            resource: database/main
+            method: none
+            reason: Disposable
+      nonFunctional:
+        backup:
+          pointInTimeRecovery: false
+    expected:
+      outcome: reject
+      violations:
+        - SO-006
+  - id: scope-cost-solution
+    scope: scope-operations
+    rules:
+      - SO-007
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+    expected:
+      outcome: accept
+      meaning:
+        total: "10"
+  - id: scope-cost-exact-sum
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: a
+                subject:
+                  kind: solution
+                amount: "0.1"
+              - name: b
+                subject:
+                  kind: solution
+                amount: "0.2"
+            total: "0.30"
+    expected:
+      outcome: accept
+      meaning:
+        total: "0.3"
+  - id: scope-cost-empty
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items: []
+            total: "0"
+    expected:
+      outcome: accept
+      meaning:
+        total: "0"
+  - id: scope-amount-67
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: 10
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-amount-68
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "-1"
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-amount-69
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1e3"
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-amount-70
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "01"
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-amount-71
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: $1
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-amount-72
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: NaN
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-cost-currency
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: usd
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-period
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: weekly
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-solution-has-ref
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                  ref: api
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-missing-ref
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: component
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-unknown-subject
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: provider
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-duplicate-item
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-total-mismatch
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+            total: "11"
+    expected:
+      outcome: reject
+      violations:
+        - SO-008
+  - id: scope-budget-9
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+            budget: "9"
+    expected:
+      outcome: accept
+      meaning:
+        total: "10"
+      warnings:
+        - rule: SO-008
+          kind: cost-budget-exceeded
+  - id: scope-budget-10
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+            budget: "10"
+    expected:
+      outcome: accept
+      meaning:
+        total: "10"
+      forbiddenWarnings:
+        - rule: SO-008
+          kind: cost-budget-exceeded
+  - id: scope-budget-11
+    scope: scope-operations
+    rules:
+      - SO-008
+    value:
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+            budget: "11"
+    expected:
+      outcome: accept
+      meaning:
+        total: "10"
+      forbiddenWarnings:
+        - rule: SO-008
+          kind: cost-budget-exceeded
+  - id: scope-cost-resource-subject
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: db
+                subject:
+                  kind: resource
+                  ref: database/main
+                amount: "10"
+            environment: prod
+    expected:
+      outcome: accept
+      meaning:
+        subject: database/main
+  - id: scope-cost-missing-resource
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: db
+                subject:
+                  kind: resource
+                  ref: storage/missing
+                amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-cost-component-integration
+    scope: scope-operations
+    rules:
+      - SO-007
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: node
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+      integrations:
+        payments:
+          provider: stripe
+      costs:
+        scenarios:
+          - name: base
+            currency: USD
+            period: month
+            items:
+              - name: compute
+                subject:
+                  kind: component
+                  ref: api
+                amount: "10"
+              - name: fees
+                subject:
+                  kind: integration
+                  ref: builtin/payments
+                amount: "2"
+    expected:
+      outcome: accept
+      meaning:
+        subjects:
+          - api
+          - builtin/payments
+  - id: scope-variance-86
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: accept
+      meaning:
+        low: "1"
+        high: "10"
+      forbiddenWarnings:
+        - rule: SO-009
+          kind: high-cost-variance
+  - id: scope-variance-87
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10.01"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: accept
+      meaning:
+        low: "1"
+        high: "10.01"
+      warnings:
+        - rule: SO-009
+          kind: high-cost-variance
+  - id: scope-variance-88
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "0"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "0"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: accept
+      meaning:
+        low: "0"
+        high: "0"
+      forbiddenWarnings:
+        - rule: SO-009
+          kind: high-cost-variance
+  - id: scope-variance-89
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "0"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: accept
+      meaning:
+        low: "0"
+        high: "1"
+      warnings:
+        - rule: SO-009
+          kind: high-cost-variance
+  - id: scope-comparison-reversed
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "20"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-comparison-currency
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: AUD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-comparison-period
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: year
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: high
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-comparison-environment
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+            environment: prod
+        comparisons:
+          - name: range
+            low: low
+            high: high
+      deployment:
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-comparison-missing
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: missing
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-comparison-same
+    scope: scope-operations
+    rules:
+      - SO-009
+    value:
+      costs:
+        scenarios:
+          - name: low
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "1"
+          - name: high
+            currency: USD
+            period: month
+            items:
+              - name: platform
+                subject:
+                  kind: solution
+                amount: "10"
+        comparisons:
+          - name: range
+            low: low
+            high: low
+    expected:
+      outcome: reject
+      violations:
+        - SO-009
+  - id: scope-compliance-true
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+    expected:
+      outcome: accept
+      meaning:
+        applicability: true
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-compliance-false
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: false
+    expected:
+      outcome: accept
+      meaning:
+        applicability: false
+      forbiddenWarnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-compliance-null
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+    expected:
+      outcome: accept
+      meaning:
+        applicability: null
+      forbiddenWarnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-requirement-missing
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - requirement: deletion
+    expected:
+      outcome: accept
+      meaning:
+        mappingClaimVerified: false
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-requirement-blank
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - requirement: deletion
+                implementation: " \t"
+    expected:
+      outcome: accept
+      meaning:
+        mappingClaimVerified: false
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-requirement-mapped
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - requirement: deletion
+                implementation: Deletion workflow
+    expected:
+      outcome: accept
+      meaning:
+        mappingClaimVerified: false
+      forbiddenWarnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-invalid-requirements-102
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - {}
+    expected:
+      outcome: reject
+      violations:
+        - SO-010
+  - id: scope-invalid-requirements-103
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - requirement: " "
+    expected:
+      outcome: reject
+      violations:
+        - SO-010
+  - id: scope-invalid-requirements-104
+    scope: scope-operations
+    rules:
+      - SO-010
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: true
+            requirements:
+              - requirement: deletion
+              - requirement: deletion
+    expected:
+      outcome: reject
+      violations:
+        - SO-010
+  - id: scope-shorthand-applicability
+    scope: scope-operations
+    rules:
+      - SO-010
+      - NM-002
+    value:
+      nonFunctional:
+        compliance:
+          frameworks:
+            - gdpr
+    expected:
+      outcome: accept
+      meaning:
+        applicable: true
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-root-false-over-shorthand
+    scope: scope-operations
+    rules:
+      - SO-010
+      - NM-002
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: false
+      nonFunctional:
+        compliance:
+          frameworks:
+            - gdpr
+    expected:
+      outcome: accept
+      meaning:
+        applicable: false
+      forbiddenWarnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: scope-design-open
+    scope: scope-operations
+    rules:
+      - SO-011
+    value:
+      design:
+        tokens:
+          arbitrary:
+            - false
+            - 0
+            - null
+        vendor: custom
+    expected:
+      outcome: accept
+      meaning:
+        preserved: true
+  - id: scope-enterprise-no-design-no-framework-inference
+    scope: scope-operations
+    rules:
+      - SO-011
+    value:
+      solution:
+        stage: Enterprise
+    expected:
+      outcome: accept
+      meaning:
+        inferredFrameworks: []
+      forbiddenWarnings:
+        - rule: SO-011
+          kind: design-section-missing
+        - rule: SO-011
+          kind: compliance-framework-missing
+  - id: scope-compliance-open-evidence
+    scope: scope-operations
+    rules:
+      - SO-011
+    value:
+      compliance:
+        certifications:
+          - customClaim: unverified
+        dataResidency:
+          - notes: Author metadata
+        dataRetention:
+          - rule: Custom
+    expected:
+      outcome: accept
+      meaning:
+        certificationVerified: false
+        resourceBindingsInferred: false
+  - id: scope-legacy-costs-rejected
+    scope: scope-operations
+    rules:
+      - SO-007
+      - SO-011
+    value:
+      costs:
+        infrastructure:
+          compute: []
+    expected:
+      outcome: reject
+      violations:
+        - SO-007
+  - id: scope-legacy-recovery-rejected
+    scope: scope-operations
+    rules:
+      - SO-004
+      - SO-011
+    value:
+      backupDr:
+        strategy: active-passive
+    expected:
+      outcome: reject
+      violations:
+        - SO-004
+  - id: scope-legacy-extensions-preserved
+    scope: scope-operations
+    rules:
+      - SO-011
+    value:
+      costs:
+        x-legacy:
+          total: 20
+      backupDr:
+        x-runbook:
+          - Restore manually
+    expected:
+      outcome: accept
+      meaning:
+        portableTotalsInferred: false
+        protectedResourcesInferred: false
+  - id: scope-compose-storage-members
+    scope: composition
+    rules:
+      - SO-002
+      - SO-012
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - storage.sdl.yaml
+        data:
+          storage:
+            blobs:
+              provider: s3
+      storage.sdl.yaml: |
+        data:
+          storage:
+            blobs:
+              id: uploads
+    expected:
+      outcome: accept
+      meaning:
+        resource: storage/uploads
+  - id: scope-compose-none-conflict
+    scope: composition
+    rules:
+      - SO-001
+      - SO-012
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - database.sdl.yaml
+        data:
+          databaseMode: none
+      database.sdl.yaml: |
+        data:
+          primaryDatabase:
+            id: main
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: reject
+      violations:
+        - SO-001
+  - id: scope-compose-duplicate-scenario
+    scope: composition
+    rules:
+      - SO-007
+      - SO-012
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - cost.sdl.yaml
+        costs:
+          scenarios:
+            - name: base
+              currency: USD
+              period: month
+              items:
+                - name: platform
+                  subject:
+                    kind: solution
+                  amount: "10"
+      cost.sdl.yaml: |
+        costs:
+          scenarios:
+            - name: base
+              currency: USD
+              period: month
+              items:
+                - name: platform
+                  subject:
+                    kind: solution
+                  amount: "10"
+    expected:
+      outcome: reject
+      violations:
+        - SO-012
+  - id: scope-compose-duplicate-environment-no-patch
+    scope: composition
+    rules:
+      - SO-003
+      - SO-012
+      - OB-007
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - base.sdl.yaml
+        deployment:
+          environments:
+            - name: prod
+              projects: []
+              services: []
+              placements: []
+              dataInstances:
+                - name: db
+                  resource: database/main
+                  target: east
+                  role: primary
+      base.sdl.yaml: |
+        data:
+          primaryDatabase:
+            id: main
+            type: postgres
+            hosting: managed
+        deployment:
+          targets:
+            - name: east
+              cloud: aws
+              region: us-east-1
+            - name: west
+              cloud: aws
+              region: us-west-2
+          environments:
+            - name: prod
+              projects: []
+              services: []
+              placements: []
+              dataInstances:
+                - name: db
+                  resource: database/main
+                  target: east
+                  role: primary
+    expected:
+      outcome: reject
+      violations:
+        - SO-012
+  - id: scope-compose-late-recovery-targets
+    scope: composition
+    rules:
+      - SO-004
+      - SO-005
+      - SO-012
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - plans.sdl.yaml
+        data:
+          primaryDatabase:
+            id: main
+            type: postgres
+            hosting: managed
+        deployment:
+          targets:
+            - name: east
+              cloud: aws
+              region: us-east-1
+            - name: west
+              cloud: aws
+              region: us-west-2
+          environments:
+            - name: prod
+              projects: []
+              services: []
+              placements: []
+              dataInstances:
+                - name: db
+                  resource: database/main
+                  target: east
+                  role: primary
+      plans.sdl.yaml: |
+        backupDr:
+          plans:
+            - name: main-backup
+              environment: prod
+              resource: database/main
+              method: periodic
+              rto: 1h
+              rpo: 1h
+              interval: 1h
+              retention: 7d
+              destination: west
+    expected:
+      outcome: accept
+      meaning:
+        covered:
+          - prod/database/main
+  - id: scope-worked-example
+    scope: scope-operations
+    rules:
+      - SO-001
+      - SO-002
+      - SO-003
+      - SO-004
+      - SO-005
+      - SO-006
+      - SO-007
+      - SO-008
+      - SO-011
+      - SO-012
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        databaseMode: declared
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects: []
+            services: []
+            placements: []
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: db-replica
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+                maxLag: 5s
+              - name: uploads
+                resource: storage/uploads
+                target: east
+                role: primary
+      sdlVersion: "2.0"
+      nonFunctional:
+        backup:
+          frequency: daily
+          retention: 7d
+          pointInTimeRecovery: false
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+          - name: uploads-backup
+            environment: prod
+            resource: storage/uploads
+            method: periodic
+            rto: 1h
+            rpo: 1d
+            interval: 1d
+            retention: 7d
+            destination: west
+      costs:
+        scenarios:
+          - name: base
+            environment: prod
+            currency: USD
+            period: month
+            items:
+              - name: database
+                subject:
+                  kind: resource
+                  ref: database/main
+                amount: "100.00"
+              - name: uploads
+                subject:
+                  kind: resource
+                  ref: storage/uploads
+                amount: "20.00"
+            total: "120"
+            budget: "150"
+            assumptions:
+              - Illustrative authored estimates; one monthly reporting period, including replicas and backup
+                storage.
+      design:
+        x-notes: Tokens intentionally unspecified
+    sourceFile: ../examples/scope-operations.sdl.yaml
+    expected:
+      outcome: accept
+      meaning:
+        coveredResourcePairs: 2
+        replicas: 1
+        costTotal: "120"
+        budgetExceeded: false

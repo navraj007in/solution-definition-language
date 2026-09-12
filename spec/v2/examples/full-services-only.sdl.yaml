@@ -1,0 +1,30 @@
+# Complete SDL v2 draft example.
+sdlVersion: "2.0"
+solution:
+  name: Status
+  description: A public service status application.
+  stage: MVP
+architecture:
+  style: microservices
+  services:
+    - name: status
+      kind: backend
+      implementation:
+        kind: external
+    - name: alerts
+      kind: worker
+      dependencies:
+        - status
+      implementation:
+        kind: external
+data:
+  databaseMode: none
+deployment:
+  environments:
+    - name: prod
+      projects: []
+      services:
+        - status
+        - alerts
+      placements: []
+nonFunctional: {}

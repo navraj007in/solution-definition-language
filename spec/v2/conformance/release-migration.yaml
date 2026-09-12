@@ -1,0 +1,552 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-release-migration-draft
+cases:
+  - id: baseline-v11-published
+    scope: release-migration
+    rules: [BL-001, BL-002, BL-003, BL-005]
+    artifactKind: release-manifest
+    artifactFile: ../releases/sdl-v1.1-2026-09-12.json
+    expected:
+      outcome: accept
+      meaning:
+        languageVersion: "1.1"
+        status: active
+  - id: baseline-v2-draft-published
+    scope: release-migration
+    rules: [BL-001, BL-002, BL-003, BL-005]
+    artifactKind: release-manifest
+    artifactFile: ../releases/sdl-v2.0-draft.1.json
+    expected:
+      outcome: accept
+      meaning:
+        languageVersion: "2.0"
+        status: draft
+  - id: baseline-missing-authority
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-09-12"
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: baseline-duplicate-path
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-09-12"
+      authority:
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+        - {path: spec/v2/FULL-SPEC.md, role: derived-reference, precedence: 2, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: baseline-duplicate-precedence
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-09-12"
+      authority:
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+        - {path: spec/v2/FOUNDATIONS.md, role: normative-prose, precedence: 1, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: baseline-invalid-status
+    scope: release-migration
+    rules: [BL-003]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: candidate
+      published: "2026-09-12"
+      authority:
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    expected:
+      outcome: reject
+      violations: [BL-003]
+  - id: baseline-invalid-calendar-date
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-02-30"
+      authority:
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: baseline-unsorted-precedence
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-09-12"
+      authority:
+        - {path: spec/v2/FOUNDATIONS.md, role: normative-prose, precedence: 2, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: baseline-hash-mismatch
+    scope: release-migration
+    rules: [BL-002]
+    artifactKind: release-manifest
+    verifyHashes: true
+    value:
+      format: sdl-release-manifest/v1
+      id: sdl-v2.0-draft.2
+      languageVersion: "2.0"
+      status: draft
+      published: "2026-09-12"
+      authority:
+        - {path: spec/v2/FULL-SPEC.md, role: normative-prose, precedence: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    expected:
+      outcome: reject
+      violations: [BL-002]
+  - id: migration-plan-published
+    scope: release-migration
+    rules: [BL-004, MG-001, MG-002, MG-003, MG-004, MG-007, MG-008]
+    artifactKind: migration-plan
+    artifactFile: ../migrations/v1.1-to-v2.0-draft.1.json
+    expected:
+      outcome: accept
+      meaning:
+        records: 22
+        allDocumentRulesAssigned: true
+  - id: migration-plan-duplicate-record
+    scope: release-migration
+    rules: [MG-001]
+    artifactKind: migration-plan
+    value:
+      format: sdl-migration-plan/v1
+      id: example-plan
+      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      records:
+        - &record
+          id: MIG-001
+          title: First
+          classification: tightened-validation
+          compatibility: breaking
+          sourcePaths: [""]
+          targetPaths: [""]
+          rules: [FD-001]
+          action: {mode: validation-only, operation: review, instructions: [Review it.]}
+          rationale: Example.
+        - *record
+    expected:
+      outcome: reject
+      violations: [MG-001]
+  - id: migration-plan-unpublished-endpoint
+    scope: release-migration
+    rules: [MG-001]
+    artifactKind: migration-plan
+    value:
+      format: sdl-migration-plan/v1
+      id: example-plan
+      from: {baseline: sdl-v1.1-unknown, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      records:
+        - id: MIG-001
+          title: First
+          classification: tightened-validation
+          compatibility: breaking
+          sourcePaths: [""]
+          targetPaths: [""]
+          rules: [FD-001]
+          action: {mode: validation-only, operation: review, instructions: [Review it.]}
+          rationale: Example.
+    expected:
+      outcome: reject
+      violations: [MG-001]
+  - id: migration-plan-version-endpoint-mismatch
+    scope: release-migration
+    rules: [MG-001]
+    artifactKind: migration-plan
+    value:
+      format: sdl-migration-plan/v1
+      id: example-plan
+      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.0"}
+      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      records:
+        - id: MIG-001
+          title: First
+          classification: tightened-validation
+          compatibility: breaking
+          sourcePaths: [""]
+          targetPaths: [""]
+          rules: [FD-001]
+          action: {mode: validation-only, operation: review, instructions: [Review it.]}
+          rationale: Example.
+    expected:
+      outcome: reject
+      violations: [MG-001]
+  - id: migration-plan-automatic-review
+    scope: release-migration
+    rules: [MG-002]
+    artifactKind: migration-plan
+    value:
+      format: sdl-migration-plan/v1
+      id: example-plan
+      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      records:
+        - id: MIG-001
+          title: Unsafe automatic action
+          classification: changed-interpretation
+          compatibility: breaking
+          sourcePaths: [""]
+          targetPaths: [""]
+          rules: [FD-001]
+          action: {mode: automatic, operation: review, instructions: [Guess the intended meaning.]}
+          rationale: Example.
+    expected:
+      outcome: reject
+      violations: [MG-002]
+  - id: migration-plan-classification-conflict
+    scope: release-migration
+    rules: [BL-004]
+    artifactKind: migration-plan
+    value:
+      format: sdl-migration-plan/v1
+      id: example-plan
+      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      records:
+        - id: MIG-001
+          title: Removed but compatible
+          classification: removed-vocabulary
+          compatibility: compatible
+          sourcePaths: ["/old"]
+          targetPaths: []
+          rules: [FD-001]
+          action: {mode: validation-only, operation: review, instructions: [Review it.]}
+          rationale: Example.
+    expected:
+      outcome: reject
+      violations: [BL-004]
+  - id: migration-result-complete
+    scope: release-migration
+    rules: [MG-004, MG-005, MG-006, MG-007]
+    artifactKind: migration-result
+    artifactFile: ../examples/migration-result.yaml
+    sourceValue:
+      sdlVersion: "1.1"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: modular-monolith
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        primaryDatabase:
+          type: postgres
+          hosting: managed
+    expected:
+      outcome: accept
+      meaning:
+        migrationOutcome: migrated
+        targetStructure: valid
+  - id: migration-result-needs-decision
+    scope: release-migration
+    rules: [MG-004, MG-006]
+    artifactKind: migration-result
+    sourceValue: {sdlVersion: "1.1"}
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: needs-decision
+      candidate: {sdlVersion: "2.0"}
+      changes:
+        - record: MIG-001
+          operation: set-value
+          path: [sdlVersion]
+          before: {present: true, value: "1.1"}
+          after: {present: true, value: "2.0"}
+      decisions:
+        - record: MIG-013
+          path: [data, primaryDatabase]
+          prompt: Choose a logical database identifier.
+          options:
+            - id: primary
+              label: Use primary.
+      diagnostics: []
+    expected:
+      outcome: accept
+      meaning:
+        migrationOutcome: needs-decision
+        targetConformanceClaimed: false
+  - id: migration-result-source-reject
+    scope: release-migration
+    rules: [MG-003, MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: reject
+      changes: []
+      decisions: []
+      diagnostics:
+        - {record: MG-003, category: validation, severity: error, message: Source does not conform.}
+    expected:
+      outcome: accept
+      meaning: {migrationOutcome: reject}
+  - id: migration-result-resource-failure
+    scope: release-migration
+    rules: [MG-003, MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: resource-failure
+      changes: []
+      decisions: []
+      diagnostics:
+        - {record: MG-003, category: resource, severity: error, message: Source could not be read.}
+    expected:
+      outcome: accept
+      meaning: {migrationOutcome: resource-failure}
+  - id: migration-result-replay-mismatch
+    scope: release-migration
+    rules: [MG-005, MG-006]
+    artifactKind: migration-result
+    sourceValue: {sdlVersion: "1.1"}
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: migrated
+      document: {sdlVersion: "2.0"}
+      changes:
+        - record: MIG-001
+          operation: set-value
+          path: [sdlVersion]
+          before: {present: true, value: "1.0"}
+          after: {present: true, value: "2.0"}
+      decisions: []
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-005, MG-006]
+  - id: migration-result-migrated-with-decision
+    scope: release-migration
+    rules: [MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: migrated
+      document: {}
+      changes: []
+      decisions:
+        - record: MIG-013
+          path: []
+          prompt: Choose an identifier.
+          options: [{id: choose, label: Choose one.}]
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-006]
+  - id: migration-result-decision-with-document
+    scope: release-migration
+    rules: [MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: needs-decision
+      document: {}
+      changes: []
+      decisions:
+        - record: MIG-013
+          path: []
+          prompt: Choose an identifier.
+          options: [{id: choose, label: Choose one.}]
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-006]
+  - id: migration-result-reject-with-resource
+    scope: release-migration
+    rules: [MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: reject
+      changes: []
+      decisions: []
+      diagnostics:
+        - {record: MG-003, category: resource, severity: error, message: Read failed.}
+    expected:
+      outcome: reject
+      violations: [MG-006]
+  - id: migration-result-resource-warning
+    scope: release-migration
+    rules: [MG-006]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: resource-failure
+      changes: []
+      decisions: []
+      diagnostics:
+        - {record: MG-003, category: resource, severity: warning, message: Read failed.}
+    expected:
+      outcome: reject
+      violations: [MG-006]
+  - id: migration-result-unknown-record
+    scope: release-migration
+    rules: [MG-004, MG-005]
+    artifactKind: migration-result
+    sourceValue: {sdlVersion: "1.1"}
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: needs-decision
+      changes: []
+      decisions:
+        - record: MIG-999
+          path: []
+          prompt: Unknown decision.
+          options: [{id: choose, label: Choose one.}]
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-004]
+  - id: migration-result-duplicate-decision-option
+    scope: release-migration
+    rules: [MG-004]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: needs-decision
+      changes: []
+      decisions:
+        - record: MIG-013
+          path: []
+          prompt: Choose an identifier.
+          options:
+            - {id: primary, label: First choice.}
+            - {id: primary, label: Duplicate choice.}
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-004]
+  - id: migration-result-operation-mismatch
+    scope: release-migration
+    rules: [MG-005]
+    artifactKind: migration-result
+    sourceValue: {sdlVersion: "1.1"}
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: needs-decision
+      candidate: {sdlVersion: "2.0"}
+      changes:
+        - record: MIG-001
+          operation: remove
+          path: [sdlVersion]
+          before: {present: true, value: "1.1"}
+          after: {present: true, value: "2.0"}
+      decisions:
+        - record: MIG-013
+          path: []
+          prompt: Choose an identifier.
+          options: [{id: choose, label: Choose one.}]
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-005]
+  - id: migration-result-migrated-target-invalid
+    scope: release-migration
+    rules: [MG-006, MG-007]
+    artifactKind: migration-result
+    sourceValue: {sdlVersion: "1.1"}
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.1
+      outcome: migrated
+      document: {sdlVersion: "2.0"}
+      changes:
+        - record: MIG-001
+          operation: set-value
+          path: [sdlVersion]
+          before: {present: true, value: "1.1"}
+          after: {present: true, value: "2.0"}
+      decisions: []
+      diagnostics: []
+    expected:
+      outcome: reject
+      violations: [MG-006]
+  - id: migration-result-target-endpoint-mismatch
+    scope: release-migration
+    rules: [MG-007]
+    artifactKind: migration-result
+    value:
+      format: sdl-migration-result/v1
+      plan: sdl-v1.1-to-v2.0-draft.1
+      sourceBaseline: sdl-v1.1-2026-09-12
+      targetBaseline: sdl-v2.0-draft.2
+      outcome: reject
+      changes: []
+      decisions: []
+      diagnostics:
+        - {record: MG-007, category: validation, severity: error, message: Endpoint mismatch.}
+    expected:
+      outcome: reject
+      violations: [MG-007]

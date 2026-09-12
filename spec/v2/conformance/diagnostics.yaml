@@ -1,0 +1,1056 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-diagnostics-draft
+cases:
+  - id: report-accepted
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: accept
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics: []
+        advice: []
+    reportFile: ../examples/validation-report.yaml
+  - id: report-rejected-input
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: reject
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics:
+          - rule: FD-001
+            severity: error
+            category: validation
+            stage: structure
+            message: Required field is missing.
+            location:
+              source: solution.sdl.yaml
+              path: []
+        advice: []
+  - id: report-warning-accepts
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: SO-008
+          severity: warning
+          category: validation
+          stage: semantics
+          message: Authored total exceeds budget.
+          location:
+            source: solution.sdl.yaml
+            path: []
+          kind: cost-budget-exceeded
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: accept
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics:
+          - rule: SO-008
+            severity: warning
+            category: validation
+            stage: semantics
+            message: Authored total exceeds budget.
+            location:
+              source: solution.sdl.yaml
+              path: []
+            kind: cost-budget-exceeded
+        advice: []
+  - id: report-resource-failure
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: resource-failure
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: IN-005
+          severity: error
+          category: resource
+          stage: input
+          message: Exact numeric representation unavailable.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: resource-failure
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics:
+          - rule: IN-005
+            severity: error
+            category: resource
+            stage: input
+            message: Exact numeric representation unavailable.
+            location:
+              source: solution.sdl.yaml
+              path: []
+        advice: []
+  - id: report-mixed-resource-priority
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: resource-failure
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+        - rule: IM-005
+          severity: error
+          category: resource
+          stage: composition
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: resource-failure
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics:
+          - rule: FD-001
+            severity: error
+            category: validation
+            stage: structure
+            message: Required field is missing.
+            location:
+              source: solution.sdl.yaml
+              path: []
+          - rule: IM-005
+            severity: error
+            category: resource
+            stage: composition
+            message: Required field is missing.
+            location:
+              source: solution.sdl.yaml
+              path: []
+        advice: []
+  - id: report-structure-scope
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-004
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: rules
+        sdlVersion: "2.0"
+        rules:
+          - FD-001
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: rules
+          sdlVersion: "2.0"
+          rules:
+            - FD-001
+        outcome: accept
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics: []
+        advice: []
+  - id: report-separate-profile
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-004
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice:
+        - profile:
+            id: team-capacity
+            version: "1"
+          code: small-team
+          severity: warning
+          message: Review the planned staffing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: accept
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+        diagnostics: []
+        advice:
+          - profile:
+              id: team-capacity
+              version: "1"
+            code: small-team
+            severity: warning
+            message: Review the planned staffing.
+            location:
+              source: solution.sdl.yaml
+              path: []
+  - id: report-undecoded-source
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: broken.yaml
+          kind: source
+      diagnostics:
+        - rule: IN-001
+          severity: error
+          category: validation
+          stage: input
+          message: Required field is missing.
+          location:
+            source: broken.yaml
+            line: 1
+            column: 1
+      advice: []
+    sourceValues: {}
+    unavailableSources:
+      - broken.yaml
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: reject
+        sources:
+          - id: broken.yaml
+            kind: source
+        diagnostics:
+          - rule: IN-001
+            severity: error
+            category: validation
+            stage: input
+            message: Required field is missing.
+            location:
+              source: broken.yaml
+              line: 1
+              column: 1
+        advice: []
+  - id: report-related-contributors
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+        - id: module.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: IM-004
+          severity: error
+          category: validation
+          stage: composition
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+          related:
+            - source: module.sdl.yaml
+              path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+      module.sdl.yaml:
+        solution:
+          name: Other
+    expected:
+      outcome: accept
+      value:
+        format: sdl-validation-report/v1
+        scope:
+          kind: full-document
+          sdlVersion: "2.0"
+        outcome: reject
+        sources:
+          - id: solution.sdl.yaml
+            kind: source
+          - id: module.sdl.yaml
+            kind: source
+        diagnostics:
+          - rule: IM-004
+            severity: error
+            category: validation
+            stage: composition
+            message: Required field is missing.
+            location:
+              source: solution.sdl.yaml
+              path: []
+            related:
+              - source: module.sdl.yaml
+                path: []
+        advice: []
+  - id: report-wrong-format
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-missing-advice
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-unknown-member
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+      output: {}
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-unknown-source
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: absent
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-002
+  - id: report-duplicate-source
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-002
+  - id: report-missing-path-node
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-002
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path:
+              - absent
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-002
+  - id: report-negative-index
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path:
+              - -1
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-half-coordinates
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+            line: 1
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-zero-line
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+            line: 0
+            column: 1
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-accept-with-error
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-003
+  - id: report-reject-without-error
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-003
+  - id: report-resource-without-error
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: resource-failure
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-003
+  - id: report-reject-with-resource
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: IN-005
+          severity: error
+          category: resource
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-003
+  - id: report-resource-warning
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-003
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: IN-005
+          severity: warning
+          category: resource
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-003
+  - id: report-unknown-rule
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-004
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: ZZ-999
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-004
+  - id: report-out-of-scope-rule
+    scope: diagnostics
+    rules:
+      - DG-001
+      - DG-004
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: rules
+        sdlVersion: "2.0"
+        rules:
+          - IN-001
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: Required field is missing.
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-004
+  - id: report-profile-error
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice:
+        - profile:
+            id: policy
+            version: "1"
+          code: deny
+          severity: error
+          message: Not allowed
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-empty-rule-scope
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: rules
+        sdlVersion: "2.0"
+        rules: []
+        baseline: sdl-v2.0-draft.1
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001
+  - id: report-unknown-baseline
+    scope: diagnostics
+    rules:
+      - DG-004
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.999
+      outcome: accept
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-004
+  - id: report-blank-message
+    scope: diagnostics
+    rules:
+      - DG-001
+    value:
+      format: sdl-validation-report/v1
+      scope:
+        kind: full-document
+        sdlVersion: "2.0"
+        baseline: sdl-v2.0-draft.1
+      outcome: reject
+      sources:
+        - id: solution.sdl.yaml
+          kind: source
+      diagnostics:
+        - rule: FD-001
+          severity: error
+          category: validation
+          stage: structure
+          message: |+
+            	
+          location:
+            source: solution.sdl.yaml
+            path: []
+      advice: []
+    sourceValues:
+      solution.sdl.yaml:
+        solution:
+          name: Status
+    expected:
+      outcome: reject
+      violations:
+        - DG-001

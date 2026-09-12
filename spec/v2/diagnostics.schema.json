@@ -1,0 +1,298 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:sdl:spec:2.0:draft:diagnostics",
+  "title": "SDL validation report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": {}
+  },
+  "properties": {
+    "format": {
+      "const": "sdl-validation-report/v1"
+    },
+        "scope": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^x-": {}
+              },
+              "properties": {
+                "kind": {
+                  "const": "full-document"
+                },
+                "sdlVersion": {
+                  "const": "2.0"
+                },
+                "baseline": {
+                  "type": "string",
+                  "pattern": "^sdl-v[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?$"
+                }
+              },
+              "required": [
+                "kind",
+                "sdlVersion",
+                "baseline"
+              ]
+            },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "kind": {
+              "const": "rules"
+            },
+                "sdlVersion": {
+                  "const": "2.0"
+                },
+                "baseline": {
+                  "type": "string",
+                  "pattern": "^sdl-v[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?$"
+                },
+                "rules": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}-[0-9]{3}$"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+              "required": [
+                "kind",
+                "sdlVersion",
+                "baseline",
+                "rules"
+              ]
+        }
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "reject",
+        "resource-failure"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-": {}
+        },
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "source",
+              "assembled",
+              "external"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ]
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Diagnostic"
+      }
+    },
+    "advice": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Advice"
+      }
+    }
+  },
+  "required": [
+    "format",
+    "scope",
+    "outcome",
+    "sources",
+    "diagnostics",
+    "advice"
+  ],
+  "definitions": {
+    "Location": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              }
+            ]
+          }
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "dependencies": {
+        "line": [
+          "column"
+        ],
+        "column": [
+          "line"
+        ]
+      }
+    },
+    "Profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "Diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "rule": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}-[0-9]{3}$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning"
+          ]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "validation",
+            "resource"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "input",
+            "source",
+            "composition",
+            "structure",
+            "semantics",
+            "normalization",
+            "result"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "pattern": "[^ \\t\\r\\n]"
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Location"
+          }
+        }
+      },
+      "required": [
+        "rule",
+        "severity",
+        "category",
+        "stage",
+        "message",
+        "location"
+      ]
+    },
+    "Advice": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "profile": {
+          "$ref": "#/definitions/Profile"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "const": "warning"
+        },
+        "message": {
+          "type": "string",
+          "pattern": "[^ \\t\\r\\n]"
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        }
+      },
+      "required": [
+        "profile",
+        "code",
+        "severity",
+        "message"
+      ]
+    }
+  }
+}

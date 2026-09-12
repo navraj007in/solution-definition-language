@@ -1,0 +1,69 @@
+# Scoped domain catalogue example; not a complete SDL v2 document.
+domain:
+  entities:
+    - name: User
+      fields:
+        - name: id
+          type: integer
+          primaryKey: true
+        - name: tenant
+          type: string
+          required: true
+        - name: email
+          type: string
+          required: true
+      constraints:
+        - name: account
+          kind: unique
+          fields:
+            - tenant
+            - email
+      indexes:
+        - name: email_lookup
+          fields:
+            - email
+            - tenant
+    - name: Order
+      fields:
+        - name: id
+          type: integer
+          primaryKey: true
+        - name: userId
+          type: integer
+          foreignKey: User.id
+        - name: tenant
+          type: string
+        - name: email
+          type: string
+      constraints:
+        - name: account
+          kind: foreignKey
+          fields:
+            - tenant
+            - email
+          target:
+            entity: User
+            fields:
+              - tenant
+              - email
+      relationships:
+        - name: purchaser
+          to: User
+          type: many-to-one
+          via:
+            side: from
+            field: userId
+        - name: billingAccount
+          to: User
+          via:
+            side: from
+            constraint: account
+  relationships:
+    - name: billedOrders
+      from: User
+      to: Order
+      type: one-to-many
+      via:
+        side: to
+        constraint: account
+sdlVersion: "2.0"

@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:sdl:migration-artifacts:v1",
+  "title": "SDL migration plan or result v1",
+  "oneOf": [
+    { "$ref": "#/definitions/Plan" },
+    { "$ref": "#/definitions/Result" }
+  ],
+  "definitions": {
+    "Nonblank": { "type": "string", "pattern": "[^ \\t\\r\\n]" },
+    "BaselineId": { "type": "string", "pattern": "^sdl-v[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?$" },
+    "RuleId": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{3}$" },
+    "MigrationId": { "type": "string", "pattern": "^MIG-[0-9]{3}$" },
+    "Path": {
+      "type": "array",
+      "items": { "anyOf": [{ "type": "string" }, { "type": "integer", "minimum": 0 }] }
+    },
+    "PathPattern": {
+      "type": "string",
+      "pattern": "^(?:|/(?:\\*|(?:[^~/]|~[01])*)(?:/(?:\\*|(?:[^~/]|~[01])*))*)$"
+    },
+    "Endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "sdlVersion"],
+      "properties": {
+        "baseline": { "$ref": "#/definitions/BaselineId" },
+        "sdlVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" }
+      }
+    },
+    "Mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": { "from": {}, "to": {} }
+    },
+    "Action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "operation", "instructions"],
+      "properties": {
+        "mode": { "enum": ["automatic", "conditional", "author-decision", "validation-only"] },
+        "operation": { "enum": ["preserve", "set-value", "map-value", "rename", "move", "add", "remove", "restructure", "review"] },
+        "instructions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/Nonblank" }
+        },
+        "preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/Nonblank" }
+        },
+        "decisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/Nonblank" }
+        },
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/Mapping" }
+        },
+        "setValue": {}
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "conditional" } }, "required": ["mode"] },
+          "then": { "required": ["preconditions"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "author-decision" } }, "required": ["mode"] },
+          "then": { "required": ["decisions"] }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "map-value" } }, "required": ["operation"] },
+          "then": { "required": ["mappings"] },
+          "else": { "not": { "required": ["mappings"] } }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "set-value" } }, "required": ["operation"] },
+          "then": { "required": ["setValue"] },
+          "else": { "not": { "required": ["setValue"] } }
+        }
+      ]
+    },
+    "Record": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["id", "title", "classification", "compatibility", "sourcePaths", "targetPaths", "rules", "action", "rationale"],
+      "properties": {
+        "id": { "$ref": "#/definitions/MigrationId" },
+        "title": { "$ref": "#/definitions/Nonblank" },
+        "classification": {
+          "enum": ["editorial", "semantic-clarification", "compatible-addition", "relaxed-validation", "tightened-validation", "changed-interpretation", "relocated-vocabulary", "removed-vocabulary"]
+        },
+        "compatibility": { "enum": ["compatible", "conditional", "breaking"] },
+        "sourcePaths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/PathPattern" }
+        },
+        "targetPaths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/PathPattern" }
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/RuleId" }
+        },
+        "action": { "$ref": "#/definitions/Action" },
+        "rationale": { "$ref": "#/definitions/Nonblank" }
+      }
+    },
+    "Plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["format", "id", "from", "to", "records"],
+      "properties": {
+        "format": { "const": "sdl-migration-plan/v1" },
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]+$" },
+        "from": { "$ref": "#/definitions/Endpoint" },
+        "to": { "$ref": "#/definitions/Endpoint" },
+        "records": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/Record" } }
+      }
+    },
+    "State": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present"],
+      "properties": { "present": { "type": "boolean" }, "value": {} },
+      "allOf": [
+        {
+          "if": { "properties": { "present": { "const": true } }, "required": ["present"] },
+          "then": { "required": ["value"] },
+          "else": { "not": { "required": ["value"] } }
+        }
+      ]
+    },
+    "Change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record", "operation", "path", "before", "after"],
+      "properties": {
+        "record": { "$ref": "#/definitions/MigrationId" },
+        "operation": { "enum": ["set-value", "map-value", "rename", "move", "add", "remove", "restructure"] },
+        "path": { "$ref": "#/definitions/Path" },
+        "before": { "$ref": "#/definitions/State" },
+        "after": { "$ref": "#/definitions/State" }
+      }
+    },
+    "DecisionOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$" },
+        "label": { "$ref": "#/definitions/Nonblank" },
+        "patch": { "type": "array", "items": { "$ref": "#/definitions/Change" } }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record", "path", "prompt", "options"],
+      "properties": {
+        "record": { "$ref": "#/definitions/MigrationId" },
+        "path": { "$ref": "#/definitions/Path" },
+        "prompt": { "$ref": "#/definitions/Nonblank" },
+        "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/DecisionOption" } }
+      }
+    },
+    "Diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record", "category", "severity", "message"],
+      "properties": {
+        "record": { "anyOf": [{ "$ref": "#/definitions/MigrationId" }, { "enum": ["MG-003", "MG-007"] }] },
+        "category": { "enum": ["validation", "precondition", "resource"] },
+        "severity": { "enum": ["error", "warning"] },
+        "message": { "$ref": "#/definitions/Nonblank" },
+        "path": { "$ref": "#/definitions/Path" }
+      }
+    },
+    "Result": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": { "^x-": {} },
+      "required": ["format", "plan", "sourceBaseline", "targetBaseline", "outcome", "changes", "decisions", "diagnostics"],
+      "properties": {
+        "format": { "const": "sdl-migration-result/v1" },
+        "plan": { "type": "string", "pattern": "^[a-z][a-z0-9.-]+$" },
+        "sourceBaseline": { "$ref": "#/definitions/BaselineId" },
+        "targetBaseline": { "$ref": "#/definitions/BaselineId" },
+        "outcome": { "enum": ["migrated", "needs-decision", "reject", "resource-failure"] },
+        "document": { "type": "object" },
+        "candidate": { "type": "object" },
+        "changes": { "type": "array", "items": { "$ref": "#/definitions/Change" } },
+        "decisions": { "type": "array", "items": { "$ref": "#/definitions/Decision" } },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } }
+      }
+    }
+  }
+}

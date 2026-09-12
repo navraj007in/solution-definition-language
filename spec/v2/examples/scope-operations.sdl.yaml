@@ -1,0 +1,88 @@
+# Scoped persistence/recovery/cost example; not a complete SDL v2 document.
+data:
+  primaryDatabase:
+    id: main
+    type: postgres
+    hosting: managed
+  databaseMode: declared
+  storage:
+    blobs:
+      id: uploads
+      provider: s3
+deployment:
+  targets:
+    - name: east
+      cloud: aws
+      region: us-east-1
+    - name: west
+      cloud: aws
+      region: us-west-2
+  environments:
+    - name: prod
+      projects: []
+      services: []
+      placements: []
+      dataInstances:
+        - name: db
+          resource: database/main
+          target: east
+          role: primary
+        - name: db-replica
+          resource: database/main
+          target: west
+          role: replica
+          replicatesFrom: db
+          maxLag: 5s
+        - name: uploads
+          resource: storage/uploads
+          target: east
+          role: primary
+sdlVersion: "2.0"
+nonFunctional:
+  backup:
+    frequency: daily
+    retention: 7d
+    pointInTimeRecovery: false
+backupDr:
+  plans:
+    - name: main-backup
+      environment: prod
+      resource: database/main
+      method: periodic
+      rto: 1h
+      rpo: 1h
+      interval: 1h
+      retention: 7d
+      destination: west
+    - name: uploads-backup
+      environment: prod
+      resource: storage/uploads
+      method: periodic
+      rto: 1h
+      rpo: 1d
+      interval: 1d
+      retention: 7d
+      destination: west
+costs:
+  scenarios:
+    - name: base
+      environment: prod
+      currency: USD
+      period: month
+      items:
+        - name: database
+          subject:
+            kind: resource
+            ref: database/main
+          amount: "100.00"
+        - name: uploads
+          subject:
+            kind: resource
+            ref: storage/uploads
+          amount: "20.00"
+      total: "120"
+      budget: "150"
+      assumptions:
+        - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+design:
+  x-notes: Tokens intentionally unspecified

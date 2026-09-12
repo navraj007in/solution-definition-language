@@ -1,0 +1,332 @@
+format: sdl-normalization-result/v1
+document:
+  sdlVersion: "2.0"
+  technicalDebt:
+    - id: D1
+      decision: Use a shared database
+      reason: Reduce initial operations
+      impact: Coupled migrations
+    - id: D2
+      decision: Use a shared database
+      reason: Reduce initial operations
+      impact: Coupled migrations
+  nonFunctional:
+    compliance: {}
+  constraints: {}
+  compliance:
+    frameworks:
+      - name: GDPR
+        applicable: true
+  design:
+    empty: {}
+    flag: false
+provenance:
+  sources:
+    - id: input.sdl.yaml
+      kind: source
+  origins:
+    - path:
+        - compliance
+        - frameworks
+        - 0
+        - applicable
+      kind: canonical
+      rule: NM-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - constraints
+            - compliance
+            - 0
+        - source: input.sdl.yaml
+          path:
+            - nonFunctional
+            - compliance
+            - frameworks
+            - 0
+    - path:
+        - compliance
+        - frameworks
+        - 0
+        - name
+      kind: canonical
+      rule: NM-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - constraints
+            - compliance
+            - 0
+        - source: input.sdl.yaml
+          path:
+            - nonFunctional
+            - compliance
+            - frameworks
+            - 0
+    - path:
+        - constraints
+      kind: canonical
+      rule: NM-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - constraints
+    - path:
+        - design
+        - empty
+      kind: source
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - design
+            - empty
+    - path:
+        - design
+        - flag
+      kind: source
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - design
+            - flag
+    - path:
+        - nonFunctional
+        - compliance
+      kind: canonical
+      rule: NM-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - nonFunctional
+            - compliance
+    - path:
+        - sdlVersion
+      kind: source
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - sdlVersion
+    - path:
+        - technicalDebt
+        - 0
+        - decision
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 0
+            - decision
+        - source: input.sdl.yaml
+          path:
+            - technicalDebt
+            - 0
+            - decision
+    - path:
+        - technicalDebt
+        - 0
+        - id
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 0
+            - id
+        - source: input.sdl.yaml
+          path:
+            - technicalDebt
+            - 0
+            - id
+    - path:
+        - technicalDebt
+        - 0
+        - impact
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 0
+            - impact
+        - source: input.sdl.yaml
+          path:
+            - technicalDebt
+            - 0
+            - impact
+    - path:
+        - technicalDebt
+        - 0
+        - reason
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 0
+            - reason
+        - source: input.sdl.yaml
+          path:
+            - technicalDebt
+            - 0
+            - reason
+    - path:
+        - technicalDebt
+        - 1
+        - decision
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 1
+            - decision
+    - path:
+        - technicalDebt
+        - 1
+        - id
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 1
+            - id
+    - path:
+        - technicalDebt
+        - 1
+        - impact
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 1
+            - impact
+    - path:
+        - technicalDebt
+        - 1
+        - reason
+      kind: canonical
+      rule: ND-002
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+            - 1
+            - reason
+  changes:
+    - rule: ND-002
+      kind: canonicalize
+      path:
+        - technicalDebt
+      before:
+        present: true
+        value:
+          - id: D1
+            decision: Use a shared database
+            reason: Reduce initial operations
+            impact: Coupled migrations
+      after:
+        present: true
+        value:
+          - id: D1
+            decision: Use a shared database
+            reason: Reduce initial operations
+            impact: Coupled migrations
+          - id: D2
+            decision: Use a shared database
+            reason: Reduce initial operations
+            impact: Coupled migrations
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+        - source: input.sdl.yaml
+          path:
+            - technicalDebt
+    - rule: ND-002
+      kind: canonicalize
+      path:
+        - techDebt
+      before:
+        present: true
+        value:
+          - id: D1
+            decision: Use a shared database
+            reason: Reduce initial operations
+            impact: Coupled migrations
+          - id: D2
+            decision: Use a shared database
+            reason: Reduce initial operations
+            impact: Coupled migrations
+      after:
+        present: false
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - techDebt
+    - rule: NM-002
+      kind: canonicalize
+      path:
+        - compliance
+      before:
+        present: false
+      after:
+        present: true
+        value:
+          frameworks:
+            - name: GDPR
+              applicable: true
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - constraints
+            - compliance
+        - source: input.sdl.yaml
+          path:
+            - nonFunctional
+            - compliance
+            - frameworks
+    - rule: NM-002
+      kind: canonicalize
+      path:
+        - nonFunctional
+        - compliance
+        - frameworks
+      before:
+        present: true
+        value:
+          - gdpr
+      after:
+        present: false
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - nonFunctional
+            - compliance
+            - frameworks
+    - rule: NM-002
+      kind: canonicalize
+      path:
+        - constraints
+        - compliance
+      before:
+        present: true
+        value:
+          - gdpr
+      after:
+        present: false
+      inputs:
+        - source: input.sdl.yaml
+          path:
+            - constraints
+            - compliance
+suggestions: []

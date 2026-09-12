@@ -1,0 +1,43 @@
+openapi: "3.1.1"
+info:
+  title: Status API
+  version: "1.0.0"
+paths:
+  /status:
+    get:
+      operationId: getStatus
+      responses:
+        "200":
+          description: Service is available.
+        "503":
+          description: A transient service failure; follows the SDL standard error convention.
+          headers:
+            Retry-After:
+              description: Required by this API's SDL convention; delay-seconds or HTTP-date.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnavailableError"
+components:
+  schemas:
+    UnavailableError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              const: SERVICE_UNAVAILABLE
+            message:
+              type: string
+            detail:
+              type: object
+              required: [requestId]
+              properties:
+                requestId:
+                  type: string

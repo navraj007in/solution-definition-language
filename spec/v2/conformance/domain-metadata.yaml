@@ -1,0 +1,4654 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-domain-metadata-draft
+cases:
+  - id: metadata-empty-arrays
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes: []
+            constraints: []
+            relationships: []
+    expected:
+      outcome: accept
+      meaning:
+        metadataDeclarations: 0
+  - id: metadata-legacy-indexes
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes:
+              - legacy
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-legacy-constraints
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - legacy
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-legacy-relationships
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - legacy
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-missing-name
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes:
+              - fields:
+                  - userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-invalid-name
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes:
+              - name: bad.name
+                fields:
+                  - userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-duplicate-index
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes:
+              - name: lookup
+                fields:
+                  - userId
+              - name: lookup
+                fields:
+                  - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-duplicate-constraint
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-separate-collections
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: account
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        indexAndConstraintShareName: true
+  - id: metadata-fields-9
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields: []
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-fields-10
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - missing
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-fields-11
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - tenant
+                  - tenant
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-fields-12
+    scope: domain-metadata
+    rules:
+      - DX-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - address.city
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-unknown-index-member
+    scope: domain-metadata
+    rules:
+      - DX-001
+      - DX-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - email
+                method: btree
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-ordered-index
+    scope: domain-metadata
+    rules:
+      - DX-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        priority:
+          - tenant
+          - email
+        unique: false
+  - id: metadata-reversed-index
+    scope: domain-metadata
+    rules:
+      - DX-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: lookup
+                fields:
+                  - email
+                  - tenant
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        priority:
+          - email
+          - tenant
+        unique: false
+  - id: metadata-duplicate-path-different-names
+    scope: domain-metadata
+    rules:
+      - DX-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: one
+                fields:
+                  - email
+              - name: two
+                fields:
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        indexCount: 2
+  - id: metadata-index-extension
+    scope: domain-metadata
+    rules:
+      - DX-001
+      - DX-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: one
+                fields:
+                  - email
+                x-method: hash
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        preservedExtension: hash
+        portableMethod: null
+  - id: metadata-unique-index
+    scope: domain-metadata
+    rules:
+      - DX-002
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: email
+                fields:
+                  - email
+                unique: true
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        uniqueSets:
+          - - id
+          - - tenant
+            - email
+          - - email
+  - id: metadata-unknown-constraint-kind
+    scope: domain-metadata
+    rules:
+      - DX-001
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: positive
+                kind: check
+                expression: id > 0
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-unique-with-target
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: Order
+                  fields:
+                    - id
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - DX-003
+  - id: metadata-tuple-not-individual
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        individuallyUnique:
+          tenant: false
+          email: false
+  - id: metadata-reordered-redundant-uniqueness
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+              - name: reversed
+                kind: unique
+                fields:
+                  - email
+                  - tenant
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        distinctTupleConstraints: 1
+  - id: metadata-false-does-not-cancel
+    scope: domain-metadata
+    rules:
+      - DX-002
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+                unique: false
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: email
+                fields:
+                  - email
+                unique: true
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        emailHasUniquenessGuarantee: true
+        authoredFieldUnique: false
+  - id: metadata-unique-distinct-tuples
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: x
+        - id: 2
+          tenant: b
+          email: x
+        - id: 3
+          tenant: x
+          email: a
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-unique-duplicate-tuples
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: x
+        - id: 2
+          tenant: a
+          email: x
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: false
+  - id: metadata-unique-case-sensitive
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: x
+        - id: 2
+          tenant: a
+          email: X
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-null-tuple-excluded
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+                nullable: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: null
+        - id: 2
+          tenant: a
+          email: null
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-missing-tuple-excluded
+    scope: domain-metadata
+    rules:
+      - DX-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    records:
+      User:
+        - id: 1
+          tenant: a
+        - id: 2
+          tenant: a
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-named-foreign-key
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    expected:
+      outcome: accept
+      meaning:
+        pairs:
+          - - Order.tenant
+            - User.tenant
+          - - Order.email
+            - User.email
+  - id: metadata-fk-missing-target
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-missing-target-entity
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  fields:
+                    - tenant
+                    - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-missing-target-fields
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-arity
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - id
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-missing-entity
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: Missing
+                  fields:
+                    - tenant
+                    - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-missing-field
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - missing
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-duplicate-target
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - tenant
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-type-mismatch
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: integer
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-nonunique-target
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints: []
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-target-reordered
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - email
+                    - tenant
+    expected:
+      outcome: accept
+      meaning:
+        pairs:
+          - - Order.tenant
+            - User.email
+          - - Order.email
+            - User.tenant
+  - id: metadata-fk-target-unique-superset
+    scope: domain-metadata
+    rules:
+      - DX-003
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - userId
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - id
+                    - email
+    expected:
+      outcome: accept
+      meaning:
+        targetUniqueBecause:
+          - User.id
+  - id: metadata-field-fk-to-unique-index
+    scope: domain-metadata
+    rules:
+      - DX-002
+      - DX-003
+      - DX-004
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: email
+                fields:
+                  - email
+                unique: true
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+                foreignKey: User.email
+    expected:
+      outcome: accept
+      meaning:
+        targetUnique: true
+  - id: metadata-field-fk-to-single-constraint
+    scope: domain-metadata
+    rules:
+      - DX-003
+      - DX-004
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+              - name: email
+                kind: unique
+                fields:
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+                foreignKey: User.email
+    expected:
+      outcome: accept
+      meaning:
+        targetUnique: true
+  - id: metadata-tuple-does-not-qualify-single-field
+    scope: domain-metadata
+    rules:
+      - DX-004
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+                foreignKey: User.email
+    expected:
+      outcome: reject
+      violations:
+        - DX-004
+  - id: metadata-fk-partial-null
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+                nullable: true
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    records:
+      User: []
+      Order:
+        - id: 1
+          tenant: a
+          email: null
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-fk-missing-member
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    records:
+      User: []
+      Order:
+        - id: 1
+          tenant: a
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-fk-record-matching
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: x
+      Order:
+        - id: 2
+          tenant: a
+          email: x
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: true
+  - id: metadata-fk-record-missing
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+    records:
+      User:
+        - id: 1
+          tenant: a
+          email: x
+      Order:
+        - id: 2
+          tenant: a
+          email: y
+    expected:
+      outcome: accept
+      meaning:
+        constraintsSatisfied: false
+  - id: metadata-field-and-constraint-conjunction
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: second
+                kind: foreignKey
+                fields:
+                  - userId
+                target:
+                  entity: User
+                  fields:
+                    - id
+    expected:
+      outcome: accept
+      meaning:
+        foreignKeyDeclarations: 2
+  - id: metadata-self-reference
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+              - name: managerId
+                type: integer
+                foreignKey: User.id
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        target: User.id
+  - id: metadata-cyclic-foreign-keys
+    scope: domain-metadata
+    rules:
+      - DX-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+              - name: latestOrder
+                type: integer
+                foreignKey: Order.id
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        cyclesAllowed: true
+  - id: metadata-local-relationship
+    scope: domain-metadata
+    rules:
+      - DX-005
+      - DX-006
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: accept
+      meaning:
+        from: Order
+        name: purchaser
+        type: many-to-one
+  - id: metadata-local-explicit-from
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+                from: Order
+    expected:
+      outcome: reject
+      violations:
+        - DX-005
+  - id: metadata-local-missing-name
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - to: User
+    expected:
+      outcome: reject
+      violations:
+        - DX-005
+  - id: metadata-local-missing-target
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: role
+                to: Missing
+    expected:
+      outcome: reject
+      violations:
+        - DX-005
+  - id: metadata-root-local-name-collision
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+        relationships:
+          - name: purchaser
+            to: User
+            type: many-to-one
+            via:
+              side: from
+              field: userId
+            from: Order
+    expected:
+      outcome: reject
+      violations:
+        - DX-005
+  - id: metadata-different-role-same-endpoints
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+              - name: reviewers
+                to: User
+                type: many-to-many
+    expected:
+      outcome: accept
+      meaning:
+        independentRoles: 2
+  - id: metadata-same-name-different-source
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            relationships:
+              - name: link
+                to: Order
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: link
+                to: User
+    expected:
+      outcome: accept
+      meaning:
+        namedRelationships: 2
+  - id: metadata-unnamed-root-independent
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+        relationships:
+          - from: Order
+            to: User
+          - from: Order
+            to: User
+    expected:
+      outcome: accept
+      meaning:
+        relationshipDeclarations: 2
+  - id: metadata-unbound-unspecified
+    scope: domain-metadata
+    rules:
+      - DX-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: role
+                to: User
+    expected:
+      outcome: accept
+      meaning:
+        cardinality: null
+  - id: metadata-selector-missing-side
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-both-selectors
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+                  constraint: account
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-no-selector
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-bad-side
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: other
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-not-fk-field
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: id
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-missing-field
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: missing
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-unique-constraint
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: to
+                  constraint: account
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-selector-wrong-target
+    scope: domain-metadata
+    rules:
+      - DX-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: Other
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+          - name: Other
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-inverse-orientation
+    scope: domain-metadata
+    rules:
+      - DX-006
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+        relationships:
+          - from: User
+            to: Order
+            name: orders
+            type: one-to-many
+            via:
+              side: to
+              field: userId
+    expected:
+      outcome: accept
+      meaning:
+        type: one-to-many
+  - id: metadata-cardinality-one-to-one
+    scope: domain-metadata
+    rules:
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: one-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-007
+  - id: metadata-cardinality-one-to-many
+    scope: domain-metadata
+    rules:
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: one-to-many
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-007
+  - id: metadata-cardinality-many-to-many
+    scope: domain-metadata
+    rules:
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-many
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-007
+  - id: metadata-one-to-one-source-index
+    scope: domain-metadata
+    rules:
+      - DX-002
+      - DX-003
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            indexes:
+              - name: one
+                fields:
+                  - userId
+                unique: true
+            relationships:
+              - name: purchaser
+                to: User
+                type: one-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: accept
+      meaning:
+        type: one-to-one
+  - id: metadata-tuple-source-unique
+    scope: domain-metadata
+    rules:
+      - DX-003
+      - DX-004
+      - DX-006
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+              - name: one
+                kind: unique
+                fields:
+                  - email
+                  - tenant
+            relationships:
+              - name: account
+                to: User
+                type: one-to-one
+                via:
+                  side: from
+                  constraint: account
+    expected:
+      outcome: accept
+      meaning:
+        type: one-to-one
+  - id: metadata-tuple-source-unique-subset
+    scope: domain-metadata
+    rules:
+      - DX-003
+      - DX-004
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+                unique: true
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+            relationships:
+              - name: account
+                to: User
+                via:
+                  side: from
+                  constraint: account
+    expected:
+      outcome: accept
+      meaning:
+        effectiveType: one-to-one
+        authoredTypePresent: false
+  - id: metadata-derived-type-not-materialized
+    scope: domain-metadata
+    rules:
+      - DX-007
+      - DX-008
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: accept
+      meaning:
+        effectiveType: many-to-one
+        authoredTypePresent: false
+  - id: metadata-loose-type-on-unique-source
+    scope: domain-metadata
+    rules:
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+                unique: true
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-007
+  - id: metadata-self-orientation-from
+    scope: domain-metadata
+    rules:
+      - DX-006
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+              - name: managerId
+                type: integer
+                foreignKey: User.id
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            relationships:
+              - name: hierarchy
+                to: User
+                via:
+                  side: from
+                  field: managerId
+                type: many-to-one
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        type: many-to-one
+  - id: metadata-self-orientation-to
+    scope: domain-metadata
+    rules:
+      - DX-006
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+              - name: managerId
+                type: integer
+                foreignKey: User.id
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            relationships:
+              - name: hierarchy
+                to: User
+                via:
+                  side: to
+                  field: managerId
+                type: one-to-many
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+    expected:
+      outcome: accept
+      meaning:
+        type: one-to-many
+  - id: metadata-same-fk-two-consistent-roles
+    scope: domain-metadata
+    rules:
+      - DX-005
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+              - name: buyer
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: accept
+      meaning:
+        roles: 2
+        type: many-to-one
+  - id: metadata-same-fk-conflicting-cardinality
+    scope: domain-metadata
+    rules:
+      - DX-007
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+              - name: buyer
+                to: User
+                type: one-to-one
+                via:
+                  side: from
+                  field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-007
+  - id: metadata-cross-database-declarations
+    scope: domain-metadata
+    rules:
+      - DX-009
+      - OB-013
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            database: a
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            database: b
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+      data:
+        primaryDatabase:
+          id: a
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: b
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      meaning:
+        crossDatabaseDeclarations: 3
+      warnings:
+        - rule: DX-009
+          kind: cross-database-reference
+          path:
+            - domain
+            - entities
+            - 1
+            - constraints
+            - 0
+        - rule: DX-009
+          kind: cross-database-reference
+          path:
+            - domain
+            - entities
+            - 1
+            - relationships
+            - 0
+        - rule: OB-013
+          kind: cross-database-reference
+          path:
+            - domain
+            - entities
+            - 1
+            - fields
+            - 1
+            - foreignKey
+  - id: metadata-database-same
+    scope: domain-metadata
+    rules:
+      - DX-009
+      - OB-013
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            database: a
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            database: a
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+      data:
+        primaryDatabase:
+          id: a
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: b
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      meaning:
+        crossDatabaseDeclarations: 0
+      forbiddenWarnings:
+        - rule: DX-009
+          kind: cross-database-reference
+        - rule: OB-013
+          kind: cross-database-reference
+  - id: metadata-database-unknown
+    scope: domain-metadata
+    rules:
+      - DX-009
+      - OB-013
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            database: a
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+      data:
+        primaryDatabase:
+          id: a
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: b
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      meaning:
+        crossDatabaseDeclarations: 0
+      forbiddenWarnings:
+        - rule: DX-009
+          kind: cross-database-reference
+        - rule: OB-013
+          kind: cross-database-reference
+  - id: metadata-compose-entity-whole-replacement
+    scope: composition
+    rules:
+      - DX-008
+      - IM-004
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - base.sdl.yaml
+        domain:
+          entities:
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              description: Replacement
+      base.sdl.yaml: |
+        domain:
+          entities:
+            - name: User
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: tenant
+                  type: string
+                  required: true
+                - name: email
+                  type: string
+                  required: true
+              constraints:
+                - name: account
+                  kind: unique
+                  fields:
+                    - tenant
+                    - email
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              indexes:
+                - name: lookup
+                  fields:
+                    - userId
+              constraints:
+                - name: account
+                  kind: foreignKey
+                  fields:
+                    - tenant
+                    - email
+                  target:
+                    entity: User
+                    fields:
+                      - tenant
+                      - email
+              relationships:
+                - name: purchaser
+                  to: User
+                  type: many-to-one
+                  via:
+                    side: from
+                    field: userId
+    expected:
+      outcome: accept
+      meaning:
+        orderIndexesPresent: false
+        orderConstraintsPresent: false
+        orderRelationshipsPresent: false
+      warnings:
+        - rule: IM-004
+          kind: duplicate-array-item
+  - id: metadata-compose-replacement-removes-selected-constraint
+    scope: composition
+    rules:
+      - DX-006
+      - DX-008
+      - IM-004
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - base.sdl.yaml
+        domain:
+          entities:
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+          relationships:
+            - from: Order
+              name: purchaser
+              to: User
+              type: many-to-one
+              via:
+                side: from
+                constraint: account
+      base.sdl.yaml: |
+        domain:
+          entities:
+            - name: User
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: tenant
+                  type: string
+                  required: true
+                - name: email
+                  type: string
+                  required: true
+              constraints:
+                - name: account
+                  kind: unique
+                  fields:
+                    - tenant
+                    - email
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              indexes:
+                - name: lookup
+                  fields:
+                    - userId
+              constraints:
+                - name: account
+                  kind: foreignKey
+                  fields:
+                    - tenant
+                    - email
+                  target:
+                    entity: User
+                    fields:
+                      - tenant
+                      - email
+              relationships:
+                - name: purchaser
+                  to: User
+                  type: many-to-one
+                  via:
+                    side: from
+                    field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-006
+  - id: metadata-compose-late-target-entity
+    scope: composition
+    rules:
+      - DX-004
+      - DX-008
+      - ST-002
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - orders.sdl.yaml
+        domain:
+          entities:
+            - name: User
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: tenant
+                  type: string
+                  required: true
+                - name: email
+                  type: string
+                  required: true
+              constraints:
+                - name: account
+                  kind: unique
+                  fields:
+                    - tenant
+                    - email
+      orders.sdl.yaml: |
+        domain:
+          entities:
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              constraints:
+                - name: account
+                  kind: foreignKey
+                  fields:
+                    - tenant
+                    - email
+                  target:
+                    entity: User
+                    fields:
+                      - tenant
+                      - email
+    expected:
+      outcome: accept
+      meaning:
+        target: User
+        pairedFields: 2
+  - id: metadata-compose-invalid-source-not-hidden
+    scope: composition
+    rules:
+      - DX-001
+      - DX-008
+      - ST-001
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - base.sdl.yaml
+        domain:
+          entities:
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+      base.sdl.yaml: |
+        domain:
+          entities:
+            - name: User
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: tenant
+                  type: string
+                  required: true
+                - name: email
+                  type: string
+                  required: true
+              constraints:
+                - name: account
+                  kind: unique
+                  fields:
+                    - tenant
+                    - email
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              indexes:
+                - name: lookup
+                  fields: []
+              constraints:
+                - name: account
+                  kind: foreignKey
+                  fields:
+                    - tenant
+                    - email
+                  target:
+                    entity: User
+                    fields:
+                      - tenant
+                      - email
+              relationships:
+                - name: purchaser
+                  to: User
+                  type: many-to-one
+                  via:
+                    side: from
+                    field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-001
+  - id: metadata-compose-root-local-collision
+    scope: composition
+    rules:
+      - DX-005
+      - DX-008
+    root: root.sdl.yaml
+    files:
+      root.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - base.sdl.yaml
+        domain:
+          relationships:
+            - from: Order
+              name: purchaser
+              to: User
+              type: many-to-one
+              via:
+                side: from
+                field: userId
+      base.sdl.yaml: |
+        domain:
+          entities:
+            - name: User
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: tenant
+                  type: string
+                  required: true
+                - name: email
+                  type: string
+                  required: true
+              constraints:
+                - name: account
+                  kind: unique
+                  fields:
+                    - tenant
+                    - email
+            - name: Order
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: userId
+                  type: integer
+                  foreignKey: User.id
+                - name: tenant
+                  type: string
+                - name: email
+                  type: string
+              indexes:
+                - name: lookup
+                  fields:
+                    - userId
+              constraints:
+                - name: account
+                  kind: foreignKey
+                  fields:
+                    - tenant
+                    - email
+                  target:
+                    entity: User
+                    fields:
+                      - tenant
+                      - email
+              relationships:
+                - name: purchaser
+                  to: User
+                  type: many-to-one
+                  via:
+                    side: from
+                    field: userId
+    expected:
+      outcome: reject
+      violations:
+        - DX-005
+  - id: metadata-worked-example
+    scope: domain-metadata
+    rules:
+      - DX-001
+      - DX-002
+      - DX-003
+      - DX-004
+      - DX-005
+      - DX-006
+      - DX-007
+      - DX-008
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: tenant
+                type: string
+                required: true
+              - name: email
+                type: string
+                required: true
+            constraints:
+              - name: account
+                kind: unique
+                fields:
+                  - tenant
+                  - email
+            indexes:
+              - name: email_lookup
+                fields:
+                  - email
+                  - tenant
+          - name: Order
+            fields:
+              - name: id
+                type: integer
+                primaryKey: true
+              - name: userId
+                type: integer
+                foreignKey: User.id
+              - name: tenant
+                type: string
+              - name: email
+                type: string
+            constraints:
+              - name: account
+                kind: foreignKey
+                fields:
+                  - tenant
+                  - email
+                target:
+                  entity: User
+                  fields:
+                    - tenant
+                    - email
+            relationships:
+              - name: purchaser
+                to: User
+                type: many-to-one
+                via:
+                  side: from
+                  field: userId
+              - name: billingAccount
+                to: User
+                via:
+                  side: from
+                  constraint: account
+        relationships:
+          - name: billedOrders
+            from: User
+            to: Order
+            type: one-to-many
+            via:
+              side: to
+              constraint: account
+      sdlVersion: "2.0"
+    sourceFile: ../examples/domain-metadata.sdl.yaml
+    expected:
+      outcome: accept
+      meaning:
+        relationships:
+          - from: Order
+            name: purchaser
+            type: many-to-one
+          - from: Order
+            name: billingAccount
+            type: many-to-one
+          - from: User
+            name: billedOrders
+            type: one-to-many
+        primaryKeys:
+          User: id
+          Order: id

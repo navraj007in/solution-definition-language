@@ -1,0 +1,355 @@
+{
+  "format": "sdl-migration-plan/v1",
+  "id": "sdl-v1.1-to-v2.0-draft.1",
+  "from": { "baseline": "sdl-v1.1-2026-09-12", "sdlVersion": "1.1" },
+  "to": { "baseline": "sdl-v2.0-draft.1", "sdlVersion": "2.0" },
+  "records": [
+    {
+      "id": "MIG-001",
+      "title": "Select the v2 contract",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/sdlVersion"],
+      "targetPaths": ["/sdlVersion"],
+      "rules": ["ST-003", "FD-002"],
+      "action": {
+        "mode": "automatic",
+        "operation": "set-value",
+        "setValue": "2.0",
+        "instructions": ["Replace the conformant source value 1.1 with 2.0 after verifying the source baseline."]
+      },
+      "rationale": "The required version marker is the explicit major-version boundary."
+    },
+    {
+      "id": "MIG-002",
+      "title": "Apply the portable YAML input profile",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": [""],
+      "targetPaths": [""],
+      "rules": ["IN-001", "IN-002", "IN-003", "IN-004", "IN-005"],
+      "action": {
+        "mode": "validation-only",
+        "operation": "review",
+        "instructions": ["Decode every source as one UTF-8 YAML 1.2 Core mapping with string unique keys, permitted aliases, and exact finite values; re-author unsupported YAML forms without changing their decoded intent."]
+      },
+      "rationale": "Previously host-dependent YAML forms cannot receive an automatic portable rewrite without the original presentation and intended decoded value."
+    },
+    {
+      "id": "MIG-003",
+      "title": "Re-evaluate modules and composition",
+      "classification": "changed-interpretation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/imports"],
+      "targetPaths": ["/imports"],
+      "rules": ["IM-001", "IM-002", "IM-003", "IM-004", "IM-005", "IM-006"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "review",
+        "instructions": ["Resolve paths from each containing file, compare the v2 depth-first postorder result with the intended architecture, and restructure modules when values or identity-keyed entries differ."],
+        "decisions": ["Confirm the canonical source graph and intended winning value for each changed composition result."]
+      },
+      "rationale": "Containing-file precedence, diamonds, limits, local source validity, and whole-entry replacement are now exact and can change the assembled value."
+    },
+    {
+      "id": "MIG-004",
+      "title": "Validate complete fragment declarations",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": [""],
+      "targetPaths": [""],
+      "rules": ["ST-001", "ST-002"],
+      "action": {
+        "mode": "validation-only",
+        "operation": "review",
+        "instructions": ["Repair invalid authored values and incomplete array items in their originating source; do not rely on a later override to hide them."]
+      },
+      "rationale": "The target baseline validates local authored facts before assembly."
+    },
+    {
+      "id": "MIG-005",
+      "title": "Repair identifiers and references transactionally",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/architecture/projects/*/*/name", "/architecture/services/*/name", "/domain/entities/*/name", "/domain/entities/*/fields/*/name", "/features/*/name", "/contracts/apis/*/name"],
+      "targetPaths": ["/architecture/projects/*/*/name", "/architecture/services/*/name", "/domain/entities/*/name", "/domain/entities/*/fields/*/name", "/features/*/name", "/contracts/apis/*/name"],
+      "rules": ["ID-001", "ID-002", "ID-003", "ID-004"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "review",
+        "instructions": ["Choose valid exact identifiers for invalid or colliding declarations and update every resolved reference in one transaction."],
+        "decisions": ["Choose the intended identity and target for every invalid, duplicate, unknown, or ambiguous reference."]
+      },
+      "rationale": "Trimming, case folding, punctuation replacement, and name similarity can select the wrong architecture element."
+    },
+    {
+      "id": "MIG-006",
+      "title": "Convert operational scalars with established units",
+      "classification": "changed-interpretation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/nonFunctional/availability/target", "/slos/services/*/availability", "/nonFunctional/performance/*", "/resilience/*"],
+      "targetPaths": ["/nonFunctional/availability/target", "/slos/services/*/availability", "/nonFunctional/performance/*", "/resilience/*"],
+      "rules": ["SC-001", "SC-002", "SC-003", "SC-004"],
+      "action": {
+        "mode": "conditional",
+        "operation": "restructure",
+        "instructions": ["Append % only to a v1.1 global availability decimal string whose percent meaning and v2 bounds are established; add duration units and convert retry counts only when their original unit/count meaning is known."],
+        "preconditions": ["Each converted scalar has one established source unit and meaning; otherwise emit an author decision."]
+      },
+      "rationale": "A bare number or retry count does not reveal a safe unit or whether it counted retries versus total executions."
+    },
+    {
+      "id": "MIG-007",
+      "title": "Complete domain keys and field constraints",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/domain/entities/*"],
+      "targetPaths": ["/domain/entities/*"],
+      "rules": ["DM-001", "DM-002", "DM-003", "DM-004", "DM-005", "DM-006"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Select exactly one primary key, convert supported field types and constraints, and resolve foreign-key and relationship targets using exact identities."],
+        "decisions": ["Choose keys, unsupported custom-type treatment, and intended targets; do not infer a key from the name id."]
+      },
+      "rationale": "The v2 portable field model closes previously open metadata and requires explicit key intent."
+    },
+    {
+      "id": "MIG-008",
+      "title": "Type domain indexes, constraints, and relationship roles",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/domain/entities/*/indexes", "/domain/entities/*/constraints", "/domain/entities/*/relationships", "/domain/relationships"],
+      "targetPaths": ["/domain/entities/*/indexes", "/domain/entities/*/constraints", "/domain/entities/*/relationships", "/domain/relationships"],
+      "rules": ["DX-001", "DX-002", "DX-003", "DX-004", "DX-005", "DX-006", "DX-007", "DX-008", "DX-009"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Translate recognized index, uniqueness, foreign-key, and relationship-role intent into the closed records; retain other metadata beneath an x-* field or remove it deliberately."],
+        "decisions": ["Choose ordered fields, target tuples, role identities, explicit selectors, and cardinality consistent with declared uniqueness."]
+      },
+      "rationale": "Arbitrary metadata does not identify tuple order, target uniqueness, relationship role, or foreign-key side."
+    },
+    {
+      "id": "MIG-009",
+      "title": "Separate teams from component bindings",
+      "classification": "changed-interpretation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/contracts/apis/*/owner", "/domain/entities/*/owner"],
+      "targetPaths": ["/solution/teams", "/contracts/apis/*/owner", "/contracts/apis/*/component", "/domain/entities/*/owner", "/domain/entities/*/managedBy"],
+      "rules": ["OB-001", "OB-002", "OB-004"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Declare accountable teams, bind owner only to teams, and place implementation identities in component or managedBy."],
+        "decisions": ["For every old owner string, choose whether it meant an organizational team, implementation component, both through separate fields, or neither."]
+      },
+      "rationale": "The source owner field was used with incompatible organizational and component meanings."
+    },
+    {
+      "id": "MIG-010",
+      "title": "Add project source and primary language",
+      "classification": "compatible-addition",
+      "compatibility": "compatible",
+      "sourcePaths": [],
+      "targetPaths": ["/architecture/projects/*/*/path", "/architecture/projects/*/*/language"],
+      "rules": ["OB-003"],
+      "action": {
+        "mode": "automatic",
+        "operation": "preserve",
+        "instructions": ["Leave the new optional fields absent unless repository source and primary language are explicit author facts; placed projects are handled by the deployment record."]
+      },
+      "rationale": "Optional declarations do not change old document meaning by themselves."
+    },
+    {
+      "id": "MIG-011",
+      "title": "Remove dotnet-8 vocabulary",
+      "classification": "removed-vocabulary",
+      "compatibility": "breaking",
+      "sourcePaths": ["/architecture/projects/backend/*/framework"],
+      "targetPaths": ["/architecture/projects/backend/*/framework", "/architecture/projects/backend/*/runtimeVersion"],
+      "rules": ["OB-003", "ND-003"],
+      "action": {
+        "mode": "conditional",
+        "operation": "restructure",
+        "instructions": ["Map dotnet-8 to dotnet and set runtimeVersion to 8 only when runtimeVersion is absent or already denotes 8; otherwise request a decision."],
+        "preconditions": ["The framework value is exactly dotnet-8 and an authored runtimeVersion does not conflict."]
+      },
+      "rationale": "The removed alias combines framework family and SDK version; a conflicting explicit version cannot be overwritten."
+    },
+    {
+      "id": "MIG-012",
+      "title": "Declare service implementation and integration use",
+      "classification": "compatible-addition",
+      "compatibility": "compatible",
+      "sourcePaths": ["/architecture/services", "/integrations"],
+      "targetPaths": ["/architecture/services/*/implementation", "/architecture/projects/*/*/usesIntegrations", "/architecture/services/*/usesIntegrations"],
+      "rules": ["OB-006", "OB-008", "OB-014"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "add",
+        "instructions": ["Identify project implementations or external services and explicitly list integration use where known."],
+        "decisions": ["Choose implementing projects versus external supply and the actual integration consumers; no matching-name inference is allowed."]
+      },
+      "rationale": "These relationships did not exist as portable source-baseline facts and are required when deployment/access claims depend on them."
+    },
+    {
+      "id": "MIG-013",
+      "title": "Identify databases and declare access",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/data/primaryDatabase", "/data/secondaryDatabases"],
+      "targetPaths": ["/data/primaryDatabase/id", "/data/secondaryDatabases/*/id", "/architecture/projects/*/*/dataAccess", "/architecture/services/*/dataAccess", "/domain/entities/*/database", "/domain/entities/*/managedBy"],
+      "rules": ["OB-005", "OB-013", "FD-003"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "add",
+        "instructions": ["Assign stable logical store IDs and declare known read/write access, entity store bindings, and managers; evaluate ORM compatibility only through those explicit bindings."],
+        "decisions": ["Choose store identities and access modes; a physical database name or primary position is not an identity/access fallback."]
+      },
+      "rationale": "Required identities and access relationships cannot be recovered reliably from physical names or array position."
+    },
+    {
+      "id": "MIG-014",
+      "title": "Relocate deployment into targets and placements",
+      "classification": "relocated-vocabulary",
+      "compatibility": "breaking",
+      "sourcePaths": ["/deployment/cloud", "/deployment/runtime", "/deployment/ciCd/environments"],
+      "targetPaths": ["/deployment/targets", "/deployment/environments"],
+      "rules": ["OB-007", "OB-008", "OB-009", "OB-010", "OB-011", "OB-012"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Create named cloud/region targets, choose active projects/services per environment, place every managed project with source path/runtime, and declare listener network scope."],
+        "decisions": ["Choose target identities and regions, environment selections, service implementations, placement runtimes, and private/shared listener scopes."]
+      },
+      "rationale": "Global cloud/runtime and CI environment metadata cannot identify per-project placement or shared infrastructure boundaries."
+    },
+    {
+      "id": "MIG-015",
+      "title": "Add portable external contract references",
+      "classification": "compatible-addition",
+      "compatibility": "compatible",
+      "sourcePaths": ["/contracts/apis/*"],
+      "targetPaths": ["/contracts/apis/*/spec"],
+      "rules": ["EC-001", "EC-002", "EC-003", "EC-004", "EC-012"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "add",
+        "instructions": ["Promote an extension pointer only after resolving its original base, local target, external format/version, and optional structured selector."],
+        "decisions": ["Confirm path base, canonical local file, API type, format/version marker, and selector; otherwise retain the extension unchanged."]
+      },
+      "rationale": "An arbitrary extension does not establish root-relative path semantics or an external format contract."
+    },
+    {
+      "id": "MIG-016",
+      "title": "Complete error and retry policy meaning",
+      "classification": "changed-interpretation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/architecture/errorConventions", "/resilience"],
+      "targetPaths": ["/architecture/errorConventions", "/contracts/apis/*/errorConventions", "/resilience"],
+      "rules": ["EC-005", "EC-006", "EC-007", "EC-008", "EC-009", "EC-010", "EC-011"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Select managed APIs, complete envelope parent/type/code declarations and policy members, restrict statuses to 400-599, and confirm total-attempt and timing intent."],
+        "decisions": ["Resolve incomplete envelopes, non-error statuses, missing retry members, replay eligibility, attempt-count meaning, and Retry-After handling."]
+      },
+      "rationale": "The target shares one retry budget/delay evaluation and does not infer envelope nesting, API applicability, or replay safety."
+    },
+    {
+      "id": "MIG-017",
+      "title": "Represent database intent and storage identities",
+      "classification": "relaxed-validation",
+      "compatibility": "conditional",
+      "sourcePaths": ["/data"],
+      "targetPaths": ["/data/databaseMode", "/data/storage/blobs/id", "/data/storage/files/id"],
+      "rules": ["SO-001", "SO-002"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "add",
+        "instructions": ["Choose declared, none, or unspecified database intent and assign stable IDs to authored storage resources."],
+        "decisions": ["Confirm whether removal of a placeholder primary database means no database or unknown intent, and choose storage identities."]
+      },
+      "rationale": "Although v2 permits database-free documents, deleting a source placeholder cannot safely establish the author's persistence intent."
+    },
+    {
+      "id": "MIG-018",
+      "title": "Declare environment data topology and recovery",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/backupDr", "/nonFunctional/backup"],
+      "targetPaths": ["/deployment/environments/*/dataInstances", "/backupDr/plans", "/nonFunctional/backup"],
+      "rules": ["SO-003", "SO-004", "SO-005", "SO-006"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Declare primary/replica instances for modeled environments and translate recognized recovery intent into one plan or explicit exception for each primary resource."],
+        "decisions": ["Choose targets, topology, plan method, objectives, retention, destinations, intervals, and explicit reasons for no protection."]
+      },
+      "rationale": "Open procedural metadata cannot prove resource identity, topology, coverage, or numerical recovery objectives."
+    },
+    {
+      "id": "MIG-019",
+      "title": "Type costs and compliance mappings",
+      "classification": "tightened-validation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/costs", "/compliance", "/nonFunctional/compliance", "/constraints/compliance"],
+      "targetPaths": ["/costs/scenarios", "/costs/comparisons", "/compliance"],
+      "rules": ["SO-007", "SO-008", "SO-009", "SO-010", "SO-011", "SO-012", "NM-001", "NM-002", "NM-003"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Create exact currency/period cost scenarios and explicit comparisons; canonicalize only listed compliance aliases/shorthands and retain evidence as open records."],
+        "decisions": ["Choose cost units, subjects, totals/budgets/comparisons, compliance applicability and mappings, and extension placement for unmatched metadata."]
+      },
+      "rationale": "Open cost/evidence metadata and shorthand names do not establish comparable amounts, references, applicability, or implementation mappings."
+    },
+    {
+      "id": "MIG-020",
+      "title": "Reconcile debt and remove implicit defaults",
+      "classification": "changed-interpretation",
+      "compatibility": "breaking",
+      "sourcePaths": ["/techDebt", "/technicalDebt", "/solution/stage", "/deployment", "/architecture/projects"],
+      "targetPaths": ["/technicalDebt"],
+      "rules": ["ND-001", "ND-002", "ND-003", "ND-004", "ND-005", "ND-006", "ND-007", "ND-008"],
+      "action": {
+        "mode": "author-decision",
+        "operation": "restructure",
+        "instructions": ["Resolve divergent same-ID debt, preserve canonical-first order, and decide whether previously inferred architecture values should become authored fields or remain absent; keep provenance and suggestions in sidecars."],
+        "decisions": ["Resolve each debt conflict and every relied-upon v1.1 inferred value before target validation."]
+      },
+      "rationale": "The v2 core has a closed normalization set and cannot silently preserve implementation-specific architecture defaults."
+    },
+    {
+      "id": "MIG-021",
+      "title": "Apply the consolidated field structure and meanings",
+      "classification": "semantic-clarification",
+      "compatibility": "conditional",
+      "sourcePaths": [""],
+      "targetPaths": [""],
+      "rules": ["FD-001", "FD-002", "FD-003", "FD-004", "FD-005", "FD-006"],
+      "action": {
+        "mode": "validation-only",
+        "operation": "review",
+        "instructions": ["Validate every standard field against the self-contained v2 catalogue and semantic slices; preserve explicit falsy/empty values and treat optional omissions as unspecified except for published effective meanings."]
+      },
+      "rationale": "Most retained descriptions are clarified compatibly, while new bounds, required identities, security/ORM predicates, and full-pipeline claims are handled by their breaking records."
+    },
+    {
+      "id": "MIG-022",
+      "title": "Publish scoped validation and normalization results",
+      "classification": "compatible-addition",
+      "compatibility": "compatible",
+      "sourcePaths": [],
+      "targetPaths": [],
+      "rules": ["CF-001", "DG-001", "DG-002", "DG-003", "DG-004"],
+      "action": {
+        "mode": "automatic",
+        "operation": "preserve",
+        "instructions": ["Leave SDL content unchanged; emit separate baseline-identified reports and normalization/migration artifacts when those operations are requested."]
+      },
+      "rationale": "Sidecar result formats add observable conformance metadata without adding fields to an SDL document."
+    }
+  ]
+}

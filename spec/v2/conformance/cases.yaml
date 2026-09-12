@@ -1,0 +1,2232 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-foundations-draft
+cases:
+  - id: input-core-resolution
+    scope: input
+    rules:
+      - IN-001
+      - IN-005
+    source: |
+      x-data: [true, yes, 2026-09-11, "99.9", 99.9]
+    expected:
+      outcome: accept
+      value:
+        x-data:
+          - true
+          - yes
+          - 2026-09-11
+          - "99.9"
+          - 99.9
+  - id: input-scalar-root
+    scope: input
+    rules:
+      - IN-001
+    source: |
+      42
+    expected:
+      outcome: reject
+      violations:
+        - IN-001
+  - id: input-empty
+    scope: input
+    rules:
+      - IN-001
+    source: ""
+    expected:
+      outcome: reject
+      violations:
+        - IN-001
+  - id: input-multiple-documents
+    scope: input
+    rules:
+      - IN-001
+    source: |
+      x-a: 1
+      ---
+      x-b: 2
+    expected:
+      outcome: reject
+      violations:
+        - IN-001
+  - id: input-wrong-yaml-version
+    scope: input
+    rules:
+      - IN-001
+    source: |
+      %YAML 1.1
+      ---
+      x-a: yes
+    expected:
+      outcome: reject
+      violations:
+        - IN-001
+  - id: input-nonstring-key
+    scope: input
+    rules:
+      - IN-002
+    source: |
+      true: value
+    expected:
+      outcome: reject
+      violations:
+        - IN-002
+  - id: input-decoded-duplicate-key
+    scope: input
+    rules:
+      - IN-002
+    source: |
+      x-a: 1
+      "x-a": 2
+    expected:
+      outcome: reject
+      violations:
+        - IN-002
+  - id: input-explicit-tag
+    scope: input
+    rules:
+      - IN-003
+    source: |
+      x-a: !!str 123
+    expected:
+      outcome: reject
+      violations:
+        - IN-003
+  - id: input-merge-key
+    scope: input
+    rules:
+      - IN-003
+    source: |
+      x-a: &a {value: 1}
+      x-b: {<<: *a}
+    expected:
+      outcome: reject
+      violations:
+        - IN-003
+  - id: input-acyclic-alias
+    scope: input
+    rules:
+      - IN-004
+    source: |
+      x-a: &a {value: 1}
+      x-b: *a
+    expected:
+      outcome: accept
+      value:
+        x-a:
+          value: 1
+        x-b:
+          value: 1
+  - id: input-cyclic-alias
+    scope: input
+    rules:
+      - IN-004
+    source: |
+      x-a: &a {self: *a}
+    expected:
+      outcome: reject
+      violations:
+        - IN-004
+  - id: input-unknown-alias
+    scope: input
+    rules:
+      - IN-004
+    source: |
+      x-a: *missing
+    expected:
+      outcome: reject
+      violations:
+        - IN-004
+  - id: input-nonfinite-number
+    scope: input
+    rules:
+      - IN-005
+    source: |
+      x-a: .inf
+    expected:
+      outcome: reject
+      violations:
+        - IN-005
+  - id: input-string-null-versus-null
+    scope: input
+    rules:
+      - IN-005
+    source: |
+      x-a: "null"
+      x-b: null
+    expected:
+      outcome: accept
+      value:
+        x-a: "null"
+        x-b: null
+  - id: identity-case-sensitive
+    scope: identity
+    rules:
+      - ID-001
+      - ID-002
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+            - name: API
+              framework: nodejs
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - architecture
+            - projects
+            - backend
+          length: 2
+  - id: identity-no-trimming
+    scope: identity
+    rules:
+      - ID-001
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: " api"
+              framework: nodejs
+    expected:
+      outcome: reject
+      violations:
+        - ID-001
+  - id: identity-component-collision
+    scope: identity
+    rules:
+      - ID-002
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        services:
+          - name: api
+            kind: backend
+            dependencies: []
+    expected:
+      outcome: reject
+      violations:
+        - ID-002
+  - id: identity-service-reference-is-not-project
+    scope: identity
+    rules:
+      - ID-003
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+        services:
+          - name: worker
+            kind: backend
+            dependencies:
+              - api
+    expected:
+      outcome: reject
+      violations:
+        - ID-003
+  - id: identity-forward-service-reference
+    scope: identity
+    rules:
+      - ID-003
+      - ID-004
+    value:
+      architecture:
+        services:
+          - name: worker
+            kind: backend
+            dependencies:
+              - api
+          - name: api
+            kind: backend
+            dependencies: []
+    expected:
+      outcome: accept
+      edges:
+        - - worker
+          - api
+  - id: identity-repeated-dependency-edge
+    scope: identity
+    rules:
+      - ID-004
+    value:
+      architecture:
+        services:
+          - name: worker
+            kind: backend
+            dependencies:
+              - api
+              - api
+          - name: api
+            kind: backend
+            dependencies: []
+    expected:
+      outcome: accept
+      edges:
+        - - worker
+          - api
+  - id: identity-self-dependency
+    scope: identity
+    rules:
+      - ID-004
+    value:
+      architecture:
+        services:
+          - name: api
+            kind: backend
+            dependencies:
+              - api
+    expected:
+      outcome: reject
+      violations:
+        - ID-004
+  - id: identity-dependency-cycle
+    scope: identity
+    rules:
+      - ID-004
+    value:
+      architecture:
+        services:
+          - name: a
+            kind: backend
+            dependencies:
+              - b
+          - name: b
+            kind: backend
+            dependencies:
+              - a
+    expected:
+      outcome: reject
+      violations:
+        - ID-004
+  - id: identity-slo-project-target
+    scope: identity
+    rules:
+      - ID-003
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+      slos:
+        services:
+          - name: api
+    expected:
+      outcome: accept
+      targets:
+        - sourcePath:
+            - slos
+            - services
+            - 0
+            - name
+          targetPath:
+            - architecture
+            - projects
+            - backend
+            - 0
+  - id: identity-slo-unknown-target
+    scope: identity
+    rules:
+      - ID-003
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+      slos:
+        services:
+          - name: API
+    expected:
+      outcome: reject
+      violations:
+        - ID-003
+  - id: identity-duplicate-slo
+    scope: identity
+    rules:
+      - ID-002
+    value:
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+      slos:
+        services:
+          - name: api
+          - name: api
+    expected:
+      outcome: reject
+      violations:
+        - ID-002
+  - id: duration-fraction
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.retryPolicy.initialInterval
+    value: 0.5s
+    expected:
+      outcome: accept
+      meaning:
+        milliseconds: "500"
+  - id: duration-week
+    scope: scalar
+    rules:
+      - SC-001
+    field: nonFunctional.backup.retention
+    value: 1w
+    expected:
+      outcome: accept
+      meaning:
+        milliseconds: "604800000"
+  - id: duration-zero-retry
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.retryPolicy.initialInterval
+    value: 0ms
+    expected:
+      outcome: accept
+      meaning:
+        milliseconds: "0"
+  - id: duration-zero-timeout
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.timeout.default
+    value: 0s
+    expected:
+      outcome: reject
+      violations:
+        - SC-001
+  - id: duration-combined-units
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.timeout.default
+    value: 1m30s
+    expected:
+      outcome: reject
+      violations:
+        - SC-001
+  - id: duration-negative
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.timeout.default
+    value: -1s
+    expected:
+      outcome: reject
+      violations:
+        - SC-001
+  - id: duration-month-ambiguous
+    scope: scalar
+    rules:
+      - SC-001
+    field: nonFunctional.backup.retention
+    value: 1mo
+    expected:
+      outcome: reject
+      violations:
+        - SC-001
+  - id: duration-unitless-number
+    scope: scalar
+    rules:
+      - SC-001
+    field: resilience.timeout.default
+    value: 30
+    expected:
+      outcome: reject
+      violations:
+        - SC-001
+  - id: availability-global
+    scope: scalar
+    rules:
+      - SC-002
+    field: nonFunctional.availability.target
+    value: 99.9%
+    expected:
+      outcome: accept
+      meaning:
+        percentage: "99.9"
+  - id: availability-low-bound
+    scope: scalar
+    rules:
+      - SC-002
+    field: slos.services[].availability
+    value: 90%
+    expected:
+      outcome: accept
+      meaning:
+        percentage: "90"
+  - id: availability-upper-bound
+    scope: scalar
+    rules:
+      - SC-002
+    field: slos.services[].availability
+    value: 99.999%
+    expected:
+      outcome: accept
+      meaning:
+        percentage: "99.999"
+  - id: availability-too-low
+    scope: scalar
+    rules:
+      - SC-002
+    field: slos.services[].availability
+    value: 89.999%
+    expected:
+      outcome: reject
+      violations:
+        - SC-002
+  - id: availability-too-high
+    scope: scalar
+    rules:
+      - SC-002
+    field: slos.services[].availability
+    value: 100%
+    expected:
+      outcome: reject
+      violations:
+        - SC-002
+  - id: availability-v1-global-spelling
+    scope: scalar
+    rules:
+      - SC-002
+    field: nonFunctional.availability.target
+    value: "99.9"
+    expected:
+      outcome: reject
+      violations:
+        - SC-002
+  - id: availability-wrong-yaml-type
+    scope: scalar
+    rules:
+      - SC-002
+    field: slos.services[].availability
+    value: 99.9
+    expected:
+      outcome: reject
+      violations:
+        - SC-002
+  - id: attempts-include-first
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.retryPolicy.maxAttempts
+    value: 3
+    expected:
+      outcome: accept
+      meaning:
+        totalExecutions: 3
+        maxRetries: 2
+  - id: attempts-one-disables-retry
+    scope: scalar
+    rules:
+      - SC-003
+    field: architecture.errorConventions.retry_policy.max_attempts
+    value: 1
+    expected:
+      outcome: accept
+      meaning:
+        totalExecutions: 1
+        maxRetries: 0
+  - id: attempts-zero
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.retryPolicy.maxAttempts
+    value: 0
+    expected:
+      outcome: reject
+      violations:
+        - SC-003
+  - id: threshold-upper-bound
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.circuitBreaker.threshold
+    value: 99
+    expected:
+      outcome: accept
+      meaning:
+        percentage: "99"
+  - id: threshold-out-of-range
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.circuitBreaker.threshold
+    value: 100
+    expected:
+      outcome: reject
+      violations:
+        - SC-003
+  - id: rate-per-minute
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.rateLimit.requestsPerMinute
+    value: 120
+    expected:
+      outcome: accept
+      meaning:
+        requests: 120
+        intervalSeconds: 60
+  - id: rate-zero
+    scope: scalar
+    rules:
+      - SC-003
+    field: resilience.rateLimit.requestsPerMinute
+    value: 0
+    expected:
+      outcome: reject
+      violations:
+        - SC-003
+  - id: retry-cap-below-base
+    scope: scalar
+    rules:
+      - SC-003
+    field: architecture.errorConventions.retry_policy
+    value:
+      max_attempts: 3
+      backoff: constant
+      base_ms: 200
+      cap_ms: 100
+    expected:
+      outcome: reject
+      violations:
+        - SC-003
+  - id: retry-field-spellings-preserved
+    scope: scalar
+    rules:
+      - SC-003
+      - SC-004
+    field: architecture.errorConventions.retry_policy
+    value:
+      max_attempts: 3
+      backoff: constant
+      base_ms: 200
+      cap_ms: 500
+    expected:
+      outcome: accept
+      value:
+        max_attempts: 3
+        backoff: constant
+        base_ms: 200
+        cap_ms: 500
+  - id: retry-name-is-not-alias
+    scope: scalar
+    rules:
+      - SC-004
+      - ST-001
+    field: resilience.retryPolicy
+    value:
+      max_attempts: 3
+    expected:
+      outcome: reject
+      violations:
+        - ST-001
+  - id: domain-explicit-key
+    scope: domain
+    rules:
+      - DM-001
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+    expected:
+      outcome: accept
+      effectiveFields:
+        User.id:
+          required: true
+          nullable: false
+          unique: true
+          generated: false
+  - id: domain-id-name-is-not-key
+    scope: domain
+    rules:
+      - DM-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+    expected:
+      outcome: reject
+      violations:
+        - DM-001
+  - id: domain-multiple-keys
+    scope: domain
+    rules:
+      - DM-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: other
+                type: uuid
+                primaryKey: true
+    expected:
+      outcome: reject
+      violations:
+        - DM-001
+  - id: domain-empty-fields
+    scope: domain
+    rules:
+      - DM-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields: []
+    expected:
+      outcome: reject
+      violations:
+        - DM-001
+  - id: domain-duplicate-field-names
+    scope: domain
+    rules:
+      - ID-002
+      - DM-001
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: id
+                type: string
+    expected:
+      outcome: reject
+      violations:
+        - ID-002
+  - id: domain-nullable-key
+    scope: domain
+    rules:
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+                nullable: true
+    expected:
+      outcome: reject
+      violations:
+        - DM-003
+  - id: domain-optional-key
+    scope: domain
+    rules:
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+                required: false
+    expected:
+      outcome: reject
+      violations:
+        - DM-003
+  - id: domain-generated-key
+    scope: domain
+    rules:
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+                generated: true
+    expected:
+      outcome: accept
+      effectiveFields:
+        User.id:
+          required: true
+          nullable: false
+          unique: true
+          generated: true
+  - id: domain-generated-and-default
+    scope: domain
+    rules:
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+                generated: true
+                default: 00000000-0000-0000-0000-000000000000
+    expected:
+      outcome: reject
+      violations:
+        - DM-003
+  - id: domain-optional-nullable
+    scope: domain
+    rules:
+      - DM-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: nickname
+                type: string
+                nullable: true
+    expected:
+      outcome: accept
+      effectiveFields:
+        User.nickname:
+          required: false
+          nullable: true
+          primaryKey: false
+          unique: false
+          generated: false
+  - id: domain-null-default-not-nullable
+    scope: domain
+    rules:
+      - DM-003
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: nickname
+                type: string
+                default: null
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-required-nullable-null-default
+    scope: domain
+    rules:
+      - DM-003
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: nickname
+                type: string
+                required: true
+                nullable: true
+                default: null
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - domain
+            - entities
+            - 0
+            - fields
+            - 1
+            - default
+          equals: null
+  - id: domain-custom-type-explicit
+    scope: domain
+    rules:
+      - DM-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: balance
+                type: x-Money
+    expected:
+      outcome: accept
+      opaqueTypes:
+        - x-Money
+  - id: domain-unknown-unprefixed-type
+    scope: domain
+    rules:
+      - DM-002
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: balance
+                type: Money
+    expected:
+      outcome: reject
+      violations:
+        - DM-002
+  - id: domain-default-wrong-type
+    scope: domain
+    rules:
+      - DM-002
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: active
+                type: boolean
+                default: "true"
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-decimal-boundary
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: total
+                type: decimal
+                precision: 5
+                scale: 2
+                default: 999.99
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - domain
+            - entities
+            - 0
+            - fields
+            - 1
+            - default
+          equals: 999.99
+  - id: domain-decimal-overflow
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: total
+                type: decimal
+                precision: 5
+                scale: 2
+                default: 1000
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-decimal-excess-scale
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: total
+                type: decimal
+                precision: 5
+                scale: 2
+                default: 1.234
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-scale-without-precision
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: total
+                type: decimal
+                scale: 2
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-default-outside-enum
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: state
+                type: string
+                enum:
+                  - new
+                  - done
+                default: paid
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-duplicate-enum
+    scope: domain
+    rules:
+      - DM-004
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: state
+                type: string
+                enum:
+                  - new
+                  - new
+    expected:
+      outcome: reject
+      violations:
+        - DM-004
+  - id: domain-foreign-key
+    scope: domain
+    rules:
+      - DM-005
+      - ID-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: userId
+                type: uuid
+                foreignKey: User.id
+    expected:
+      outcome: accept
+      targets:
+        - sourcePath:
+            - domain
+            - entities
+            - 1
+            - fields
+            - 1
+            - foreignKey
+          targetPath:
+            - domain
+            - entities
+            - 0
+            - fields
+            - 0
+  - id: domain-foreign-key-wrong-type
+    scope: domain
+    rules:
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: userId
+                type: string
+                foreignKey: User.id
+    expected:
+      outcome: reject
+      violations:
+        - DM-005
+  - id: domain-foreign-key-nonunique-target
+    scope: domain
+    rules:
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: email
+                type: string
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: email
+                type: string
+                foreignKey: User.email
+    expected:
+      outcome: reject
+      violations:
+        - DM-005
+  - id: domain-foreign-key-unknown-target
+    scope: domain
+    rules:
+      - DM-005
+      - ID-003
+    value:
+      domain:
+        entities:
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: userId
+                type: uuid
+                foreignKey: User.id
+    expected:
+      outcome: reject
+      violations:
+        - ID-003
+  - id: domain-self-foreign-key
+    scope: domain
+    rules:
+      - DM-005
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: managerId
+                type: uuid
+                foreignKey: User.id
+                nullable: true
+    expected:
+      outcome: accept
+      targets:
+        - sourcePath:
+            - domain
+            - entities
+            - 0
+            - fields
+            - 1
+            - foreignKey
+          targetPath:
+            - domain
+            - entities
+            - 0
+            - fields
+            - 0
+  - id: domain-root-relationship
+    scope: domain
+    rules:
+      - DM-006
+      - ID-003
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+        relationships:
+          - from: Order
+            to: User
+            type: many-to-one
+    expected:
+      outcome: accept
+      meaning:
+        from: Order
+        to: User
+        maxTargetsPerSource: 1
+        minimumParticipation: unspecified
+  - id: domain-unknown-relationship-type
+    scope: domain
+    rules:
+      - DM-006
+    value:
+      domain:
+        entities:
+          - name: User
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+          - name: Order
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+        relationships:
+          - from: Order
+            to: User
+            type: belongs-to
+    expected:
+      outcome: reject
+      violations:
+        - DM-006
+  - id: compliance-lift-and-deduplicate
+    scope: normalization
+    rules:
+      - NM-001
+      - NM-002
+    value:
+      nonFunctional:
+        compliance:
+          frameworks:
+            - gdpr
+            - soc2
+      constraints:
+        compliance:
+          - soc2
+          - iso27001
+    expected:
+      outcome: accept
+      value:
+        nonFunctional:
+          compliance: {}
+        constraints: {}
+        compliance:
+          frameworks:
+            - name: GDPR
+              applicable: true
+            - name: SOC2
+              applicable: true
+            - name: ISO27001
+              applicable: true
+      idempotent: true
+  - id: compliance-root-empty-wins
+    scope: normalization
+    rules:
+      - NM-002
+      - NM-003
+    value:
+      compliance:
+        frameworks: []
+      constraints:
+        compliance:
+          - gdpr
+    expected:
+      outcome: accept
+      value:
+        compliance:
+          frameworks: []
+        constraints: {}
+      warnings:
+        - rule: NM-002
+          kind: shadowed-compliance-shorthand
+      idempotent: true
+  - id: compliance-preserve-applicability
+    scope: normalization
+    rules:
+      - NM-002
+      - NM-003
+    value:
+      compliance:
+        frameworks:
+          - name: GDPR
+            applicable: false
+      constraints:
+        compliance:
+          - gdpr
+    expected:
+      outcome: accept
+      value:
+        compliance:
+          frameworks:
+            - name: GDPR
+              applicable: false
+        constraints: {}
+      warnings:
+        - rule: NM-002
+          kind: shadowed-compliance-shorthand
+      idempotent: true
+  - id: compliance-root-alias
+    scope: normalization
+    rules:
+      - NM-001
+      - NM-002
+    value:
+      compliance:
+        frameworks:
+          - name: ISO 27001
+    expected:
+      outcome: accept
+      value:
+        compliance:
+          frameworks:
+            - name: ISO27001
+      idempotent: true
+  - id: compliance-root-lowercase-rejected
+    scope: normalization
+    rules:
+      - NM-001
+    value:
+      compliance:
+        frameworks:
+          - name: gdpr
+    expected:
+      outcome: reject
+      violations:
+        - NM-001
+  - id: compliance-canonical-collision
+    scope: normalization
+    rules:
+      - NM-002
+    value:
+      compliance:
+        frameworks:
+          - name: ISO 27001
+          - name: ISO27001
+    expected:
+      outcome: reject
+      violations:
+        - NM-002
+  - id: normalization-preserves-explicit-values
+    scope: normalization
+    rules:
+      - NM-003
+    value:
+      x-values:
+        - null
+        - ""
+        - {}
+        - []
+        - 0
+        - false
+    expected:
+      outcome: accept
+      value:
+        x-values:
+          - null
+          - ""
+          - {}
+          - []
+          - 0
+          - false
+      idempotent: true
+  - id: merge-containing-file-wins
+    scope: composition
+    rules:
+      - IM-003
+      - IM-004
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: Containing file takes precedence.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - base
+      base.sdl.yaml: |
+        solution:
+          description: Imported baseline description.
+    expected:
+      outcome: accept
+      contributions:
+        - base.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - solution
+            - description
+          equals: Containing file takes precedence.
+      warnings:
+        - rule: IM-004
+          kind: scalar-override
+          path:
+            - solution
+            - description
+  - id: merge-sibling-order
+    scope: composition
+    rules:
+      - IM-003
+      - IM-004
+      - ST-002
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+          - b
+      a.sdl.yaml: |
+        auth:
+          strategy: oidc
+          provider: auth0
+      b.sdl.yaml: |
+        auth:
+          provider: custom
+    expected:
+      outcome: accept
+      contributions:
+        - a.sdl.yaml
+        - b.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - auth
+          equals:
+            strategy: oidc
+            provider: custom
+      warnings:
+        - rule: IM-004
+          kind: scalar-override
+          path:
+            - auth
+            - provider
+  - id: merge-diamond-does-not-replay-shared
+    scope: composition
+    rules:
+      - IM-002
+      - IM-003
+      - IM-004
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+          - b
+      a.sdl.yaml: |
+        imports:
+          - shared
+        auth:
+          provider: custom
+      b.sdl.yaml: |
+        imports:
+          - shared
+        features:
+          - name: Second branch
+      shared.sdl.yaml: |
+        auth:
+          strategy: oidc
+          provider: auth0
+    expected:
+      outcome: accept
+      contributions:
+        - shared.sdl.yaml
+        - a.sdl.yaml
+        - b.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - auth
+            - provider
+          equals: custom
+      warnings:
+        - rule: IM-004
+          kind: scalar-override
+          path:
+            - auth
+            - provider
+  - id: merge-identity-whole-entry
+    scope: composition
+    rules:
+      - IM-004
+      - ID-002
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+          - b
+      a.sdl.yaml: |
+        features:
+          - name: Login
+            priority: high
+            description: Earlier complete feature.
+          - name: Reports
+      b.sdl.yaml: |
+        features:
+          - name: Login
+            status: done
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - features
+          equals:
+            - name: Login
+              status: done
+            - name: Reports
+      warnings:
+        - rule: IM-004
+          kind: duplicate-array-item
+          path:
+            - features
+            - 0
+  - id: merge-empty-array-does-not-clear
+    scope: composition
+    rules:
+      - IM-004
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+        features: []
+      a.sdl.yaml: |
+        features:
+          - name: Login
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - features
+          equals:
+            - name: Login
+  - id: merge-extension-array-concatenates
+    scope: composition
+    rules:
+      - IM-004
+      - IM-006
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+          - b
+      a.sdl.yaml: |
+        solution: {}
+        x-items:
+          - name: same
+            value: 1
+      b.sdl.yaml: |
+        solution: {}
+        x-items:
+          - name: same
+            value: 2
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - x-items
+          equals:
+            - name: same
+              value: 1
+            - name: same
+              value: 2
+  - id: merge-null-open-value
+    scope: composition
+    rules:
+      - IM-004
+      - NM-003
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+        x-settings: null
+      a.sdl.yaml: |
+        solution: {}
+        x-settings:
+          enabled: true
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - x-settings
+          equals: null
+      warnings:
+        - rule: IM-004
+          kind: scalar-override
+          path:
+            - x-settings
+  - id: merge-local-duplicate-cannot-be-overridden
+    scope: composition
+    rules:
+      - ST-001
+      - ID-002
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+        features:
+          - name: Login
+      a.sdl.yaml: |
+        features:
+          - name: Login
+          - name: Login
+    expected:
+      outcome: reject
+      violations:
+        - ID-002
+  - id: merge-invalid-source-cannot-be-overridden
+    scope: composition
+    rules:
+      - ST-001
+      - SC-003
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+        resilience:
+          retryPolicy:
+            maxAttempts: 3
+      a.sdl.yaml: |
+        resilience:
+          retryPolicy:
+            maxAttempts: 0
+    expected:
+      outcome: reject
+      violations:
+        - SC-003
+  - id: merge-cross-module-relationship
+    scope: composition
+    rules:
+      - ST-002
+      - ID-003
+      - DM-006
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - relations
+          - entities
+      relations.sdl.yaml: |
+        domain:
+          relationships:
+            - from: Order
+              to: User
+              type: many-to-one
+      entities.sdl.yaml: |
+        domain:
+          entities:
+            - name: Order
+              fields:
+                - name: id
+                  type: uuid
+                  primaryKey: true
+            - name: User
+              fields:
+                - name: id
+                  type: uuid
+                  primaryKey: true
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - domain
+            - relationships
+            - 0
+          equals:
+            from: Order
+            to: User
+            type: many-to-one
+  - id: merge-mixed-version
+    scope: composition
+    rules:
+      - ST-003
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - old
+      old.sdl.yaml: |
+        sdlVersion: "1.1"
+        auth:
+          strategy: none
+    expected:
+      outcome: reject
+      violations:
+        - ST-003
+  - id: merge-cycle-to-root
+    scope: composition
+    rules:
+      - IM-003
+      - IM-005
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+      a.sdl.yaml: |
+        imports:
+          - solution
+        auth:
+          strategy: none
+    expected:
+      outcome: reject
+      violations:
+        - IM-003
+  - id: merge-missing-file
+    scope: composition
+    rules:
+      - IM-005
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - missing
+    expected:
+      outcome: reject
+      violations:
+        - IM-005
+  - id: merge-depth-limit
+    scope: composition
+    rules:
+      - IM-005
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+      a.sdl.yaml: |
+        imports:
+          - b
+      b.sdl.yaml: |
+        imports:
+          - c
+      c.sdl.yaml: |
+        imports:
+          - d
+      d.sdl.yaml: |
+        auth:
+          strategy: none
+    limits:
+      maxImportDepth: 3
+    expected:
+      outcome: resource-failure
+      violations:
+        - IM-005
+      partialResultIsConformant: false
+  - id: merge-depth-three-supported
+    scope: composition
+    rules:
+      - IM-005
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+      a.sdl.yaml: |
+        imports:
+          - b
+      b.sdl.yaml: |
+        imports:
+          - c
+      c.sdl.yaml: |
+        auth:
+          strategy: none
+    limits:
+      maxImportDepth: 3
+    expected:
+      outcome: accept
+      contributions:
+        - c.sdl.yaml
+        - b.sdl.yaml
+        - a.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - auth
+            - strategy
+          equals: none
+  - id: merge-canonical-path-once
+    scope: composition
+    rules:
+      - IM-001
+      - IM-002
+      - IM-003
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - name: first
+            path: shared
+          - name: second
+            path: parts/../shared
+      shared.sdl.yaml: |
+        features:
+          - name: Once
+    expected:
+      outcome: accept
+      contributions:
+        - shared.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - features
+          equals:
+            - name: Once
+  - id: merge-escape-root
+    scope: composition
+    rules:
+      - IM-001
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - ../outside
+    expected:
+      outcome: reject
+      violations:
+        - IM-001
+  - id: merge-duplicate-label
+    scope: composition
+    rules:
+      - IM-001
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - name: same
+            path: a
+          - name: same
+            path: b
+      a.sdl.yaml: |
+        auth:
+          strategy: none
+      b.sdl.yaml: |
+        features: []
+    expected:
+      outcome: reject
+      violations:
+        - IM-001
+  - id: merge-malformed-preferred-no-fallback
+    scope: composition
+    rules:
+      - IM-001
+      - IM-005
+      - IN-001
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - a
+      a.sdl.yaml: |
+        auth: [
+      a.sdl.yml: |
+        auth:
+          strategy: none
+    expected:
+      outcome: reject
+      violations:
+        - IN-001
+  - id: merge-sidecar-forbidden
+    scope: composition
+    rules:
+      - IM-006
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - sdl/assumptions.sdl.yaml
+      sdl/assumptions.sdl.yaml: |
+        x-notes:
+          - Review hosting
+    expected:
+      outcome: reject
+      violations:
+        - IM-006
+  - id: merge-extension-only-module-forbidden
+    scope: composition
+    rules:
+      - IM-006
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        solution:
+          name: Merge Example
+          description: A composition conformance example.
+          stage: MVP
+        architecture:
+          style: modular-monolith
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+        data:
+          primaryDatabase:
+            type: postgres
+            hosting: managed
+        imports:
+          - notes
+      notes.sdl.yaml: |
+        sdlVersion: "2.0"
+        x-notes:
+          - Review hosting
+    expected:
+      outcome: reject
+      violations:
+        - IM-006

@@ -1,0 +1,2425 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-full-document-draft
+cases:
+  - id: full-minimal
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution: &a1
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture: &a2
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data: &a3
+        databaseMode: none
+    sourceFile: ../examples/full-minimal.sdl.yaml
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+      meaning:
+        databaseIntent: none
+        insertedProjectType: false
+  - id: full-services-only
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+      - OB-008
+      - ID-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: microservices
+        services:
+          - name: status
+            kind: backend
+            implementation:
+              kind: external
+          - name: alerts
+            kind: worker
+            dependencies:
+              - status
+            implementation:
+              kind: external
+      data:
+        databaseMode: none
+      deployment:
+        environments:
+          - name: prod
+            projects: []
+            services:
+              - status
+              - alerts
+            placements: []
+      nonFunctional: {}
+    sourceFile: ../examples/full-services-only.sdl.yaml
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: microservices
+          services:
+            - name: status
+              kind: backend
+              implementation:
+                kind: external
+            - name: alerts
+              kind: worker
+              dependencies:
+                - status
+              implementation:
+                kind: external
+        data:
+          databaseMode: none
+        deployment:
+          environments:
+            - name: prod
+              projects: []
+              services:
+                - status
+                - alerts
+              placements: []
+        nonFunctional: {}
+  - id: full-production
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - OB-005
+      - OB-009
+      - SO-003
+      - SO-005
+      - SO-006
+      - DM-001
+      - DX-001
+      - EC-001
+      - EC-004
+      - EC-008
+      - ND-002
+      - NM-002
+      - SO-010
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        databaseMode: declared
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects:
+              - status-api
+            services: []
+            placements:
+              - project: status-api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: db-replica
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+                maxLag: 5s
+              - name: uploads
+                resource: storage/uploads
+                target: east
+                role: primary
+      sdlVersion: "2.0"
+      nonFunctional:
+        backup:
+          frequency: daily
+          retention: 7d
+          pointInTimeRecovery: false
+        security:
+          pii: true
+          encryptionAtRest: true
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+          - name: uploads-backup
+            environment: prod
+            resource: storage/uploads
+            method: periodic
+            rto: 1h
+            rpo: 1d
+            interval: 1d
+            retention: 7d
+            destination: west
+      costs:
+        scenarios:
+          - name: base
+            environment: prod
+            currency: USD
+            period: month
+            items:
+              - name: database
+                subject:
+                  kind: resource
+                  ref: database/main
+                amount: "100.00"
+              - name: uploads
+                subject:
+                  kind: resource
+                  ref: storage/uploads
+                amount: "20.00"
+            total: "120"
+            budget: "150"
+            assumptions:
+              - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+      design:
+        x-notes: Tokens intentionally unspecified
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: Growth
+        teams:
+          - name: platform
+        regions:
+          primary: us-east-1
+          secondary:
+            - us-west-2
+      architecture:
+        projects:
+          backend:
+            - name: status-api
+              framework: nodejs
+              language: typescript
+              path: apps/status
+              owner: platform
+              dataAccess:
+                - database: main
+                  mode: read-write
+        errorConventions:
+          envelope:
+            kind: object
+            codeField: error.code
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+              - name: error.detail
+                type: object
+              - name: error.detail.requestId
+                type: string
+                required: true
+          status_mapping:
+            - status: 503
+              code: SERVICE_UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+        style: modular-monolith
+      contracts:
+        apis:
+          - name: Status API
+            type: rest
+            owner: platform
+            component: status-api
+            errorConventions: standard
+            spec:
+              path: contracts/status.openapi.yaml
+              format: openapi
+              version: 3.1.1
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+        timeout:
+          default: 2s
+      domain:
+        entities:
+          - name: Status
+            owner: platform
+            managedBy: status-api
+            database: main
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: label
+                type: string
+                maxLength: 80
+            indexes:
+              - name: by_label
+                fields:
+                  - label
+      techDebt:
+        - id: single_api
+          decision: Use one backend process
+          reason: Small initial operations team
+          impact: Shared scaling boundary
+      constraints:
+        compliance:
+          - soc2
+    sourceFile: ../examples/full-production.sdl.yaml
+    resources:
+      contracts/status.openapi.yaml: |
+        openapi: "3.1.1"
+        info:
+          title: Status API
+          version: "1.0.0"
+        paths:
+          /status:
+            get:
+              operationId: getStatus
+              responses:
+                "200":
+                  description: Service is available.
+                "503":
+                  description: A transient service failure; follows the SDL standard error convention.
+                  headers:
+                    Retry-After:
+                      description: Required by this API's SDL convention; delay-seconds or HTTP-date.
+                      schema:
+                        type: string
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/UnavailableError"
+        components:
+          schemas:
+            UnavailableError:
+              type: object
+              required: [error]
+              properties:
+                error:
+                  type: object
+                  required: [code, message]
+                  properties:
+                    code:
+                      type: string
+                      const: SERVICE_UNAVAILABLE
+                    message:
+                      type: string
+                    detail:
+                      type: object
+                      required: [requestId]
+                      properties:
+                        requestId:
+                          type: string
+    resourceFiles:
+      contracts/status.openapi.yaml: ../examples/contracts/status.openapi.yaml
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        data:
+          primaryDatabase:
+            id: main
+            type: postgres
+            hosting: managed
+          databaseMode: declared
+          storage:
+            blobs:
+              id: uploads
+              provider: s3
+        deployment:
+          targets:
+            - name: east
+              cloud: aws
+              region: us-east-1
+            - name: west
+              cloud: aws
+              region: us-west-2
+          environments:
+            - name: prod
+              projects:
+                - status-api
+              services: []
+              placements:
+                - project: status-api
+                  target: east
+                  runtime: ecs
+                  ports:
+                    - number: 8080
+                      protocol: tcp
+              dataInstances:
+                - name: db
+                  resource: database/main
+                  target: east
+                  role: primary
+                - name: db-replica
+                  resource: database/main
+                  target: west
+                  role: replica
+                  replicatesFrom: db
+                  maxLag: 5s
+                - name: uploads
+                  resource: storage/uploads
+                  target: east
+                  role: primary
+        sdlVersion: "2.0"
+        nonFunctional:
+          backup:
+            frequency: daily
+            retention: 7d
+            pointInTimeRecovery: false
+          security:
+            pii: true
+            encryptionAtRest: true
+        backupDr:
+          plans:
+            - name: main-backup
+              environment: prod
+              resource: database/main
+              method: periodic
+              rto: 1h
+              rpo: 1h
+              interval: 1h
+              retention: 7d
+              destination: west
+            - name: uploads-backup
+              environment: prod
+              resource: storage/uploads
+              method: periodic
+              rto: 1h
+              rpo: 1d
+              interval: 1d
+              retention: 7d
+              destination: west
+        costs:
+          scenarios:
+            - name: base
+              environment: prod
+              currency: USD
+              period: month
+              items:
+                - name: database
+                  subject:
+                    kind: resource
+                    ref: database/main
+                  amount: "100.00"
+                - name: uploads
+                  subject:
+                    kind: resource
+                    ref: storage/uploads
+                  amount: "20.00"
+              total: "120"
+              budget: "150"
+              assumptions:
+                - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+        design:
+          x-notes: Tokens intentionally unspecified
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: Growth
+          teams:
+            - name: platform
+          regions:
+            primary: us-east-1
+            secondary:
+              - us-west-2
+        architecture:
+          projects:
+            backend:
+              - name: status-api
+                framework: nodejs
+                language: typescript
+                path: apps/status
+                owner: platform
+                dataAccess:
+                  - database: main
+                    mode: read-write
+          errorConventions:
+            envelope:
+              kind: object
+              codeField: error.code
+              fields:
+                - name: error
+                  type: object
+                  required: true
+                - name: error.code
+                  type: string
+                  required: true
+                - name: error.message
+                  type: string
+                  required: true
+                - name: error.detail
+                  type: object
+                - name: error.detail.requestId
+                  type: string
+                  required: true
+            status_mapping:
+              - status: 503
+                code: SERVICE_UNAVAILABLE
+                retryable: true
+                retry_after_header: true
+            retry_policy:
+              max_attempts: 4
+              backoff: exponential
+              base_ms: 200
+              cap_ms: 500
+          style: modular-monolith
+        contracts:
+          apis:
+            - name: Status API
+              type: rest
+              owner: platform
+              component: status-api
+              errorConventions: standard
+              spec:
+                path: contracts/status.openapi.yaml
+                format: openapi
+                version: 3.1.1
+        resilience:
+          retryPolicy:
+            maxAttempts: 3
+            backoff: fixed
+            initialInterval: 300ms
+          timeout:
+            default: 2s
+        domain:
+          entities:
+            - name: Status
+              owner: platform
+              managedBy: status-api
+              database: main
+              fields:
+                - name: id
+                  type: uuid
+                  primaryKey: true
+                - name: label
+                  type: string
+                  maxLength: 80
+              indexes:
+                - name: by_label
+                  fields:
+                    - label
+        constraints: {}
+        technicalDebt:
+          - id: single_api
+            decision: Use one backend process
+            reason: Small initial operations team
+            impact: Shared scaling boundary
+        compliance:
+          frameworks:
+            - name: SOC2
+              applicable: true
+      meaning:
+        costTotal: "120"
+        maximumAttempts: 3
+        topologyCovered: true
+        externalFormatValidated: false
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: full-missing-sdlversion
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-missing-solution
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-missing-architecture
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-missing-data
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-empty-architecture
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-empty-projects
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend: []
+          backend: []
+          mobile: []
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-libraries-only
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: modular-monolith
+        sharedLibraries:
+          - name: lib
+            language: typescript
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-one-microservice
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: microservices
+        services:
+          - name: status
+            kind: backend
+            implementation:
+              kind: external
+      data:
+        databaseMode: none
+      deployment:
+        environments:
+          - name: prod
+            projects: []
+            services:
+              - status
+            placements: []
+      nonFunctional: {}
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-nfr-empty
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional: {}
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        nonFunctional: {}
+  - id: full-availability-empty
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        availability: {}
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-002
+  - id: full-scaling-only
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-002
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        scaling:
+          expectedUsersMonth1: 0
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        nonFunctional:
+          scaling:
+            expectedUsersMonth1: 0
+  - id: full-negative-or-fraction-count-negative
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      constraints:
+        team:
+          developers: -1
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-negative-or-fraction-count-fraction
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      constraints:
+        team:
+          developers: 1.5
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-coverage-0
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - FD-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      testing:
+        coverage:
+          target: 0
+          enforce: false
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        testing:
+          coverage:
+            target: 0
+            enforce: false
+  - id: full-coverage-100
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - FD-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      testing:
+        coverage:
+          target: 100
+          enforce: false
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        testing:
+          coverage:
+            target: 100
+            enforce: false
+  - id: full-coverage-invalid-negative
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      testing:
+        coverage:
+          target: -1
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-coverage-invalid-101
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      testing:
+        coverage:
+          target: 101
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-coverage-invalid-0-5
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      testing:
+        coverage:
+          target: 0.5
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-pii-protected
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        security:
+          pii: true
+          encryptionAtRest: true
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        nonFunctional:
+          security:
+            pii: true
+            encryptionAtRest: true
+  - id: full-pii-false
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        security:
+          pii: true
+          encryptionAtRest: false
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-pii-missing
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        security:
+          pii: true
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-003
+  - id: full-phi-no-inference
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - FD-005
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        security:
+          phi: true
+          pii: false
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        nonFunctional:
+          security:
+            phi: true
+            pii: false
+  - id: full-orm-unrelated-mongodb
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - OB-005
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          backend:
+            - name: api
+              framework: dotnet
+              orm: ef-core
+              dataAccess:
+                - database: sql
+                  mode: read-write
+      data:
+        primaryDatabase:
+          id: mongo
+          type: mongodb
+          hosting: managed
+        secondaryDatabases:
+          - id: sql
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            backend:
+              - name: api
+                framework: dotnet
+                orm: ef-core
+                dataAccess:
+                  - database: sql
+                    mode: read-write
+        data:
+          primaryDatabase:
+            id: mongo
+            type: mongodb
+            hosting: managed
+          secondaryDatabases:
+            - id: sql
+              type: postgres
+              hosting: managed
+  - id: full-orm-explicit-mongodb
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+      - OB-005
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          backend:
+            - name: api
+              framework: dotnet
+              orm: ef-core
+              dataAccess:
+                - database: sql
+                  mode: read-write
+                - database: mongo
+                  mode: read
+      data:
+        primaryDatabase:
+          id: mongo
+          type: mongodb
+          hosting: managed
+        secondaryDatabases:
+          - id: sql
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - FD-003
+  - id: full-orm-unknown-binding
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          backend:
+            - name: api
+              framework: dotnet
+              orm: ef-core
+      data:
+        primaryDatabase:
+          id: mongo
+          type: mongodb
+          hosting: managed
+        secondaryDatabases:
+          - id: sql
+            type: postgres
+            hosting: managed
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            backend:
+              - name: api
+                framework: dotnet
+                orm: ef-core
+        data:
+          primaryDatabase:
+            id: mongo
+            type: mongodb
+            hosting: managed
+          secondaryDatabases:
+            - id: sql
+              type: postgres
+              hosting: managed
+  - id: full-orm-database-none
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - SO-001
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          backend:
+            - name: api
+              framework: dotnet
+              orm: ef-core
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - SO-001
+  - id: full-unknown-field
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+              unknown: true
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-001
+  - id: full-extension-preserved
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      x-metadata:
+        "false": false
+        zero: 0
+        empty: ""
+        "null": null
+        array: []
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        x-metadata:
+          "false": false
+          zero: 0
+          empty: ""
+          "null": null
+          array: []
+  - id: full-descriptive-text
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      evolution:
+        roadmap:
+          - targetDate: When funding arrives
+        costProjection:
+          currentMonthly: Not yet estimated
+      constraints:
+        timeline: After the trial
+        budgetAmount: To be agreed
+      testing:
+        coverage:
+          enforce: true
+      artifacts:
+        generate: []
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        evolution:
+          roadmap:
+            - targetDate: When funding arrives
+          costProjection:
+            currentMonthly: Not yet estimated
+        constraints:
+          timeline: After the trial
+          budgetAmount: To be agreed
+        testing:
+          coverage:
+            enforce: true
+        artifacts:
+          generate: []
+  - id: full-no-enterprise-heuristics
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - FD-005
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: Enterprise
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      constraints:
+        team:
+          developers: 0
+          devops: 0
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: Enterprise
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        constraints:
+          team:
+            developers: 0
+            devops: 0
+      meaning:
+        mandatoryStageWarnings: []
+        inferredCompliance: []
+  - id: full-feature-display-and-description
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - ID-001
+      - FD-004
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      features:
+        - name: Status page
+          description: Public status
+          stage: Growth
+          status: planned
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        sdlVersion: "2.0"
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        features:
+          - name: Status page
+            description: Public status
+            stage: Growth
+            status: planned
+  - id: full-null-optional
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional: null
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-001
+  - id: full-wrong-version
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - ST-003
+    value:
+      sdlVersion: "1.1"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - ST-003
+  - id: full-unknown-component-slo
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - ID-003
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      slos:
+        services:
+          - name: missing
+            availability: 99.9%
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - ID-003
+  - id: full-zero-duration
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - SC-001
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      nonFunctional:
+        performance:
+          apiResponseTime: 0ms
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - SC-001
+  - id: full-domain-no-key
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - DM-001
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      domain:
+        entities:
+          - name: Item
+            fields:
+              - name: id
+                type: string
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - DM-001
+  - id: full-description-short
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: Short
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+    expected:
+      outcome: reject
+      structure: reject
+      violations:
+        - FD-001
+  - id: full-canonical-production
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - ND-002
+      - NM-002
+      - SO-010
+    value:
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        databaseMode: declared
+        storage:
+          blobs:
+            id: uploads
+            provider: s3
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: us-west-2
+        environments:
+          - name: prod
+            projects:
+              - status-api
+            services: []
+            placements:
+              - project: status-api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+            dataInstances:
+              - name: db
+                resource: database/main
+                target: east
+                role: primary
+              - name: db-replica
+                resource: database/main
+                target: west
+                role: replica
+                replicatesFrom: db
+                maxLag: 5s
+              - name: uploads
+                resource: storage/uploads
+                target: east
+                role: primary
+      sdlVersion: "2.0"
+      nonFunctional:
+        backup:
+          frequency: daily
+          retention: 7d
+          pointInTimeRecovery: false
+        security:
+          pii: true
+          encryptionAtRest: true
+      backupDr:
+        plans:
+          - name: main-backup
+            environment: prod
+            resource: database/main
+            method: periodic
+            rto: 1h
+            rpo: 1h
+            interval: 1h
+            retention: 7d
+            destination: west
+          - name: uploads-backup
+            environment: prod
+            resource: storage/uploads
+            method: periodic
+            rto: 1h
+            rpo: 1d
+            interval: 1d
+            retention: 7d
+            destination: west
+      costs:
+        scenarios:
+          - name: base
+            environment: prod
+            currency: USD
+            period: month
+            items:
+              - name: database
+                subject:
+                  kind: resource
+                  ref: database/main
+                amount: "100.00"
+              - name: uploads
+                subject:
+                  kind: resource
+                  ref: storage/uploads
+                amount: "20.00"
+            total: "120"
+            budget: "150"
+            assumptions:
+              - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+      design:
+        x-notes: Tokens intentionally unspecified
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: Growth
+        teams:
+          - name: platform
+        regions:
+          primary: us-east-1
+          secondary:
+            - us-west-2
+      architecture:
+        projects:
+          backend:
+            - name: status-api
+              framework: nodejs
+              language: typescript
+              path: apps/status
+              owner: platform
+              dataAccess:
+                - database: main
+                  mode: read-write
+        errorConventions:
+          envelope:
+            kind: object
+            codeField: error.code
+            fields:
+              - name: error
+                type: object
+                required: true
+              - name: error.code
+                type: string
+                required: true
+              - name: error.message
+                type: string
+                required: true
+              - name: error.detail
+                type: object
+              - name: error.detail.requestId
+                type: string
+                required: true
+          status_mapping:
+            - status: 503
+              code: SERVICE_UNAVAILABLE
+              retryable: true
+              retry_after_header: true
+          retry_policy:
+            max_attempts: 4
+            backoff: exponential
+            base_ms: 200
+            cap_ms: 500
+        style: modular-monolith
+      contracts:
+        apis:
+          - name: Status API
+            type: rest
+            owner: platform
+            component: status-api
+            errorConventions: standard
+            spec:
+              path: contracts/status.openapi.yaml
+              format: openapi
+              version: 3.1.1
+      resilience:
+        retryPolicy:
+          maxAttempts: 3
+          backoff: fixed
+          initialInterval: 300ms
+        timeout:
+          default: 2s
+      domain:
+        entities:
+          - name: Status
+            owner: platform
+            managedBy: status-api
+            database: main
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: label
+                type: string
+                maxLength: 80
+            indexes:
+              - name: by_label
+                fields:
+                  - label
+      constraints: {}
+      technicalDebt:
+        - id: single_api
+          decision: Use one backend process
+          reason: Small initial operations team
+          impact: Shared scaling boundary
+      compliance:
+        frameworks:
+          - name: SOC2
+            applicable: true
+    resources:
+      contracts/status.openapi.yaml: |
+        openapi: "3.1.1"
+        info:
+          title: Status API
+          version: "1.0.0"
+        paths:
+          /status:
+            get:
+              operationId: getStatus
+              responses:
+                "200":
+                  description: Service is available.
+                "503":
+                  description: A transient service failure; follows the SDL standard error convention.
+                  headers:
+                    Retry-After:
+                      description: Required by this API's SDL convention; delay-seconds or HTTP-date.
+                      schema:
+                        type: string
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/UnavailableError"
+        components:
+          schemas:
+            UnavailableError:
+              type: object
+              required: [error]
+              properties:
+                error:
+                  type: object
+                  required: [code, message]
+                  properties:
+                    code:
+                      type: string
+                      const: SERVICE_UNAVAILABLE
+                    message:
+                      type: string
+                    detail:
+                      type: object
+                      required: [requestId]
+                      properties:
+                        requestId:
+                          type: string
+    expected:
+      outcome: accept
+      structure: accept
+      value:
+        data:
+          primaryDatabase:
+            id: main
+            type: postgres
+            hosting: managed
+          databaseMode: declared
+          storage:
+            blobs:
+              id: uploads
+              provider: s3
+        deployment:
+          targets:
+            - name: east
+              cloud: aws
+              region: us-east-1
+            - name: west
+              cloud: aws
+              region: us-west-2
+          environments:
+            - name: prod
+              projects:
+                - status-api
+              services: []
+              placements:
+                - project: status-api
+                  target: east
+                  runtime: ecs
+                  ports:
+                    - number: 8080
+                      protocol: tcp
+              dataInstances:
+                - name: db
+                  resource: database/main
+                  target: east
+                  role: primary
+                - name: db-replica
+                  resource: database/main
+                  target: west
+                  role: replica
+                  replicatesFrom: db
+                  maxLag: 5s
+                - name: uploads
+                  resource: storage/uploads
+                  target: east
+                  role: primary
+        sdlVersion: "2.0"
+        nonFunctional:
+          backup:
+            frequency: daily
+            retention: 7d
+            pointInTimeRecovery: false
+          security:
+            pii: true
+            encryptionAtRest: true
+        backupDr:
+          plans:
+            - name: main-backup
+              environment: prod
+              resource: database/main
+              method: periodic
+              rto: 1h
+              rpo: 1h
+              interval: 1h
+              retention: 7d
+              destination: west
+            - name: uploads-backup
+              environment: prod
+              resource: storage/uploads
+              method: periodic
+              rto: 1h
+              rpo: 1d
+              interval: 1d
+              retention: 7d
+              destination: west
+        costs:
+          scenarios:
+            - name: base
+              environment: prod
+              currency: USD
+              period: month
+              items:
+                - name: database
+                  subject:
+                    kind: resource
+                    ref: database/main
+                  amount: "100.00"
+                - name: uploads
+                  subject:
+                    kind: resource
+                    ref: storage/uploads
+                  amount: "20.00"
+              total: "120"
+              budget: "150"
+              assumptions:
+                - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+        design:
+          x-notes: Tokens intentionally unspecified
+        solution:
+          name: Status
+          description: A public service status application.
+          stage: Growth
+          teams:
+            - name: platform
+          regions:
+            primary: us-east-1
+            secondary:
+              - us-west-2
+        architecture:
+          projects:
+            backend:
+              - name: status-api
+                framework: nodejs
+                language: typescript
+                path: apps/status
+                owner: platform
+                dataAccess:
+                  - database: main
+                    mode: read-write
+          errorConventions:
+            envelope:
+              kind: object
+              codeField: error.code
+              fields:
+                - name: error
+                  type: object
+                  required: true
+                - name: error.code
+                  type: string
+                  required: true
+                - name: error.message
+                  type: string
+                  required: true
+                - name: error.detail
+                  type: object
+                - name: error.detail.requestId
+                  type: string
+                  required: true
+            status_mapping:
+              - status: 503
+                code: SERVICE_UNAVAILABLE
+                retryable: true
+                retry_after_header: true
+            retry_policy:
+              max_attempts: 4
+              backoff: exponential
+              base_ms: 200
+              cap_ms: 500
+          style: modular-monolith
+        contracts:
+          apis:
+            - name: Status API
+              type: rest
+              owner: platform
+              component: status-api
+              errorConventions: standard
+              spec:
+                path: contracts/status.openapi.yaml
+                format: openapi
+                version: 3.1.1
+        resilience:
+          retryPolicy:
+            maxAttempts: 3
+            backoff: fixed
+            initialInterval: 300ms
+          timeout:
+            default: 2s
+        domain:
+          entities:
+            - name: Status
+              owner: platform
+              managedBy: status-api
+              database: main
+              fields:
+                - name: id
+                  type: uuid
+                  primaryKey: true
+                - name: label
+                  type: string
+                  maxLength: 80
+              indexes:
+                - name: by_label
+                  fields:
+                    - label
+        constraints: {}
+        technicalDebt:
+          - id: single_api
+            decision: Use one backend process
+            reason: Small initial operations team
+            impact: Shared scaling boundary
+        compliance:
+          frameworks:
+            - name: SOC2
+              applicable: true
+      warnings:
+        - rule: SO-010
+          kind: compliance-mapping-missing
+  - id: full-modular-whole-entity
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-002
+      - FD-006
+      - ST-002
+      - IM-003
+      - IM-004
+      - DM-001
+    value: &a4
+      sdlVersion: "2.0"
+      solution: *a1
+      architecture: *a2
+      data: *a3
+      domain:
+        entities:
+          - name: Item
+            fields:
+              - name: key
+                type: uuid
+                primaryKey: true
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - parts/base
+        solution:
+          name: Status
+          description: A public service status application.
+        domain:
+          entities:
+            - name: Item
+              fields:
+                - name: key
+                  type: uuid
+                  primaryKey: true
+      parts/base.sdl.yaml: |
+        solution:
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        domain:
+          entities:
+            - name: Item
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: old
+                  type: string
+    expected:
+      outcome: accept
+      structure: accept
+      value: *a4
+      contributions:
+        - parts/base.sdl.yaml
+        - solution.sdl.yaml
+      warnings:
+        - rule: IM-004
+          kind: duplicate-array-item
+      meaning:
+        entityFields:
+          - key
+        oldFieldRetained: false
+  - id: full-modular-key-removed
+    scope: full-document
+    rules:
+      - FD-001
+      - FD-006
+      - IM-004
+      - DM-001
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Status
+        description: A public service status application.
+        stage: MVP
+      architecture:
+        style: serverless
+        projects:
+          frontend:
+            - name: web
+              framework: react
+      data:
+        databaseMode: none
+      domain:
+        entities:
+          - name: Item
+            fields:
+              - name: key
+                type: uuid
+                primaryKey: false
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - parts/base
+        solution:
+          name: Status
+          description: A public service status application.
+        domain:
+          entities:
+            - name: Item
+              fields:
+                - name: key
+                  type: uuid
+                  primaryKey: false
+      parts/base.sdl.yaml: |
+        solution:
+          stage: MVP
+        architecture:
+          style: serverless
+          projects:
+            frontend:
+              - name: web
+                framework: react
+        data:
+          databaseMode: none
+        domain:
+          entities:
+            - name: Item
+              fields:
+                - name: id
+                  type: integer
+                  primaryKey: true
+                - name: old
+                  type: string
+    expected:
+      outcome: reject
+      structure: accept
+      violations:
+        - DM-001
+      warnings:
+        - rule: IM-004
+          kind: duplicate-array-item

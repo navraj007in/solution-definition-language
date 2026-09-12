@@ -1,0 +1,3561 @@
+format: sdl-conformance-cases/v1
+target: sdl-v2-bindings-draft
+cases:
+  - id: owner-team-reference
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: platform
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        owners:
+          api: platform
+  - id: owner-component-is-not-team
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: worker
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-001
+  - id: owner-team-and-component-same-spelling
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+          - name: api
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        owners:
+          api: api
+  - id: owner-duplicate-team
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+          - name: platform
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-001
+  - id: owner-omitted-is-unspecified
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        owners:
+          api: unspecified
+          worker: unspecified
+  - id: owner-api-independent-of-component
+    scope: bindings
+    rules:
+      - OB-001
+      - OB-004
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: platform
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      contracts:
+        apis:
+          - name: Public API
+            owner: product
+            component: api
+    expected:
+      outcome: accept
+      meaning:
+        apiOwner: product
+        componentOwner: platform
+  - id: binding-many-services-one-project
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+          - name: checkout
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        serviceProjects:
+          billing:
+            - api
+          checkout:
+            - api
+  - id: binding-service-spans-projects
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+                - worker
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        serviceProjects:
+          billing:
+            - api
+            - worker
+  - id: binding-project-reference-is-not-service
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - other
+          - name: other
+            kind: backend
+            implementation:
+              kind: external
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-002
+  - id: binding-external-has-no-projects
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: identity
+            kind: backend
+            implementation:
+              kind: external
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        serviceProjects:
+          identity: []
+        external:
+          - identity
+  - id: binding-external-projects-contradiction
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: identity
+            kind: backend
+            implementation:
+              kind: external
+              projects:
+                - api
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-002
+  - id: binding-empty-internal-projects
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-002
+  - id: binding-mobile-is-not-hosted-implementation
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+          mobile:
+            - name: phone
+              framework: swift
+              platform: ios
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - phone
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-002
+  - id: binding-unknown-implementation-allowed-unselected
+    scope: bindings
+    rules:
+      - OB-002
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: planned
+            kind: backend
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        implementation:
+          planned: unspecified
+  - id: project-language-pair
+    scope: bindings
+    rules:
+      - OB-003
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              language: typescript
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        primaryLanguage: typescript
+  - id: project-language-pair-invalid
+    scope: bindings
+    rules:
+      - OB-003
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              language: python
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-003
+  - id: project-source-repository-root
+    scope: bindings
+    rules:
+      - OB-003
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: .
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        sourceBase: repository-root
+        path: .
+  - id: project-source-traversal
+    scope: bindings
+    rules:
+      - OB-003
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: ../api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-003
+  - id: project-source-absolute
+    scope: bindings
+    rules:
+      - OB-003
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: /srv/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-003
+  - id: api-component-reference
+    scope: bindings
+    rules:
+      - OB-004
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      contracts:
+        apis:
+          - name: Public API
+            component: api
+    expected:
+      outcome: accept
+      targets:
+        - sourcePath:
+            - contracts
+            - apis
+            - 0
+            - component
+          targetPath:
+            - architecture
+            - projects
+            - backend
+            - 0
+  - id: api-component-unknown
+    scope: bindings
+    rules:
+      - OB-004
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      contracts:
+        apis:
+          - name: Public API
+            component: missing
+    expected:
+      outcome: reject
+      violations:
+        - OB-004
+  - id: database-id-not-physical-name
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: physical_db
+                  mode: read
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+          name: physical_db
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: database-id-required
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: database-id-duplicate
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: main
+            type: postgres
+            hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: database-access-duplicate-not-unioned
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+                - database: main
+                  mode: write
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: database-service-access-covered-by-union
+    scope: bindings
+    rules:
+      - OB-002
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+              dataAccess:
+                - database: main
+                  mode: write
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+                - worker
+            dataAccess:
+              - database: main
+                mode: read-write
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        servicePermissions:
+          billing:
+            main:
+              - read
+              - write
+  - id: database-service-access-not-covered
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+            dataAccess:
+              - database: main
+                mode: write
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: entity-manager-write-access
+    scope: bindings
+    rules:
+      - OB-001
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: platform
+              dataAccess:
+                - database: main
+                  mode: write
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      domain:
+        entities:
+          - name: Invoice
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+            owner: product
+            database: main
+            managedBy: api
+    expected:
+      outcome: accept
+      meaning:
+        manager: api
+        entityOwner: product
+        store: main
+  - id: entity-manager-read-only
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              dataAccess:
+                - database: main
+                  mode: read
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      domain:
+        entities:
+          - name: Invoice
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+            database: main
+            managedBy: api
+    expected:
+      outcome: reject
+      violations:
+        - OB-005
+  - id: entity-partial-binding-does-not-infer
+    scope: bindings
+    rules:
+      - OB-005
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      domain:
+        entities:
+          - name: Invoice
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+            managedBy: api
+    expected:
+      outcome: accept
+      meaning:
+        manager: api
+        store: unspecified
+  - id: integration-builtin-reference
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              usesIntegrations:
+                - builtin/payments
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        payments:
+          provider: stripe
+    expected:
+      outcome: accept
+      meaning:
+        uses:
+          api:
+            - builtin/payments
+  - id: integration-vendor-not-identity
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              usesIntegrations:
+                - stripe
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        payments:
+          provider: stripe
+    expected:
+      outcome: reject
+      violations:
+        - OB-006
+  - id: integration-empty-slot-no-target
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              usesIntegrations:
+                - builtin/payments
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        payments: {}
+    expected:
+      outcome: reject
+      violations:
+        - OB-006
+  - id: integration-auth-no-duplicate-vendor-entry
+    scope: bindings
+    rules:
+      - OB-006
+      - OB-014
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              usesIntegrations:
+                - builtin/auth
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      auth:
+        strategy: oidc
+        provider: auth0
+    expected:
+      outcome: accept
+      meaning:
+        target: auth
+        duplicateCustomEntryRequired: false
+      warnings: []
+      forbiddenWarnings:
+        - rule: OB-014
+          kind: unused-integration
+  - id: integration-auth-none-with-provider
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      auth:
+        strategy: none
+        provider: auth0
+    expected:
+      outcome: reject
+      violations:
+        - OB-006
+  - id: integration-service-use-covered
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+              usesIntegrations:
+                - custom/crm
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+                - worker
+            usesIntegrations:
+              - custom/crm
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        custom:
+          - name: crm
+            apiType: rest
+    expected:
+      outcome: accept
+      meaning:
+        carriedBy:
+          custom/crm:
+            - worker
+  - id: integration-service-use-not-covered
+    scope: bindings
+    rules:
+      - OB-006
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+            usesIntegrations:
+              - custom/crm
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        custom:
+          - name: crm
+            apiType: rest
+    expected:
+      outcome: reject
+      violations:
+        - OB-006
+  - id: integration-unreferenced-advisory
+    scope: bindings
+    rules:
+      - OB-014
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      integrations:
+        email:
+          provider: sendgrid
+    expected:
+      outcome: accept
+      meaning:
+        unreferenced:
+          - builtin/email
+      warnings:
+        - rule: OB-014
+          kind: unused-integration
+  - id: integration-auth-system-use
+    scope: bindings
+    rules:
+      - OB-006
+      - OB-014
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      auth:
+        strategy: oidc
+        provider: auth0
+    expected:
+      outcome: accept
+      meaning:
+        implicitlyUsed:
+          - builtin/auth
+      warnings: []
+      forbiddenWarnings:
+        - rule: OB-014
+          kind: unused-integration
+  - id: environment-canonical-location
+    scope: bindings
+    rules:
+      - OB-007
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: accept
+      meaning:
+        selectedProjects:
+          test:
+            - api
+  - id: environment-old-ci-location-rejected
+    scope: bindings
+    rules:
+      - OB-007
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        ciCd:
+          provider: github-actions
+          environments:
+            - name: test
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: environment-global-cloud-rejected
+    scope: bindings
+    rules:
+      - OB-007
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        cloud: aws
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: environment-global-runtime-rejected
+    scope: bindings
+    rules:
+      - OB-007
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        runtime:
+          backend: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: environment-target-duplicate
+    scope: bindings
+    rules:
+      - OB-007
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: environment-same-region-distinct-targets
+    scope: bindings
+    rules:
+      - OB-007
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: isolated
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        distinctNamespaces:
+          - east
+          - isolated
+  - id: environment-selection-is-not-every-project
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: accept
+      meaning:
+        covered:
+          - api
+        notSelected:
+          - worker
+  - id: environment-selected-project-unplaced
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements: []
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-placement-not-selected
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects: []
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-unknown-target
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: missing
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-service-cannot-be-placed
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - billing
+            services: []
+            placements:
+              - project: billing
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-service-implementation-required
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects: []
+            services:
+              - billing
+            placements: []
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-all-implementation-projects-required
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+                - worker
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services:
+              - billing
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-active-dependency-required
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - api
+            dependencies:
+              - identity
+          - name: identity
+            kind: backend
+            implementation:
+              kind: external
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services:
+              - billing
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: environment-external-service-needs-no-placement
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services:
+          - name: identity
+            kind: backend
+            implementation:
+              kind: external
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects: []
+            services:
+              - identity
+            placements: []
+    expected:
+      outcome: accept
+      meaning:
+        activeExternalServices:
+          - identity
+        placements: []
+  - id: environment-duplicate-placement
+    scope: bindings
+    rules:
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-008
+  - id: placement-path-required
+    scope: bindings
+    rules:
+      - OB-009
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-009
+  - id: placement-runtime-required
+    scope: bindings
+    rules:
+      - OB-009
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+    expected:
+      outcome: reject
+      violations:
+        - OB-009
+  - id: placement-runtime-open-identifier
+    scope: bindings
+    rules:
+      - OB-009
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: custom-runtime
+    expected:
+      outcome: accept
+      meaning:
+        declaredRuntime: custom-runtime
+        providerCapability: not-established
+  - id: ports-private-project-scopes
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+              - worker
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+              - project: worker
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+    expected:
+      outcome: accept
+      meaning:
+        reservations: 2
+        collisions: 0
+  - id: ports-shared-network-collision
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+              - worker
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+              - project: worker
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+    expected:
+      outcome: reject
+      violations:
+        - OB-010
+  - id: ports-tcp-udp-distinct
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+              - worker
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+              - project: worker
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: udp
+                    network: host
+    expected:
+      outcome: accept
+      meaning:
+        reservations: 2
+        collisions: 0
+  - id: ports-out-of-range
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 65536
+                    protocol: tcp
+    expected:
+      outcome: reject
+      violations:
+        - OB-010
+  - id: ports-duplicate-in-placement
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                  - number: 8080
+                    protocol: tcp
+    expected:
+      outcome: reject
+      violations:
+        - OB-010
+  - id: ports-cross-environment-shared-collision
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: staging
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+          - name: production
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+    expected:
+      outcome: reject
+      violations:
+        - OB-010
+  - id: ports-cross-environment-private-isolation
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: staging
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+          - name: production
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+    expected:
+      outcome: accept
+      meaning:
+        reservations: 2
+        collisions: 0
+  - id: ports-distinct-target-isolation
+    scope: bindings
+    rules:
+      - OB-010
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+          - name: west
+            cloud: aws
+            region: eu-west-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+              - project: api
+                target: west
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+                    network: host
+    expected:
+      outcome: accept
+      meaning:
+        reservations: 2
+        collisions: 0
+  - id: region-policy-contained
+    scope: bindings
+    rules:
+      - OB-011
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+        regions:
+          primary: us-east-1
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: accept
+      meaning:
+        usedRegions:
+          - us-east-1
+  - id: region-policy-rejects-outside
+    scope: bindings
+    rules:
+      - OB-011
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+        regions:
+          primary: eu-west-1
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-011
+  - id: region-unused-target-does-not-deploy
+    scope: bindings
+    rules:
+      - OB-011
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+        regions:
+          primary: eu-west-1
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+    expected:
+      outcome: accept
+      meaning:
+        usedRegions: []
+  - id: region-global-is-not-wildcard
+    scope: bindings
+    rules:
+      - OB-011
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+        regions:
+          primary: global
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+    expected:
+      outcome: reject
+      violations:
+        - OB-011
+  - id: region-cloudformation-mixed-cloud
+    scope: bindings
+    rules:
+      - OB-011
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: gcp
+            region: us-central1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+        infrastructure:
+          iac: cloudformation
+    expected:
+      outcome: reject
+      violations:
+        - OB-011
+  - id: cross-database-reference-advisory
+    scope: bindings
+    rules:
+      - OB-005
+      - OB-013
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: warehouse
+            type: postgres
+            hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      domain:
+        entities:
+          - name: Invoice
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+            database: main
+          - name: Revenue
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: invoiceId
+                type: uuid
+                foreignKey: Invoice.id
+            database: warehouse
+    expected:
+      outcome: accept
+      meaning:
+        fromStore: warehouse
+        toStore: main
+      warnings:
+        - rule: OB-013
+          kind: cross-database-reference
+  - id: cross-database-unknown-is-not-local
+    scope: bindings
+    rules:
+      - OB-013
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+      domain:
+        entities:
+          - name: Invoice
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+            database: main
+          - name: Revenue
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+        relationships:
+          - from: Revenue
+            to: Invoice
+    expected:
+      outcome: accept
+      meaning:
+        locality: unspecified
+      warnings: []
+      forbiddenWarnings:
+        - rule: OB-013
+          kind: cross-database-reference
+  - id: binding-array-duplicate-environment
+    scope: bindings
+    rules:
+      - OB-007
+      - OB-012
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects: []
+            services: []
+            placements: []
+          - name: test
+            projects: []
+            services: []
+            placements: []
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: binding-worked-example
+    scope: bindings
+    rules:
+      - OB-001
+      - OB-002
+      - OB-003
+      - OB-004
+      - OB-005
+      - OB-006
+      - OB-007
+      - OB-008
+      - OB-009
+      - OB-010
+      - OB-011
+      - OB-012
+      - OB-013
+      - OB-014
+    value:
+      sdlVersion: "2.0"
+      solution:
+        name: Binding Example
+        description: An illustrative billing system for reviewing ownership and hosting
+          bindings.
+        stage: Growth
+        teams:
+          - name: platform
+            displayName: Platform Engineering
+          - name: billing
+            displayName: Billing Product
+        regions:
+          primary: us-east-1
+          secondary:
+            - eu-west-1
+      architecture:
+        style: modular-monolith
+        projects:
+          backend:
+            - name: billing-app
+              owner: platform
+              path: apps/billing
+              framework: nodejs
+              language: typescript
+              usesIntegrations:
+                - builtin/payments
+              dataAccess:
+                - database: operational
+                  mode: read-write
+                - database: analytics
+                  mode: read
+            - name: reporting-worker
+              owner: platform
+              path: apps/reporting
+              framework: nodejs
+              language: typescript
+              type: worker
+              usesIntegrations:
+                - custom/warehouse
+              dataAccess:
+                - database: analytics
+                  mode: write
+        services:
+          - name: billing
+            owner: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - billing-app
+            dependencies:
+              - identity
+            usesIntegrations:
+              - builtin/payments
+            dataAccess:
+              - database: operational
+                mode: read-write
+          - name: checkout
+            owner: billing
+            kind: backend
+            implementation:
+              kind: projects
+              projects:
+                - billing-app
+            dependencies:
+              - billing
+              - identity
+          - name: reporting
+            owner: billing
+            kind: worker
+            implementation:
+              kind: projects
+              projects:
+                - billing-app
+                - reporting-worker
+            usesIntegrations:
+              - custom/warehouse
+            dataAccess:
+              - database: analytics
+                mode: read-write
+          - name: identity
+            owner: platform
+            kind: backend
+            implementation:
+              kind: external
+            usesIntegrations:
+              - builtin/auth
+      auth:
+        strategy: oidc
+        provider: auth0
+        owner: platform
+      integrations:
+        payments:
+          provider: stripe
+          owner: billing
+        custom:
+          - name: warehouse
+            apiType: rest
+            owner: platform
+      contracts:
+        apis:
+          - name: Billing API
+            type: rest
+            owner: billing
+            component: billing-app
+      data:
+        primaryDatabase:
+          id: operational
+          name: billing_db
+          owner: platform
+          type: postgres
+          hosting: managed
+        secondaryDatabases:
+          - id: analytics
+            name: reporting_db
+            owner: platform
+            type: postgres
+            hosting: managed
+      domain:
+        entities:
+          - name: Invoice
+            owner: billing
+            managedBy: billing
+            database: operational
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+          - name: RevenueRecord
+            owner: billing
+            managedBy: reporting
+            database: analytics
+            fields:
+              - name: id
+                type: uuid
+                primaryKey: true
+              - name: invoiceId
+                type: uuid
+                foreignKey: Invoice.id
+      deployment:
+        targets:
+          - name: east
+            owner: platform
+            cloud: aws
+            region: us-east-1
+          - name: west
+            owner: platform
+            cloud: aws
+            region: eu-west-1
+        environments:
+          - name: staging
+            owner: platform
+            projects:
+              - billing-app
+              - reporting-worker
+            services:
+              - billing
+              - checkout
+              - reporting
+              - identity
+            placements:
+              - project: billing-app
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+              - project: reporting-worker
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+          - name: production
+            owner: platform
+            projects:
+              - billing-app
+              - reporting-worker
+            services:
+              - billing
+              - checkout
+              - reporting
+              - identity
+            requiresTests: true
+            placements:
+              - project: billing-app
+                target: east
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+              - project: billing-app
+                target: west
+                runtime: ecs
+                ports:
+                  - number: 8080
+                    protocol: tcp
+              - project: reporting-worker
+                target: east
+                runtime: ecs
+        ciCd:
+          provider: github-actions
+        infrastructure:
+          iac: terraform
+    expected:
+      outcome: accept
+      meaning:
+        teams: 2
+        projects: 2
+        internalServices: 3
+        externalServices: 1
+        environments: 2
+        placements: 5
+      warnings:
+        - rule: OB-013
+          kind: cross-database-reference
+    sourceFile: ../examples/ownership-bindings.sdl.yaml
+  - id: binding-cross-module-team-reference
+    scope: composition
+    rules:
+      - OB-001
+      - OB-012
+      - ST-002
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - project
+          - team
+      project.sdl.yaml: |
+        architecture:
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+                path: apps/api
+                owner: platform
+      team.sdl.yaml: |
+        solution:
+          teams:
+            - name: platform
+    expected:
+      outcome: accept
+      contributions:
+        - project.sdl.yaml
+        - team.sdl.yaml
+        - solution.sdl.yaml
+      assertions:
+        - path:
+            - architecture
+            - projects
+            - backend
+            - 0
+            - owner
+          equals: platform
+  - id: binding-cross-module-environment-collision
+    scope: composition
+    rules:
+      - OB-007
+      - OB-012
+      - IM-004
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - a
+          - b
+      a.sdl.yaml: |
+        deployment:
+          environments:
+            - name: test
+              projects: []
+              services: []
+              placements: []
+      b.sdl.yaml: |
+        deployment:
+          environments:
+            - name: test
+              projects: []
+              services: []
+              placements: []
+    expected:
+      outcome: reject
+      violations:
+        - OB-007
+  - id: binding-project-path-not-rebased
+    scope: composition
+    rules:
+      - OB-003
+      - OB-012
+    root: solution.sdl.yaml
+    files:
+      solution.sdl.yaml: |
+        sdlVersion: "2.0"
+        imports:
+          - name: project
+            path: parts/project
+      parts/project.sdl.yaml: |
+        architecture:
+          projects:
+            backend:
+              - name: api
+                framework: nodejs
+                path: apps/api
+    expected:
+      outcome: accept
+      assertions:
+        - path:
+            - architecture
+            - projects
+            - backend
+            - 0
+            - path
+          equals: apps/api
+  - id: owner-target-unknown-team
+    scope: bindings
+    rules:
+      - OB-001
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+            owner: missing
+    expected:
+      outcome: reject
+      violations:
+        - OB-001
+  - id: owner-environment-independent-of-project
+    scope: bindings
+    rules:
+      - OB-001
+      - OB-007
+      - OB-008
+    value:
+      solution:
+        teams:
+          - name: platform
+          - name: product
+      architecture:
+        projects:
+          backend:
+            - name: api
+              framework: nodejs
+              path: apps/api
+              owner: product
+            - name: worker
+              framework: nodejs
+              path: apps/worker
+        services: []
+      data:
+        primaryDatabase:
+          id: main
+          type: postgres
+          hosting: managed
+      deployment:
+        targets:
+          - name: east
+            cloud: aws
+            region: us-east-1
+        environments:
+          - name: test
+            projects:
+              - api
+            services: []
+            placements:
+              - project: api
+                target: east
+                runtime: ecs
+            owner: platform
+    expected:
+      outcome: accept
+      meaning:
+        projectOwner: product
+        environmentOwner: platform

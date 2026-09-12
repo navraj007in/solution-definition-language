@@ -1,0 +1,26 @@
+# Scoped normalization example, not a complete SDL v2 document.
+sdlVersion: "2.0"
+technicalDebt:
+  - id: D1
+    decision: Use a shared database
+    reason: Reduce initial operations
+    impact: Coupled migrations
+techDebt:
+  - id: D1
+    decision: Use a shared database
+    reason: Reduce initial operations
+    impact: Coupled migrations
+  - id: D2
+    decision: Use a shared database
+    reason: Reduce initial operations
+    impact: Coupled migrations
+nonFunctional:
+  compliance:
+    frameworks:
+      - gdpr
+constraints:
+  compliance:
+    - gdpr
+design:
+  empty: {}
+  flag: false

@@ -1,0 +1,192 @@
+# Complete SDL v2 draft example.
+data:
+  primaryDatabase:
+    id: main
+    type: postgres
+    hosting: managed
+  databaseMode: declared
+  storage:
+    blobs:
+      id: uploads
+      provider: s3
+deployment:
+  targets:
+    - name: east
+      cloud: aws
+      region: us-east-1
+    - name: west
+      cloud: aws
+      region: us-west-2
+  environments:
+    - name: prod
+      projects:
+        - status-api
+      services: []
+      placements:
+        - project: status-api
+          target: east
+          runtime: ecs
+          ports:
+            - number: 8080
+              protocol: tcp
+      dataInstances:
+        - name: db
+          resource: database/main
+          target: east
+          role: primary
+        - name: db-replica
+          resource: database/main
+          target: west
+          role: replica
+          replicatesFrom: db
+          maxLag: 5s
+        - name: uploads
+          resource: storage/uploads
+          target: east
+          role: primary
+sdlVersion: "2.0"
+nonFunctional:
+  backup:
+    frequency: daily
+    retention: 7d
+    pointInTimeRecovery: false
+  security:
+    pii: true
+    encryptionAtRest: true
+backupDr:
+  plans:
+    - name: main-backup
+      environment: prod
+      resource: database/main
+      method: periodic
+      rto: 1h
+      rpo: 1h
+      interval: 1h
+      retention: 7d
+      destination: west
+    - name: uploads-backup
+      environment: prod
+      resource: storage/uploads
+      method: periodic
+      rto: 1h
+      rpo: 1d
+      interval: 1d
+      retention: 7d
+      destination: west
+costs:
+  scenarios:
+    - name: base
+      environment: prod
+      currency: USD
+      period: month
+      items:
+        - name: database
+          subject:
+            kind: resource
+            ref: database/main
+          amount: "100.00"
+        - name: uploads
+          subject:
+            kind: resource
+            ref: storage/uploads
+          amount: "20.00"
+      total: "120"
+      budget: "150"
+      assumptions:
+        - Illustrative authored estimates; one monthly reporting period, including replicas and backup storage.
+design:
+  x-notes: Tokens intentionally unspecified
+solution:
+  name: Status
+  description: A public service status application.
+  stage: Growth
+  teams:
+    - name: platform
+  regions:
+    primary: us-east-1
+    secondary:
+      - us-west-2
+architecture:
+  projects:
+    backend:
+      - name: status-api
+        framework: nodejs
+        language: typescript
+        path: apps/status
+        owner: platform
+        dataAccess:
+          - database: main
+            mode: read-write
+  errorConventions:
+    envelope:
+      kind: object
+      codeField: error.code
+      fields:
+        - name: error
+          type: object
+          required: true
+        - name: error.code
+          type: string
+          required: true
+        - name: error.message
+          type: string
+          required: true
+        - name: error.detail
+          type: object
+        - name: error.detail.requestId
+          type: string
+          required: true
+    status_mapping:
+      - status: 503
+        code: SERVICE_UNAVAILABLE
+        retryable: true
+        retry_after_header: true
+    retry_policy:
+      max_attempts: 4
+      backoff: exponential
+      base_ms: 200
+      cap_ms: 500
+  style: modular-monolith
+contracts:
+  apis:
+    - name: Status API
+      type: rest
+      owner: platform
+      component: status-api
+      errorConventions: standard
+      spec:
+        path: contracts/status.openapi.yaml
+        format: openapi
+        version: 3.1.1
+resilience:
+  retryPolicy:
+    maxAttempts: 3
+    backoff: fixed
+    initialInterval: 300ms
+  timeout:
+    default: 2s
+domain:
+  entities:
+    - name: Status
+      owner: platform
+      managedBy: status-api
+      database: main
+      fields:
+        - name: id
+          type: uuid
+          primaryKey: true
+        - name: label
+          type: string
+          maxLength: 80
+      indexes:
+        - name: by_label
+          fields:
+            - label
+techDebt:
+  - id: single_api
+    decision: Use one backend process
+    reason: Small initial operations team
+    impact: Shared scaling boundary
+constraints:
+  compliance:
+    - soc2

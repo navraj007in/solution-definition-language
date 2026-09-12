@@ -1,0 +1,28 @@
+{
+  "format": "sdl-release-manifest/v1",
+  "id": "sdl-v1.1-2026-09-12",
+  "languageVersion": "1.1",
+  "status": "active",
+  "published": "2026-09-12",
+  "authority": [
+    {
+      "path": "spec/SDL-v1.1.md",
+      "role": "normative-prose",
+      "precedence": 1,
+      "sha256": "97cf85205dbe3213ed87b7fc8e8ab71884048d9f04d079f7daf0fbc2cb5e5ac4"
+    },
+    {
+      "path": "schema/sdl-v1.1.schema.json",
+      "role": "structural-schema",
+      "precedence": 2,
+      "sha256": "3abf81c4b708cdb04c259411483cbea1d51a72f64bc65070fb11bd73b2191465"
+    },
+    {
+      "path": "reference/canonical-contract.md",
+      "role": "derived-reference",
+      "precedence": 3,
+      "sha256": "a6ab68c8e952360bf61b565f85a4aa6816d7ee19fbb21b8351b3c6bced664735"
+    }
+  ],
+  "notes": "Preserved active v1.1 contract after the September 2026 editorial consistency amendments; documented definition gaps remain historical v1.1 behavior and are not backfilled from v2."
+}
