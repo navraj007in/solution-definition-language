@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Documentation
+
+- Completed D07 for the unreleased SDL v2 draft: published content-addressed v1.1 and v2 draft.1 baselines, classified every document/report rule through a 22-record migration inventory, defined migration plan/result schemas, and added release/migration cases. This does not promote v2 or implement package migration.
+
+- Consolidated the SDL v2 draft into a self-contained structural schema and complete field catalogue, with explicit requiredness, retained-field meanings, ORM/access compatibility, and historical rule dispositions. Defined versioned validation reports and added 71 full-document/report cases. v1.1, packages, and root schemas are unchanged by this pass.
+
+- Defined SDL v2 debt reconciliation, a closed core default policy, effective-value catalogue, and a versioned provenance/suggestion result format. Added worked input/result artifacts and 81 cases; positive artifact checks cover source lineage and journal reconstruction without implementing package normalization.
+
+- Defined the selected SDL v2 persistence/recovery/cost and metadata scope: database-free and storage-only systems, identified data instances, explicit recovery coverage/global requirements, exact authored cost scenarios, and compliance/open-metadata boundaries. Added a worked example and 119 cases; v1.1 packages/schemas remain unchanged.
+
+- Completed the selected SDL v2 portable domain metadata catalogue: ordered indexes, named tuple uniqueness/foreign keys, root/local relationship roles, explicit foreign-key selectors, cardinality checks, and extended cross-database advisories. Added a worked example and 90 cases; packages and v1.1 schemas remain unchanged.
+
+- Defined SDL v2 external contract references, explicit managed-API error applicability, typed envelope paths and code mappings, and shared retry budgets/delays including Retry-After. Added a worked OpenAPI reference and 166 scoped cases; v1.1 packages and schemas remain unchanged.
+
+- Defined SDL v2 ownership and bindings: team ownership, API/component links, service/project implementation, database identities/access, integration use, explicit environment placements, region policy, and listener scopes. Added a worked example, binding cases, and migration notes; extended corpus-integrity checks without changing v1.1 packages or schemas.
+- Added an unreleased SDL v2 foundation draft covering the YAML input profile, identity/references, import precedence and limits, scalar formats, domain keys/fields, and compliance conversion. Incompatible rules target v2; v1.1 is preserved. Added scoped expected-result cases and a corpus-integrity checker, with package implementation deferred.
+- Completed the first specification-consistency milestone: aligned authority and current/future version labels; clarified top-level imports and open metadata; consolidated defaults and support references; corrected primary-key examples; separated normative requirements from package support; and marked incomplete rule definitions explicitly.
+- Added [`spec/completion-decisions.md`](spec/completion-decisions.md) with eight remaining language-design decisions and recommended directions. This milestone changes documentation only; it does not add language fields, adopt unresolved proposals, or change package behavior.
+- Incorporated peer review: aligned canonical debt spelling and merge-warning wording, corrected the audit's status-convention finding, recorded naming/unit and compliance-vocabulary decisions, and moved expected-result example authoring alongside semantic definitions.
+
 ### Fixed
 
 - **Normalized output is now always valid SDL (audit criticals 1).** The compiler's output could fail its own schema: the normalizer fabricated `product.personas: []` and `artifacts.generate: []` against `minItems: 1` constraints, and emitted `railway` runtimes and (for `java-spring`) a `hibernate` ORM that were absent from the schema enums. The two `minItems` constraints are relaxed (empty arrays are valid), `railway` is added to all three `deployment.runtime` enums, `hibernate` to the ORM enum, and `CLOUD_RUNTIME_MAP`/`FRAMEWORK_ORM_MAP` are now typed against the enum unions so drift is a compile error. A new normative invariant — `validate(normalize(validInput).document)` passes — is stated in the spec and enforced across every example and template by `audit-conformance.test.ts`.

@@ -2,7 +2,7 @@
 
 This document is the compact machine-first reference for authoring valid SDL `v1.1`.
 
-Load this when generating SDL. Do not use README examples, old `.d.ts` files, or `spec/SDL-v0.1.md` as guides — they are stale or removed.
+Load this first for authoring convenience. Normative authority remains with [SDL v1.1](../spec/SDL-v1.1.md), followed by the [canonical contract](canonical-contract.md); reading order does not change authority. Do not use retired specifications or stale generated declarations to override those sources.
 
 Full detail lives in [`canonical-contract.md`](canonical-contract.md). This document is the minimal fast path.
 
@@ -51,7 +51,7 @@ These four sections — `sdlVersion`, `solution`, `architecture`, `data` — are
 | `auth` | `strategy` |
 | `deployment` | `cloud` |
 | `nonFunctional` | `availability.target`, `scaling` |
-| `techDebt[]` | `id`, `decision`, `reason`, `impact` |
+| `technicalDebt[]` (alias `techDebt[]`) | `id`, `decision`, `reason`, `impact` |
 | `contracts.apis[]` | `name` |
 | `domain.entities[]` | `name` |
 | `domain.entities[].fields[]` | `name`, `type` |
@@ -126,7 +126,7 @@ observability.logging.level:     debug | info | warn | error
 observability.tracing.provider:  opentelemetry | jaeger | zipkin | xray | none
 observability.metrics.provider:  prometheus | datadog | cloudwatch | grafana | none
 
-techDebt[].priority:          low | medium | high | critical
+technicalDebt[].priority:     low | medium | high | critical
 features[].priority:          critical | high | medium | low
 features[].stage:             MVP | Growth | Enterprise
 features[].status:            planned | in-progress | done | deferred
@@ -142,32 +142,9 @@ nonFunctional.compliance.frameworks[]: gdpr | hipaa | sox | pci-dss | iso27001 |
 
 ## What the Normalizer Will Fill Automatically
 
-Do not set these fields if you have no concrete value. The normalizer fills them on compile and will not overwrite explicit values.
+The maintained table of defaults and their applicability lives in [Normalization Defaults](normalization-defaults.md). Use that table instead of a duplicate here. Defaults are not evidence of an authored architecture decision: omit unsupported assumptions and review the inference report.
 
-| Field | Filled when absent | Filled with |
-|---|---|---|
-| `solution.regions.primary` | always | `us-east-1` |
-| `data.primaryDatabase.name` | always | `{solution.name}_db` (slugified) |
-| `architecture.projects.frontend[].type` | per item | `web` |
-| `architecture.projects.backend[].type` | per item | `backend` |
-| `backend[].orm` | when framework+DB combo is known | see normalization-defaults.md |
-| `deployment.cloud` | when `deployment` absent | `railway` (has backend) or `vercel` (frontend only) |
-| `deployment.runtime.frontend` | when cloud is known | cloud-mapped value |
-| `deployment.runtime.backend` | when cloud is known | cloud-mapped value |
-| `deployment.networking.publicApi` | always | `true` |
-| `deployment.ciCd.provider` | when `ciCd` absent | `github-actions` |
-| `nonFunctional.availability.target` | when absent | stage-based: MVP=`99.5%`, Growth=`99.9%`, Enterprise=`99.99%` |
-| `nonFunctional.scaling.expectedUsersMonth1` | when scaling absent | stage-based |
-| `nonFunctional.scaling.expectedUsersYear1` | when scaling absent | stage-based |
-| `nonFunctional.security.encryptionAtRest` | when `pii: true` | `true` |
-| `nonFunctional.security.encryptionInTransit` | always (if security present) | `true` |
-| `testing.unit.framework` | when testing present, framework absent | inferred from backend framework |
-| `observability.logging.structured` | when logging present | `true` |
-| `observability.logging.provider` | when logging present | inferred from backend framework |
-| `observability.tracing.samplingRate` | when tracing present | `0.1` |
-| `product.personas` | when product absent | `[]` |
-| `product.coreFlows` | when product absent | `[]` |
-| `artifacts.generate` | when artifacts absent | `[]` |
+If an optional section is authored, its required fields still need to be supplied. Normalization does not make an incomplete authored section valid. The distinction between language defaults and tool suggestions, including empty-value precedence, is tracked in [D04](../spec/completion-decisions.md#d04--scalars-and-normalization).
 
 ---
 
@@ -216,7 +193,7 @@ These were common in older examples and generated code. Do not use them.
 
 ## Modular SDL — `imports[]`
 
-Split a large solution across files using a root `imports[]` array. Three forms — pick whichever reads cleanest, mix freely:
+Split a large solution across files using an `imports[]` array at the top level of any SDL file, including imported modules. Three forms may be mixed:
 
 ```yaml
 imports:
@@ -229,7 +206,7 @@ imports:
 - Paths are relative to the file declaring `imports[]`.
 - Names in Form C should match `^[a-zA-Z][a-zA-Z0-9_-]*$` (kebab-case is allowed because module filenames often are). Names must be unique within one `imports[]` list.
 - Imported modules merge in declaration order; later modules override earlier ones (last-writer-wins on scalars). The `imports[]` key itself is stripped before validation.
-- Maximum nesting depth is 3 (root → depth 1 → depth 2 → depth 3). Circular imports are an error.
+- The documented portability minimum is three levels (root → depth 1 → depth 2 → depth 3). Behavior beyond a supported depth and containing-file precedence remain open in [D03](../spec/completion-decisions.md#d03--import-completeness-and-precedence); the specification's depth discussion must not be reduced to a fixed language-wide maximum.
 
 Full normative rules: [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) § "Modular SDL and Import Semantics".
 
@@ -250,44 +227,20 @@ architecture:
 
 solution:
   name: My App
-  description: desc
+  description: Example application with extension metadata.
   stage: MVP
   x-internalRef: PROJ-123
 ```
 
-The validator accepts any `x-*` key at any level. Do not invent new non-`x-` top-level sections or new non-`x-` fields inside stable sections.
+`x-*` keys are the general extension mechanism. The [canonical contract](canonical-contract.md#open-metadata-and-extension-boundaries) also lists intentionally open metadata locations. Unknown non-`x-*` root keys remain invalid; open metadata does not introduce new portable field semantics.
 
 ---
 
 ## Section Support Quick Reference
 
-Use this to decide whether to author a section:
+Use the [Section Support Matrix](section-support.md) for package validation, normalization, and generator coverage. This guide does not duplicate that table. Package coverage is independent of whether a language requirement is normative.
 
-| Section | Maturity | Validated | Normalized | Generators use it |
-|---|---|---|---|---|
-| `solution` | stable | yes | yes | all |
-| `product` | stable | yes | yes | 5 generators |
-| `architecture` | stable | yes | yes | all |
-| `auth` | stable | yes | no | 9 generators |
-| `data` | stable | yes | yes | 10 generators |
-| `integrations` | stable | yes | no | 5 generators |
-| `nonFunctional` | stable | yes | yes | 4 generators |
-| `deployment` | stable | yes | yes | 4 generators |
-| `artifacts` | stable | yes | yes | controls generation |
-| `testing` | partial | yes | yes (if present) | `coding-rules` |
-| `observability` | partial | yes | yes (if present) | `coding-rules`, `monitoring` |
-| `constraints` | partial | yes | no | `adr` (budget only) |
-| `techDebt` | partial | yes | no | `adr` |
-| `evolution` | partial | yes | no | `coding-rules` |
-| `contracts` | minimal | defined shape | no | none yet |
-| `domain` | minimal | defined shape | no | none yet |
-| `features` | minimal | partial | no | none yet |
-| `compliance` | minimal | defined — `frameworks[]` objects with `name` required | no | none |
-| `slos` | placeholder | permissive | no | none |
-| `resilience` | minimal | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` typed | no | none |
-| `costs` | placeholder | permissive | no | none |
-| `backupDr` | placeholder | permissive | no | none |
-| `design` | placeholder | permissive | no | none |
+For authoring, `features` includes optional `stage` and `status` in v1.1; `contracts` is an API inventory; `slos` declares component availability and latency objectives; and `resilience` declares solution-wide defaults. `costs`, `backupDr`, and `design` carry open v1.1 metadata. The [specification decisions](../spec/completion-decisions.md) preserve those v1.1 boundaries and define incompatible completions only in the unreleased v2 baseline.
 
 ---
 
@@ -367,4 +320,4 @@ auth:
 - Prefer **omit** over **guess**. Unknown values fail. Missing optional sections do not.
 - Prefer **`x-` extension** over inventing new schema fields.
 - Prefer **canonical strings exactly** — casing and hyphens are significant (`MVP` not `mvp`, `modular-monolith` not `modularMonolith`).
-- Do not copy old README snippets. They contained stale vocabulary. Use this file and [`canonical-contract.md`](canonical-contract.md).
+- Use current examples and follow the specification's authority order when sources disagree.

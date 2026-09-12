@@ -4,13 +4,17 @@ The SDL normalizer auto-infers sensible defaults when optional fields are omitte
 
 ## How It Works
 
+This reference is subordinate to [SDL v1.1](../spec/SDL-v1.1.md). It is the maintained table of existing normalization defaults; authoring guides link here instead of restating values. The unreleased [v2 normalization draft](../spec/v2/NORMALIZATION.md) now defines its separate core/default/suggestion policy under D04. This table continues to describe existing v1.1 implementation behavior; its inferred values are not automatically adopted as v2 language defaults.
+
 ```
 YAML input → parse() → validate() → normalize() → complete SDL document
 ```
 
 The normalizer runs AFTER validation. It only fills in fields that are:
-1. Not explicitly set in the input
-2. Can be deterministically inferred from other fields
+1. Not explicitly set in the input, subject to the canonical-location reconciliation rules
+2. Derived from other fields or supplied by a documented default convention
+
+Defaulted regions, cloud choices, and capacity estimates are conventions, not evidence that an author chose them. If an optional section is supplied, its schema-required fields must still be present before normalization. The normalized-validity invariant does not remove authored-input requirements.
 
 The current implementation is defined by `packages/sdl/src/normalizer.ts`. This reference summarizes the implemented defaults rather than earlier aspirational mappings.
 
@@ -40,6 +44,8 @@ The current implementation is defined by `packages/sdl/src/normalizer.ts`. This 
 | `compliance.frameworks` | shorthand locations only (`nonFunctional.compliance.frameworks` / `constraints.compliance`) | union lifted into canonical root `compliance.frameworks[]` as `{name, applicable: true}` entries; an authored root section always wins |
 | `testing.unit.framework` | first backend framework | framework-specific test runner |
 | `observability.logging.structured` | missing explicit value | `true` when logging section exists |
+| `observability.logging.provider` | first backend framework, when logging exists and provider is absent | framework-specific logging provider |
+| `observability.tracing.samplingRate` | tracing exists and sampling rate is absent | `0.1` |
 
 ## Frontend Defaults
 

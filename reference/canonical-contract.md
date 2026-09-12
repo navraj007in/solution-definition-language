@@ -2,6 +2,8 @@
 
 This document is the canonical naming reference for the active SDL `v1.1` contract.
 
+The exact active publication is baseline `sdl-v1.1-2026-09-12`, identified by its [content-addressed manifest](../spec/v2/releases/sdl-v1.1-2026-09-12.json). Baseline identity is external metadata and is not an SDL field.
+
 Use it for:
 
 - valid enum values
@@ -32,9 +34,9 @@ These root fields are always required:
 - `architecture`
 - `data`
 
-## Stable Root Section Shapes
+## Root Section Shapes
 
-These are the currently stable root section shapes:
+These are the v1.1 root container shapes. A listed container does not imply that all its inner semantics are complete; specification gaps are tracked in [Completion Decisions](../spec/completion-decisions.md), independently of package support.
 
 | Section | Canonical Shape |
 |---|---|
@@ -51,9 +53,9 @@ These are the currently stable root section shapes:
 | `observability` | object |
 | `evolution` | object |
 | `artifacts` | object |
-| `techDebt` | array |
 | `technicalDebt` | array |
-| `contracts` | object with `apis` array |
+| `techDebt` | array (equivalent alias of `technicalDebt`) |
+| `contracts` | object with optional `apis` array |
 | `domain` | object |
 | `features` | array |
 | `compliance` | object |
@@ -65,9 +67,22 @@ These are the currently stable root section shapes:
 
 Use `x-` extension fields for richer metadata that is not part of the stable contract.
 
-### `imports` (root files only)
+### `imports` (top level of any SDL file)
 
 `imports` is an array and is the one root key that is **not** a document section. It is consumed by the resolver and stripped from the merged document before validation, so it never appears in a compiled SDL document. Full semantics in [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Modular SDL and Import Semantics*.
+
+Root solution files and imported modules may both declare imports. Depth-limit behavior and containing-file precedence remain undefined in the preserved v1.1 contract; [D03](../spec/completion-decisions.md#d03--import-completeness-and-precedence) defines them for the separately versioned v2 draft.
+
+### Open Metadata and Extension Boundaries
+
+The root object and defined closed sections accept only their declared fields and `x-*` extensions. The following v1.1 locations intentionally accept additional content:
+
+- `costs`, `backupDr`, and `design`: open objects; their detailed examples are illustrative rather than a mandatory field catalogue.
+- `domain.entities[].fields[]`: declared field attributes have defined types, while additional attributes are accepted without portable SDL semantics. Prefer `x-*` for custom attributes.
+- `compliance.certifications[]`, `compliance.dataResidency[]`, and `compliance.dataRetention[]`: arrays of open metadata objects.
+- Values explicitly declared as arbitrary metadata, such as field defaults, enum entries, and unstructured index/constraint/relationship entries, do not acquire normative inner fields by being present.
+
+These exceptions do not permit unknown non-`x-*` root sections. Formalizing their contents requires a language definition; current acceptance alone is not a semantic contract. See [D02](../spec/completion-decisions.md#d02--domain-types-identity-and-relationships) and [D06](../spec/completion-decisions.md#d06--scope-and-open-metadata).
 
 ## Canonical Locations for Overlapping Declarations
 
@@ -79,6 +94,10 @@ Some concerns can be declared in more than one place. One location is canonical 
 | Compliance | `compliance.frameworks[]` (structured entries) | `nonFunctional.compliance.frameworks[]`, `constraints.compliance[]` (lowercase identifier shorthands) | When the canonical section is absent, the normalizer lifts the union of the shorthands into it as `{name, applicable: true}` entries. An authored canonical section always wins. Consumers (`compliance-checklist`, `coding-rules`) read the canonical section. |
 | Backup / DR | `nonFunctional.backup` (enforced shape: frequency, retention, point-in-time recovery) | `backupDr` (placeholder: procedural DR content, open shape) | No normalization — they are different concerns. Tooling that needs backup posture reads `nonFunctional.backup`; `backupDr` is free-form until it gains a normative shape. |
 | Cost | `constraints.budget` (validated tier, consumed by budget warnings) | `evolution.costProjection`, `costs` (advisory / placeholder) | No normalization — `constraints.budget` is the only machine-consumed location; the others are advisory narrative. |
+
+For new v1.1 documents, use the canonical `technicalDebt` spelling; `techDebt` remains accepted with the same item shape. The reconciliation table describes current normalization behavior. Historical v1.1 collision and conversion gaps remain part of this preserved baseline; [D04](../spec/completion-decisions.md#d04--scalars-and-normalization) defines their incompatible completion only for unreleased v2.
+
+Compliance vocabularies must be read by location. Rule 24 in [SDL v1.1](../spec/SDL-v1.1.md#conditional-rules-errors) lists the root framework names; the lowercase shorthand identifiers are a separate authoring form. Accepted casing at each location and conversion from shorthand names to canonical root values remain part of D04. Package acceptance of additional spellings does not by itself establish language aliases.
 
 ## Constrained Scalar Fields
 
@@ -93,9 +112,9 @@ Fields whose value is restricted beyond its type:
 | `resilience.retryPolicy.maxAttempts` | ≥ 1 |
 | `slos.services[].availability` | percentage string between `90.0%` and `99.999%` |
 
-## Stable Architecture Sub-Shapes
+## Architecture Sub-Shapes
 
-These nested shapes inside `architecture` are part of the stable `v1.1` contract:
+These nested containers are part of v1.1; their remaining semantic decisions are tracked separately:
 
 | Sub-shape | Canonical Form |
 |---|---|
@@ -250,6 +269,15 @@ Defaults live in `DEFAULT_RUNTIME_VERSION` in `packages/sdl/src/constants.ts`, w
 - `exponential`
 - `linear`
 - `constant`
+
+`resilience.retryPolicy.backoff` uses `fixed` for the same constant-delay strategy. Each spelling remains valid in its own v1.1 location; removing either spelling requires a major language version. The sections do not implicitly accept each other's spelling.
+
+### `features[].stage` and `features[].status`
+
+Both fields are optional and already part of v1.1:
+
+- `stage`: `MVP | Growth | Enterprise` — intended lifecycle stage for delivery.
+- `status`: `planned | in-progress | done | deferred` — author-reported delivery state, without an implied verification guarantee.
 
 ### `auth.strategy`
 
@@ -449,13 +477,13 @@ These outputs are supported by direct generator exports, but are not currently v
 
 ### Stable Policy
 
-The active `v1.1` validator is strict:
+The v1.1 field and value policy is:
 
 - canonical values are accepted
-- unknown fields are rejected unless prefixed with `x-`
+- unknown fields in closed objects are rejected unless prefixed with `x-`; the open metadata exceptions above remain accepted
 - legacy forms are rejected outright unless they appear in the *normalized aliases* table below
 
-SDL prefers rejection over implicit alias handling. Exactly **one** alias is normalized rather than rejected, and it exists only because the original value was a modeling mistake that would otherwise force a schema change on every vendor release.
+SDL prefers rejection over implicit value-alias handling. The normalized enum-value alias below is distinct from the accepted root-key spelling `techDebt` / `technicalDebt` and the canonical-location reconciliation rules above.
 
 ### Normalized Aliases
 
@@ -505,6 +533,6 @@ When authoring new SDL:
 
 1. Start from `sdlVersion: "1.1"`.
 2. Use only the canonical names listed here.
-3. Prefer the stable root section shapes listed here.
+3. Use the root section shapes listed here and respect their open/closed boundaries.
 4. Put richer unsupported detail under `x-` fields instead of inventing new root shapes.
 5. Treat older examples or generated `.d.ts` files as non-authoritative if they conflict with this file.

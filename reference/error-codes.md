@@ -1,12 +1,14 @@
 # SDL Error Codes
 
+This is a package diagnostic reference subordinate to [SDL v1.1](../spec/SDL-v1.1.md). Implementation coverage does not determine whether a fully defined language requirement is normative. Historical v1.1 predicates with incomplete definitions are identified in the [completion decisions](../spec/completion-decisions.md); their v2 resolutions do not change these package codes or v1.1 behavior.
+
 ## Parse Errors
 
 | Code | Message | Cause |
 |---|---|---|
 | `EMPTY_INPUT` | Input is empty | Empty or whitespace-only YAML string |
 | `YAML_PARSE_ERROR` | YAML parsing failed | Invalid YAML syntax |
-| `NOT_AN_OBJECT` | Parsed result is not an object | YAML parsed to a scalar or array instead of object |
+| `INVALID_YAML` | Parsed result is not an SDL mapping | YAML parsed to a scalar, array, or empty document |
 
 ## Schema Validation Errors
 
@@ -85,7 +87,7 @@ The complete table of implemented defaults lives in [`normalization-defaults.md`
 
 Warnings don't block validation but flag potential issues. They are returned on `ValidationResult.warnings` when schema validation passes — `detectWarnings()` runs inside `validate()`, not as a separate pipeline stage.
 
-These are the **4 codes currently emitted** by `packages/sdl/src/warnings.ts`. `spec/SDL-v1.1.md` → *Warning Rules* defines 11 rules in total; the other 7 are normative but not yet implemented and emit nothing today.
+These are the **4 codes currently emitted** by `packages/sdl/src/warnings.ts`. The spec's warning catalogue contains 11 active entries in total. The other 7 are not emitted by the package; some also have definition gaps explicitly identified in the spec. These are separate status dimensions.
 
 | Warning | Condition | Suggestion |
 |---|---|---|

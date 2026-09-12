@@ -1,10 +1,10 @@
 # SDL Section Support Matrix
 
-This document declares the support level of every root SDL section in the active `v1.1` contract.
+This document reports package support for SDL sections. It is subordinate to [SDL v1.1](../spec/SDL-v1.1.md) and does not define language requirements.
 
-Use it to understand which sections are stable and which are still evolving, and to know exactly which toolchain stages each section participates in.
+Use it to see which toolchain stages consume each section. The historical stable/partial/minimal/placeholder labels below describe implementation coverage, not specification completeness. A normative requirement may be unimplemented, and a heavily used section may still have semantic gaps. See [Completion Decisions](../spec/completion-decisions.md) for specification work.
 
-## Maturity Levels
+## Package Support Levels
 
 | Level | Meaning |
 |---|---|
@@ -30,13 +30,13 @@ Use it to understand which sections are stable and which are still evolving, and
 | `testing` | no | yes | partial | yes — `unit.framework` (inferred from backend framework, if section present) | `coding-rules` | partial |
 | `observability` | no | yes | partial | yes — `logging.structured`, `logging.provider` (if section present), `tracing.samplingRate` | `coding-rules`, `monitoring` | partial |
 | `constraints` | no | yes | partial | no | `adr` (budget field only) | partial |
-| `techDebt` / `technicalDebt` | no | yes | partial | no | `adr` | partial |
+| `techDebt` / `technicalDebt` | no | yes | partial | yes — alias entries reconciled into `technicalDebt` | `coding-rules` reads `technicalDebt` | partial |
 | `evolution` | no | yes | partial | no | `coding-rules` | partial |
 | `contracts` | no | yes | defined — `apis[]` items have `additionalProperties: false`, `type` enum enforced | no | `openapi` reads `contracts.apis[]` for tags and API type annotation when present | partial |
 | `domain` | no | yes | defined — entity items have `additionalProperties: false`; entity-level fields (`description`, `table`, `indexes`, `constraints`) enumerated; `fields[]` items have known DB attributes typed (`nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `description`, `onUpdate`) with `additionalProperties: true` | no | `data-model` reads `domain.entities[]` as authoritative entity source when present | partial |
 | `features` | no | yes | defined — items have `additionalProperties: false`; `priority` enum enforced; `stage` (MVP\|Growth\|Enterprise) and `status` (planned\|in-progress\|done\|deferred) added | no | none | minimal |
 | `slos` | no | yes | defined — `services[]` items have `additionalProperties: false`, `name` required | no | `monitoring` reads `slos.services[]` for per-service SLO alert configuration | partial |
-| `compliance` | no | yes | defined — `frameworks[]` items have `additionalProperties: false` with `name` required; `requirements[]` typed; `certifications`, `dataResidency`, `dataRetention` accepted as open arrays | no | `compliance-checklist` reads `compliance.frameworks[]` to generate framework-specific compliance checklists | partial |
+| `compliance` | no | yes | defined — `frameworks[]` items have `additionalProperties: false` with `name` required; `requirements[]` typed; `certifications`, `dataResidency`, `dataRetention` accepted as open arrays | yes — shorthand declarations lifted into the canonical location; intended precedence is documented in the canonical contract | `compliance-checklist` reads `compliance.frameworks[]` to generate framework-specific compliance checklists | partial |
 | `resilience` | no | yes | defined — `circuitBreaker`, `retryPolicy`, `timeout`, `rateLimit` each have typed shapes with `additionalProperties: false`; per-service detail goes in `x-` extensions | no | `coding-rules` emits resilience pattern rules from circuit breaker, retry, timeout, and rate limit config | partial |
 | `costs` | no | yes | permissive — cost breakdown structures vary (per-service, third-party, scaling tiers, total) | no | none | placeholder |
 | `backupDr` | no | yes | permissive — backup/DR structures vary significantly (database-level, storage, site failover, recovery procedures) | no | none | placeholder |
@@ -50,7 +50,7 @@ Use it to understand which sections are stable and which are still evolving, and
 - `no` — optional
 
 **Documented**
-- All sections are currently documented in `spec/SDL-v1.1.md` and `reference/schema-reference.md`
+- Sections are described in `spec/SDL-v1.1.md` and `reference/schema-reference.md`; this does not assert a complete normative definition for every field
 
 **Schema**
 - `strict` — `$defs` shape has `required` fields, `additionalProperties: false` enforced
@@ -79,7 +79,9 @@ Do not assume these sections will be backfilled by normalization or consumed by 
 
 **Status update:** `compliance`, `slos`, and `resilience` are no longer placeholder-only. They are now consumed by generators (`compliance-checklist`, `monitoring`, and `coding-rules` respectively) and have progressed from `minimal` to `partial` maturity.
 
-## Roadmap
+## Package Follow-Up
+
+The following are implementation opportunities, not prerequisites for specification completion. Language status and version assignments follow the [language roadmap](../spec/ROADMAP.md).
 
 - ✓ `compliance` → `partial` (as of v1.1, `compliance-checklist` generator consumes `frameworks[]`)
 - ✓ `resilience` → `partial` (as of v1.1, `coding-rules` generator emits resilience pattern rules)
@@ -87,5 +89,5 @@ Do not assume these sections will be backfilled by normalization or consumed by 
 - `contracts` → `stable` once `openapi` generates richer server stubs, security schemes, and path groupings from `contracts.apis[]`
 - `domain` → `stable` once `data-model` produces fully entity-driven ORM schemas and ERDs without fallback inference
 - `features` → `partial` once a planning-tier generator reads it
-- `costs`, `backupDr` → promote only when a concrete generator use case emerges; currently experimental
-- `design` → intentionally open; promote only if a design-token or component-scaffold generator is added
+- `costs`, `backupDr` → assess package consumers after the language's shared metadata scope is settled
+- `design` → intentionally open; a future design-token or component-scaffold consumer would change package support, not the openness of the language by itself

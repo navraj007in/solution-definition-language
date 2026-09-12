@@ -7,7 +7,7 @@ description: Solution Design Language (SDL) specification — schema, validation
 
 ## Identity
 
-You understand the Solution Design Language (SDL) — a YAML-based architecture specification format used by arch0 to capture complete system designs. SDL transforms raw requirements into a validated, normalized intermediate representation that drives deterministic artifact generation.
+Solution Design Language (SDL) is a YAML-based architecture specification format. It captures architecture decisions in a structured document that tooling can validate, normalize, and use to generate artifacts. This guide is subordinate to the normative specification.
 
 ## Version Policy
 
@@ -28,26 +28,25 @@ SDL v1.1 captures:
 - authentication and deployment strategy
 - product personas and core flows
 - testing, observability, and constraints
-- API contracts
+- API inventories and external specification pointers
 - domain models
 - feature planning
 - compliance requirements
-- SLOs and SLIs
+- component availability and latency objectives
 - resilience patterns
-- cost model
-- backup and disaster recovery
-- design system definition
+- open cost metadata
+- open recovery metadata, alongside defined backup-posture fields
+- intentionally open design metadata
 
 ## Canonical Sources
 
-Use these files in order of authority:
+Normative authority follows the same hierarchy as the specification:
 
-1. [`reference/ai-authoring.md`](ai-authoring.md) — compact machine-first authoring reference: minimum valid document, all enums, normalization behaviour, rejected legacy values, common mistakes
-2. [`reference/canonical-contract.md`](canonical-contract.md) — canonical enums, artifact types, root section shapes, and alias policy (full detail)
-3. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative v1.1 spec
-4. [`reference/schema-reference.md`](schema-reference.md) — quick v1.1 section reference
-5. [`reference/normalization-defaults.md`](normalization-defaults.md) — normalization rules and mappings
-6. [`reference/error-codes.md`](error-codes.md) — validation error vocabulary
+1. [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) — normative language requirements and explicitly identified definition gaps.
+2. [`reference/canonical-contract.md`](canonical-contract.md) — subordinate summary of names, shapes, and aliases.
+3. Runtime JSON Schema and exported types — machine-readable derivations; implementation differences do not override the specification.
+
+For efficient reading, start with [AI Authoring](ai-authoring.md), then consult the [section overview](schema-reference.md), [normalization reference](normalization-defaults.md), and [error-code reference](error-codes.md). Reading order is not authority order. [Completion Decisions](../spec/completion-decisions.md) records the preserved v1.1 gaps and their selected, separately versioned v2 definitions; those definitions are not v1.1 requirements.
 
 ## Required Root Sections
 
@@ -67,13 +66,14 @@ Use these when the architecture requires them:
 - `product`
 - `auth`
 - `deployment`
-- `environments`
 - `nonFunctional`
 - `observability`
 - `integrations`
 - `constraints`
 - `testing`
-- `techDebt`
+- `technicalDebt` (alias `techDebt`)
+- `evolution`
+- `artifacts`
 - `contracts`
 - `domain`
 - `features`
@@ -83,6 +83,8 @@ Use these when the architecture requires them:
 - `costs`
 - `backupDr`
 - `design`
+
+There is no root-level `environments` section in v1.1. CI/CD environment declarations use `deployment.ciCd.environments[]`; D01 defines richer deployment scope only for unreleased v2. `costs`, `backupDr`, and `design` are open v1.1 metadata, not mandatory detailed models.
 
 ## Generation Rules
 
@@ -101,16 +103,17 @@ When generating SDL:
 When validating v1.1 SDL, check:
 
 - component references resolve correctly
-- contract-to-service references are valid
 - domain relationships target known entities
-- feature dependencies point to known features
-- deployment and runtime choices are compatible
-- resilience and SLO sections reference real components
-- compliance and security assumptions are internally consistent
+- service dependencies and SLO component references resolve
+- applicable, fully defined compatibility rules hold
+- feature values use the documented priority, stage, and status vocabulary
+- unknown fields respect the closed/open object boundary
+
+Do not invent first-class feature dependencies, per-service resilience fields, or API-owner reference semantics from earlier examples. Their definition gaps are tracked in the spec's decision record. Package support is separate from normative requirements.
 
 ## Output Expectation
 
-New SDL output should look like:
+The root containers are shown below as an outline; empty objects are not a valid complete document:
 
 ```yaml
 sdlVersion: "1.1"
@@ -119,4 +122,4 @@ architecture: {}
 data: {}
 ```
 
-Then extend with the relevant v1.1 sections for the system.
+Use the [minimum valid document](ai-authoring.md#minimum-valid-document) to fill required values, then extend with relevant v1.1 sections.

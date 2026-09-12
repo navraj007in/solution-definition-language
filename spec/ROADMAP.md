@@ -1,176 +1,96 @@
 # SDL Language Roadmap
 
-This document describes the planned evolution of the Solution Design Language (SDL) specification. It is the authoritative source for what the language will support, in what order, and why.
+This document records completion and future evolution of the SDL specification. It is subordinate to [SDL v1.1](SDL-v1.1.md): roadmap proposals do not change the active contract. [Completion Decisions](completion-decisions.md) records the selected D01–D08 designs and their boundaries.
 
-Audience: teams implementing SDL tooling, authors writing SDL documents, and contributors proposing spec changes.
+For the discovery-tooling roadmap, see [the repository roadmap](../ROADMAP.md). For package support and delivery, see the [support matrix](../reference/section-support.md) and [changelog](../CHANGELOG.md). Specification completion is assessed independently of package implementation.
 
-For delivery phases of the discovery tooling built on top of SDL, see [`ROADMAP.md`](../ROADMAP.md). (There is no separate reference-package roadmap; package work is tracked in [`CHANGELOG.md`](../CHANGELOG.md).)
+## Current Language Surface — v1.1
 
----
+SDL v1.1 is the active language version. Its 23 conceptual root sections count `techDebt` and `technicalDebt` as one concern and exclude the version/import metadata.
 
-## Current State — v1.1
-
-SDL v1.1 is the active specification. It defines 23 root sections across four maturity levels. See [`reference/section-support.md`](../reference/section-support.md) for the full matrix.
-
-| Maturity | Sections |
+| Area | Current documented scope |
 |---|---|
-| **stable** | `solution`, `product`, `architecture`, `auth`, `data`, `integrations`, `nonFunctional`, `deployment`, `artifacts` |
-| **partial** | `testing`, `observability`, `constraints`, `techDebt`, `evolution`, `contracts`, `domain`, `slos`, `compliance`, `resilience` |
-| **minimal** | `features` |
-| **placeholder** | `costs`, `backupDr`, `design` |
+| Core architecture | Solution, product, projects/services, auth, data, integrations, NFRs, deployment, constraints, testing, observability, evolution, debt, and artifact requests |
+| API inventory | `contracts.apis[]`: names, API types, optional ownership, and extension pointers to external specifications; ownership and portable references remain undefined in v1.1 and are defined for v2 under D01/D05 |
+| Domain model | Entities, fields, and relationships, with additional metadata; full types, identity, key, and relationship semantics remain undefined in v1.1 and are defined for v2 under D02 |
+| Features | Flat feature items with `name`, `description`, `priority`, `stage`, and `status`; stage and status already belong to v1.1 |
+| Error conventions | Optional `architecture.errorConventions` envelope, status mapping, and retry policy; cross-policy semantics remain D05 |
+| Compliance, SLOs, resilience | Structured declarations already belong to v1.1; scalar, reference, and scope gaps remain in v1.1 and are resolved for v2 in the decision record |
+| Open metadata | `costs`, `backupDr`, and `design` accept heterogeneous metadata; their illustrative examples are not complete normative field catalogues |
+| Composition | Import Forms A/B/C and identity-keyed merging are documented v1.1 features; limit behavior and full precedence remain undefined in v1.1 and are defined for v2 under D03 |
 
-The stable and partial groups are normatively defined, validated, and consumed by at least one generator (`contracts` → `openapi`, `domain` → `data-model`, `slos` → `monitoring`, `compliance` → `compliance-checklist`, `resilience` → `coding-rules`). The minimal group has enforced schema shapes but no generator consumer yet. The placeholder group accepts any content and has no enforcement or outputs. This table matches [`reference/section-support.md`](../reference/section-support.md), which is the row-by-row source of truth.
+Package labels such as stable, partial, minimal, and placeholder describe implementation coverage. They do not decide whether a language requirement is normative or fully specified.
 
----
+## Specification Completion Milestones
 
-## Planned — v1.2
+### 1. Reconcile current documentation
 
-### 1. Close the leverage loop on `contracts` and `domain`
+Align authority order, current-versus-future field labels, root/module wording, defaults references, open metadata descriptions, and version policy. Make examples agree with existing requirements and identify unresolved definitions explicitly.
 
-**Status: partially delivered in v1.1.** The `openapi` generator consumes `contracts.apis[]` (tags and API type annotation) and the `data-model` generator consumes `domain.entities[]` as its authoritative entity source. Both sections are `partial` maturity today. What remains for v1.2 is the promotion to `stable`: richer server stubs, security schemes, and path groupings from `contracts.apis[]`, and fully entity-driven ORM schemas and ERDs from `domain.entities[]` without fallback inference.
+The September 2026 consistency pass completes this bounded mechanical milestone. Later v2 passes resolve the listed choices; a corrected wording contradiction remains distinct from a newly selected major-version semantic definition.
 
-**`contracts` specification:**
+### 2. Complete shared definitions and the field catalogue
 
-SDL is intentionally **not** an API description language — that role belongs to OpenAPI, GraphQL SDL, gRPC `.proto`, and AsyncAPI. SDL's job is to record the *inventory* of API surfaces, not their per-operation contracts.
+Start with identity and references, operational scalars, import precedence, and domain keys, since these determine whether independent implementations interpret a document consistently. Draft a short input/document profile alongside them, then complete requiredness, cardinality, and the remaining field catalogue. A reader must not need package source to determine a field's meaning.
 
-- `contracts.apis[]` is the authoritative inventory of a solution's API surfaces (one entry per surface, not per operation)
-- Each entry: `name` (required), `type` (rest | graphql | grpc | webhook | asyncapi), `owner`
-- Extension fields (`x-`) accepted for richer detail and pointers to external spec files (e.g. `x-spec-path: ./openapi/api-server.yaml`, `x-version`, `x-base-path`)
-- Tooling that generates API-related artifacts (catalogs, ownership reports, gateway registration) must consume `contracts.apis[]`; tooling that needs per-operation detail must consume the externally referenced OpenAPI/GraphQL/gRPC/AsyncAPI file, **not** SDL
-- Cross-cutting wire-shape decisions that apply solution-wide (e.g. error envelope, auth scheme conventions) belong under `architecture` — see `architecture.errorConventions`. Per-operation detail does not
+Write examples and expected results as each definition is settled. Dependencies: D01–D04 and D08, with compatibility assessed under D07. Existing enums and container shapes are the baseline, not proof that all underlying semantics are complete.
 
-**`domain` specification:**
-- `domain.entities[]` becomes the authoritative declaration of the solution's data model
-- Normative outputs must reference `domain.entities[]` when producing schema or data-related artifacts
-- Each entity: `name` (required), `fields[]` (name + type required), `description`, `table`, `indexes`, `constraints`, `relationships`
-- Field attributes: `nullable`, `primaryKey`, `foreignKey`, `unique`, `generated`, `default`, `enum`, `maxLength`, `precision`, `scale`, `onUpdate`, `description`
-- Tooling that generates ORM schemas must consume `domain.entities[]` in preference to inferring from personas or flows
+**Progress:** the first semantic slice is defined in the [v2 foundations draft](v2/README.md), with a [scoped conformance corpus](v2/conformance/README.md). It covers the input profile, identity/references, composition, operational scalars, domain keys/fields, and compliance conversion. The subsequent [full-document consolidation](v2/FULL-SPEC.md) completes the selected portable field catalogue and requiredness. Incompatible rules target v2 under the selected policy; v1.1 is preserved.
 
-**Promotion:** ~~Both sections move from `minimal` to `partial` in the section support matrix.~~ Done in v1.1. The v1.2 target is `partial` → `stable`.
+### 3. Settle cross-section semantics
 
----
+Define organizational ownership separately from component binding; decide project/service and environment relationships; complete domain, import, external-contract, and normalization semantics. Develop composition, normalization, and valid/invalid examples with these decisions; unresolved alternatives remain proposals until a result is adopted.
 
-### 2. Formalize or retire placeholder sections
+**Progress:** [Ownership and Bindings](v2/OWNERSHIP-BINDINGS.md) defines the selected team, API/component, many-to-many service/project, integration-use, database-access, and hosted-environment relationships with expected-result cases. [Contracts and Errors](v2/CONTRACTS-ERRORS.md) now defines portable external references and shared HTTP error/retry policies. [Domain Metadata](v2/DOMAIN-METADATA.md) completes the portable index, constraint, and relationship-role catalogue. [Scope and Operations](v2/SCOPE-OPERATIONS.md) defines the portable persistence, recovery, cost, and metadata boundaries. [Normalization](v2/NORMALIZATION.md) completes the selected debt/default/provenance semantics. The selected cross-section definitions are now established; the [consolidated contract](v2/FULL-SPEC.md) now integrates full fields and documents.
 
-Each placeholder section must pass a test before being promoted to `minimal`:
+Dependencies: D01–D06. New fields or incompatible reinterpretations require a version decision under D07. A current implementation gap is not a reason to discard a well-defined requirement.
 
-> Can a useful, deterministic or inferred output be produced from this section? If yes, define the normative shape. If no, document the section as out of scope for this version.
+### 4. Complete rules and consolidate conformance coverage
 
-**`slos` — promoted to `partial` in v1.1**
-The `services[]` shape (`name`, `availability`, `latencyP95`) drives alert threshold configuration in the `monitoring` generator today.
+Every normative rule needs a defined predicate, applicability, field paths, severity, and valid/invalid examples. Consolidate the examples developed during milestones 2–3, check rule and boundary-case coverage, and publish their expected meaning before packages implement them.
 
-Normative shape (already enforced):
-```yaml
-slos:
-  services:
-    - name: string          # required
-      availability: string  # e.g. "99.9%"
-      latencyP95: string    # e.g. "200ms"
-      x-*: ...              # extension fields for richer SLO detail
-```
+**Progress:** the [consolidated field contract](v2/FULL-SPEC.md), [validation reports](v2/DIAGNOSTICS.md), [historical rule dispositions](v2/RULE-COVERAGE.md), and full-document/report fixtures define the selected portable D08 scope. [D07](v2/RELEASE-MIGRATION.md) now supplies frozen baseline identities and migration records. Coverage checks establish fixture integrity, not exhaustive semantic proof or package conformance.
 
-**`resilience` — promoted to `partial` in v1.1**
-The `coding-rules` generator emits resilience pattern rules from circuit breaker, retry, timeout, and rate limit config today.
+Dependencies: D07 and D08, plus the semantic decisions above. Implementation support is a separate follow-up.
 
-Normative shape (already enforced):
-```yaml
-resilience:
-  circuitBreaker:
-    enabled: boolean
-    threshold: integer        # failure % before opening
-    timeout: string           # e.g. "30s"
-  retryPolicy:
-    maxAttempts: integer
-    backoff: exponential | linear | fixed
-    initialInterval: string
-  timeout:
-    default: string
-  rateLimit:
-    requestsPerMinute: integer
-  x-*: ...
-```
+## Versioning and Compatibility Policy
 
-**`compliance` — promoted to `partial` in v1.1**
-The `compliance-checklist` generator consumes `compliance.frameworks[]` today, and the normalizer lifts the shorthand declarations (`nonFunctional.compliance.frameworks`, `constraints.compliance`) into this canonical section.
+`sdlVersion` identifies the language contract, not a package release. [D07](v2/RELEASE-MIGRATION.md) now identifies exact publications outside SDL documents: active `sdl-v1.1-2026-09-12` and unreleased `sdl-v2.0-draft.1`. Conformance and migration claims name both language version and baseline; no revision field is added to SDL.
 
-Normative shape (already enforced):
-```yaml
-compliance:
-  frameworks:
-    - name: string     # required — GDPR | HIPAA | SOC2 | PCI-DSS | ISO27001 | SOX
-      applicable: boolean
-      requirements:
-        - requirement: string
-          implementation: string
-      x-*: ...
-  x-*: ...
-```
+- Editorial corrections align documents without changing the accepted vocabulary or intended meaning.
+- Compatible minor additions preserve the validity and meaning of existing conformant documents. Adding optional fields or values can be compatible; tightening a constraint is not automatically compatible merely because the field is optional.
+- Removing valid vocabulary, requiring new information in existing documents, or changing previously specified meaning requires a major language version. Interpretation includes defaults, identity, and merge behavior as well as structure.
+- Implementations should identify the contract baseline they support; package numbering alone is insufficient to describe language support.
 
-**`costs` — mark as experimental, no normative shape in v1.2**
-Cost structures are too provider- and team-specific to formalize without a concrete normative output. Remain permissive. Authors may use `x-` extensions freely.
+The selected completion policy preserves v1.1 and assigns incompatible rules to the [unreleased v2 draft](v2/README.md). Its compatibility ledger distinguishes selected draft semantics from current language requirements. Package implementation remains later work.
 
-**`backupDr` — mark as experimental, no normative shape in v1.2**
-Backup and DR procedures vary significantly across hosting providers and team capabilities. Remain permissive until a concrete use case justifies formalization.
+### v1.2 boundary
 
-**`design` — mark as intentionally open**
-Design system content is intentionally heterogeneous. The section will remain permissive by design. No promotion planned.
+v1.2 is planned, with no breaking changes assigned to it. In particular:
 
----
+- Feature `stage` and `status`, import Forms B/C, `architecture.errorConventions`, and the structured contracts/domain/compliance/SLO/resilience containers are already v1.1 surface; they must not be reintroduced as new v1.2 features.
+- `constant` in error retry policies and `fixed` in resilience retry policies remain valid in their respective locations. Removing either spelling is not a v1.2 change. Any proposed additive alias needs an explicit mapping and compatibility review.
+- New bindings, scalar restrictions, required keys, or normalization changes receive a release assignment after their compatibility impact is understood. “Spec completion” does not automatically make a change nonbreaking.
 
-### 3. Migration and versioning policy
+### Migration definition
 
-**Problem:** Authors using stale vocabulary or old section shapes have no automated path to upgrade. The v0.1 spec was deleted but no migration tooling was provided.
+The [v1.1-to-v2 migration plan](v2/migrations/v1.1-to-v2.0-draft.1.json) identifies exact endpoints, affected path patterns, governing rules, compatibility, transformation safety, preconditions, and author decisions. Its result format carries replayable changes and cannot claim target conformance while decisions or resource failures remain. Existing migration utilities remain package capabilities; their presence or absence does not alter the language contract.
 
-**SDL version semantics:**
-- `sdlVersion` is a language contract version, not a package version
-- A change is a **minor version** (1.1 → 1.2) if it adds new optional sections or tightens optional field validation in a way that does not break existing valid documents
-- A change is a **major version** (1.x → 2.0) if it removes or renames required sections, changes required field shapes, or removes valid enum values
-- Tooling must declare which `sdlVersion` values it supports
+## Scope Decisions
 
-**Migration specification:**
-- A normative migration map must exist for every breaking change
-- The migration map is machine-readable: `{ from, to, transform }` per field
-- SDL tooling that supports a target version must be able to detect and report documents authored for older versions
-- Automated migration is opt-in — tooling may offer it but must not silently rewrite documents
+SDL retains an API-inventory role. Per-operation request/response definitions belong in external OpenAPI, GraphQL, gRPC, or AsyncAPI specifications. The portable reference mechanism is defined in [Contracts and Errors](v2/CONTRACTS-ERRORS.md); validating the external language and its operations is separately scoped.
 
-**v1.1 → v1.2 migration map (non-breaking):**
-No breaking changes are planned for v1.2. All additions are new optional sections or new optional fields on existing sections.
+Feature dependencies, flags, and rollout policies are extension metadata today. The completion pass does not silently promote them into first-class fields.
 
----
+[Scope and Operations](v2/SCOPE-OPERATIONS.md) defines database-free/storage-only designs, typed recovery coverage and cost scenarios. Design and compliance evidence metadata remain explicitly open; stage-derived heuristic advice is separately scoped. Provider execution, live prices, and certification verification are not core conformance claims.
 
-### 4. `features` section specification
-
-**Problem:** `features` has an enforced array shape but no normative semantics. A feature is currently just `name` + `priority` + optional `description`.
-
-**Proposed normative shape (v1.2):**
-```yaml
-features:
-  - name: string                                    # required
-    description: string
-    priority: critical | high | medium | low
-    stage: MVP | Growth | Enterprise                # which stage this ships in
-    status: planned | in-progress | done | deferred
-    x-*: ...                                        # phase, flags, dependencies via extension
-```
-
-`stage` aligns features to the solution lifecycle. `status` enables progress tracking against the spec. Both are optional — the section remains usable without them.
-
----
-
-## Not Planned for v1.2
-
-The following are explicitly out of scope for v1.2 to keep the specification focused:
-
-- **Dependency graph between sections** — e.g. `contracts.apis[].owner` referencing a `team` definition. Cross-section references add validation complexity that outweighs the benefit at this stage.
-- **Executable constraints** — e.g. asserting that `nonFunctional.availability.target` is achievable given `deployment.cloud`. This is tooling-level analysis, not spec-level definition.
-- **SDL composition beyond imports** — e.g. inheritance, mixins, or overlays. The current `imports` mechanism covers the primary use case.
-
----
+Inheritance, mixins, and executable infrastructure-feasibility analysis are not commitments in the current completion milestone. Project/service binding is now defined in the v2 ownership/binding draft. External references and shared error/retry policies are now defined in the v2 contracts draft, independently of current package support.
 
 ## Versioning History
 
-| Version | Status | Key additions |
+| Version | Status | Scope |
 |---|---|---|
-| v0.1 | Retired | Initial prototype. Removed — see CHANGELOG.md. |
-| v1.1 | Active | Full section set, modular imports, AI authoring guidance, generator tiers |
-| v1.2 | Planned | `contracts` and `domain` leverage, `slos`/`resilience`/`compliance` formalization, `features` enrichment, migration policy |
+| v0.1 | Retired | Original prototype; see the changelog |
+| v1.1 | Active, preserved baseline `sdl-v1.1-2026-09-12` | Current language surface above, including its historically documented completion gaps; exact bytes are content-addressed |
+| v1.2 | Planned | Compatible additions only; exact scope follows the completion decisions |
+| v2.0 | Unreleased baseline `sdl-v2.0-draft.1` | Consolidated field/semantic/diagnostic contract, full fixtures, compatibility inventory, and migration grammar in `spec/v2/`; stable promotion and package implementation remain later work |
