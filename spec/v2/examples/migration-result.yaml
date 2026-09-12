@@ -1,7 +1,7 @@
 format: sdl-migration-result/v1
-plan: sdl-v1.1-to-v2.0-draft.1
-sourceBaseline: sdl-v1.1-2026-09-12
-targetBaseline: sdl-v2.0-draft.1
+plan: sdl-v1.1-to-v2.0
+sourceBaseline: sdl-v1.1-2026-09-13
+targetBaseline: sdl-v2.0
 outcome: migrated
 document:
   sdlVersion: "2.0"

@@ -1,63 +1,63 @@
 {
   "format": "sdl-release-manifest/v1",
-  "id": "sdl-v2.0-draft.1",
+  "id": "sdl-v2.0",
   "languageVersion": "2.0",
-  "status": "draft",
+  "status": "active",
   "published": "2026-09-12",
   "authority": [
     {
       "path": "spec/v2/FULL-SPEC.md",
       "role": "normative-prose",
       "precedence": 1,
-      "sha256": "f7808646f639ebfbcf08722331d3c51bc5f6a0899de602063c1675f19985b46d"
+      "sha256": "85a7cd69f0b20da0d72502d6c083783bcda99c97ed54a2e9b43785bc7cd9ac69"
     },
     {
       "path": "spec/v2/FOUNDATIONS.md",
       "role": "normative-prose",
       "precedence": 2,
-      "sha256": "5892d571739b98c65ca62de0a49a0624fd494f9efca36189c9d2ba3f4bbcc795"
+      "sha256": "b4b632204ff63e9cc155f1a77147a65766408e5585c04c745ffe0a2887803462"
     },
     {
       "path": "spec/v2/OWNERSHIP-BINDINGS.md",
       "role": "normative-prose",
       "precedence": 3,
-      "sha256": "e5e43960c42056cdad0ba1b65af600f4ac265a9d0bcfd51917368c03382ad62c"
+      "sha256": "c047cb167e167b5aed352c499779f8fc3f32a42635490ec34e8df0ca98337836"
     },
     {
       "path": "spec/v2/CONTRACTS-ERRORS.md",
       "role": "normative-prose",
       "precedence": 4,
-      "sha256": "d728a847707bdd5ee3248fa6c2fbbbf51bf5688bf13ae0d0da9c73128ce0bfb6"
+      "sha256": "7ba4eb2f3c1b20f8b7440f0c79c46e5118e38917d49715780bb3fe81196ad1fb"
     },
     {
       "path": "spec/v2/DOMAIN-METADATA.md",
       "role": "normative-prose",
       "precedence": 5,
-      "sha256": "f64b4e0081175165e70b79a97dbbb2353ca9b72d05ef3d28091e021c286629c4"
+      "sha256": "97c5d091b916f933ac4f86715f83452a03a4c3bfbb2cbcb5f9e41bd51ca353a5"
     },
     {
       "path": "spec/v2/SCOPE-OPERATIONS.md",
       "role": "normative-prose",
       "precedence": 6,
-      "sha256": "be0a85573a54acc6342484b372e6a1e5af5fdc9afa6ddc0ba708bd880f3598c2"
+      "sha256": "de0be2594ae9ab10bb1e92deb5e89ed68952980b3e32077e41bafc8b03af64c6"
     },
     {
       "path": "spec/v2/NORMALIZATION.md",
       "role": "normative-prose",
       "precedence": 7,
-      "sha256": "bada72b7b9771ef783b09e7bbbc40930c8ab75c632b8f16db11a15d8bb452bbe"
+      "sha256": "ced8f6e05d2136ced126a9c00d8c6a875bd3449b065b8f1f1bd9a2d58746a759"
     },
     {
       "path": "spec/v2/DIAGNOSTICS.md",
       "role": "normative-prose",
       "precedence": 8,
-      "sha256": "3ace1e3850310b432eaecc75b252438faf9c47f26c92115e464f50c3935cc11a"
+      "sha256": "0ac923a5f2365ea458bdaf196d18867dc8a1f25b3d1ece7c5654d7706422c8cb"
     },
     {
       "path": "spec/v2/RELEASE-MIGRATION.md",
       "role": "normative-prose",
       "precedence": 9,
-      "sha256": "4dd5cd97405a161565e5723ef033eab597267dc7860da7d3c79489c1efc738e6"
+      "sha256": "2f36b48ec7c031900122188386c79fb9d560d25fe99172716bdf2e3a9631f8e0"
     },
     {
       "path": "spec/v2/sdl-v2.schema.json",
@@ -84,77 +84,77 @@
       "sha256": "8a409c40322dbd694b15bfaddd884a3c345f396ebdb8200782b9a9ebdbec2c36"
     },
     {
-      "path": "spec/v2/migrations/v1.1-to-v2.0-draft.1.json",
+      "path": "spec/v2/migrations/v1.1-to-v2.0.json",
       "role": "normative-corpus",
       "precedence": 14,
-      "sha256": "2d461768b2ffc7739a2cb0facc89691394f2edaa84c56e37b0f53b0576b7228c"
+      "sha256": "340a93087577f43bdd25bc17d4784020b4bb7321f27a5627f778c76e3d94533d"
     },
     {
       "path": "spec/v2/conformance/cases.yaml",
       "role": "normative-corpus",
       "precedence": 15,
-      "sha256": "ae700f5df2f4b14d5ff8909652b0fb7b5fdbcb4414cd41f4b05716294f3c7e60"
+      "sha256": "6415f2f38a2520cd6cc44b29885a8fff1a7cf7e88f1c291d0a7297e81f31f6e6"
     },
     {
       "path": "spec/v2/conformance/bindings.yaml",
       "role": "normative-corpus",
       "precedence": 16,
-      "sha256": "d2b367cf866007244dbfc829701e4b5ce87a362cfa3eed73690eb5acd1a219b0"
+      "sha256": "dcc438606185a0fc11b11b7d25f4c812eef501a94a80d04fc76932e929480cbd"
     },
     {
       "path": "spec/v2/conformance/contracts.yaml",
       "role": "normative-corpus",
       "precedence": 17,
-      "sha256": "e2d326d854f7bcb215e4ff7298625459a5db308077486c72a68d7d0d4b3f451a"
+      "sha256": "dbd38ebe04f02bc82f8daf86dd977ed7939a5c923b6164a3f4a9134f1a4ec84a"
     },
     {
       "path": "spec/v2/conformance/domain-metadata.yaml",
       "role": "normative-corpus",
       "precedence": 18,
-      "sha256": "684eb8eef2ee210f5a8a6c1dd37b4d7da36fa06635e62e7128436c939e784779"
+      "sha256": "97a036db6d8ff273ea00546437937538d5afebdad01a988bfb38ce77d66a2263"
     },
     {
       "path": "spec/v2/conformance/scope-operations.yaml",
       "role": "normative-corpus",
       "precedence": 19,
-      "sha256": "01c741121ca6fdefa384cf3739361c3feea62b9a99349372191e7576d15352d4"
+      "sha256": "d4f10bf3996cd02e3038f5f5f1e734a7d67a5347aa18b4804399f9e5e7677818"
     },
     {
       "path": "spec/v2/conformance/normalization.yaml",
       "role": "normative-corpus",
       "precedence": 20,
-      "sha256": "579cab0b0d4071ebe1d4a9ce854c0e03e43df1cf276c95da1466c531cd8e186b"
+      "sha256": "37bde4521c647a84eeb318e34971560861c210e91427d7e6991629da976661c1"
     },
     {
       "path": "spec/v2/conformance/full-document.yaml",
       "role": "normative-corpus",
       "precedence": 21,
-      "sha256": "375eda58d3092d8e36669d4ebb9b664f0452e3f289f29fa637a92649193052ea"
+      "sha256": "8cd3678ca922da85a8237aec5887e8df96b3a044e9405a6360cc4f0d7586dbb3"
     },
     {
       "path": "spec/v2/conformance/diagnostics.yaml",
       "role": "normative-corpus",
       "precedence": 22,
-      "sha256": "ea06d7cab5eb27dd5bb3de42976f6f1c25d222eedc8d76193436eec939ad2979"
+      "sha256": "c79b27c1139d95140b07ee83f2a41248d1736c063ad61e7e5fbf9befd0f987b8"
     },
     {
       "path": "spec/v2/conformance/release-migration.yaml",
       "role": "normative-corpus",
       "precedence": 23,
-      "sha256": "f021c650a3cb4f3dead085a2e807c5953272418dd7ae5b2bc16932b8a1027672"
+      "sha256": "b47a2d128b1b76fb283c3b447ad2f1c87b3143cfb8b58affebacbf1f8db26113"
     },
     {
       "path": "spec/v2/FIELD-CATALOGUE.md",
       "role": "derived-reference",
       "precedence": 24,
-      "sha256": "ead91d040edac48c5934d101ae8e7ea769f83a4fa5121a1f38abbcd42d36975d"
+      "sha256": "841122077a19b7c523743526adc6649331cb4da1aee862bd64d6d5f3a1af6dab"
     },
     {
       "path": "spec/v2/RULE-COVERAGE.md",
       "role": "derived-reference",
       "precedence": 25,
-      "sha256": "870ba08ca731c6c5efc292ec3af465e7a562baf0e61c283ad94b81771044e32f"
+      "sha256": "24f0429c8e32d6dd40913c8db282bbeecb257ba676a4f4999b0b8381ffcf9d56"
     }
   ],
-  "notes": "First complete portable v2 specification draft. Stable promotion and package conformance are separate future work."
+  "notes": "Active v2 specification baseline for the 2.x line, promoted from the preceding numbered draft record after review of the compatibility inventory. SDL v1.1 remains active for the 1.x line; package implementation of v2 is separate work."
 }

@@ -1,14 +1,14 @@
-# SDL v2 specification draft
+# SDL v2 specification
 
-**Status: unreleased design draft.** The active language remains [SDL v1.1](../SDL-v1.1.md). This directory contains selected completion rules for the next major version; it does not make `sdlVersion: "2.0"` acceptable to v1.1 tools or change existing documents.
+**Status: active specification for the 2.x line**, published as baseline `sdl-v2.0`. [SDL v1.1](../SDL-v1.1.md) remains active for the 1.x line. This directory is the v2 language contract. The reference packages still implement v1.1 only, so `sdlVersion: "2.0"` is not yet accepted by current tooling; that is a package support gap, not a specification limit.
 
-The user-selected release policy preserves v1.1 and assigns incompatible completion rules to this draft. Requirements expressed with “must” in this directory specify the draft design. They are not requirements on v1.1 implementations.
+The release policy preserves v1.1 and assigns incompatible completion rules to v2. Requirements expressed with “must” in this directory are normative for SDL v2. They are not requirements on v1.1 implementations.
 
 ## Defined specification slices
 
-Start with the [consolidated document contract](FULL-SPEC.md), [complete field catalogue](FIELD-CATALOGUE.md), and [structural schema](sdl-v2.schema.json). [Validation reports](DIAGNOSTICS.md) define portable outcomes and locations; [rule coverage](RULE-COVERAGE.md) records every historical rule disposition. These are self-contained draft definitions, not package implementation claims.
+Start with the [consolidated document contract](FULL-SPEC.md), [complete field catalogue](FIELD-CATALOGUE.md), and [structural schema](sdl-v2.schema.json). [Validation reports](DIAGNOSTICS.md) define portable outcomes and locations; [rule coverage](RULE-COVERAGE.md) records every historical rule disposition. These are self-contained v2 definitions, not package implementation claims.
 
-[Release Baselines and Migration](RELEASE-MIGRATION.md) identifies the active v1.1 baseline and this numbered v2 draft, defines compatibility classes and migration artifacts, and provides the complete v1.1-to-v2 change inventory. A numbered draft baseline is reviewable identity, not stable v2 publication.
+[Release Baselines and Migration](RELEASE-MIGRATION.md) identifies the active v1.1 and v2.0 baselines, defines compatibility classes and migration artifacts, and provides the complete v1.1-to-v2 change inventory. Each baseline is an exact content-addressed publication identity.
 
 [Foundations](FOUNDATIONS.md) defines the input profile, identifier/reference model, composition algorithm, operational scalar formats, domain keys and field constraints, and compliance vocabulary conversion. [Conformance cases](conformance/README.md) record their expected results independently of packages.
 
@@ -22,7 +22,7 @@ Start with the [consolidated document contract](FULL-SPEC.md), [complete field c
 
 [Normalization](NORMALIZATION.md) defines debt reconciliation, the closed default policy, effective-value catalogue, deterministic provenance, and unapplied suggestions. It includes a [worked input](examples/normalization.sdl.yaml), [result artifact](examples/normalization.result.yaml), and [cases](conformance/normalization.yaml).
 
-| Decision | Defined in this draft | Boundary / later work |
+| Decision | Defined in this specification | Boundary / later work |
 |---|---|---|
 | D01 | Team ownership, component/API bindings, many-to-many project/service implementation, integration use, canonical environments, explicit placements/coverage, regional policy, and port scopes | Selected binding design is defined; full-document integration is defined below; external provider capability profiles remain separate work |
 | D02 | Entity/field identities, single primary keys, field constraints, ordered indexes, tuple uniqueness/foreign keys, named relationship roles and bound cardinalities, database identity/access, stewardship, and cross-database advisories | Selected portable catalogue, full-document integration, and migration assignment defined; primary/replica data topology is defined in SO-003; provider-specific topology remains outside the portable model |
@@ -30,14 +30,14 @@ Start with the [consolidated document contract](FULL-SPEC.md), [complete field c
 | D04 | Scalars/retries, compliance and debt reconciliation, closed default policy, effective-value catalogue, exact provenance/change journal, and separate suggestion records | Selected normalization policy, result format, full-document integration, and migration decisions defined; optional suggestion algorithms are separate |
 | D05 | Root-relative external contract references, selectors/format markers, explicit applicability, envelope types/presence, status/code identities, shared retry budgets/delays and Retry-After | Portable design, full-document integration, and migration decisions defined; ecosystem validation and transport adapters are separate profiles |
 | D06 | Database intent/storage IDs, environment data instances, per-resource recovery plans and global requirements, exact authored cost scenarios/comparisons, compliance mapping advice, and open metadata boundaries | Selected portable scope, full-document integration, and migration decisions defined; provider execution, price acquisition, and optional heuristic profiles are separate |
-| D07 | Active v1.1 and numbered v2 draft content-addressed baselines; compatibility classes; complete change inventory; migration plan/result grammar and cases | Selected definition complete; stable v2 promotion is a future release act, while package implementation remains separate |
+| D07 | Active v1.1 and v2.0 content-addressed baselines; compatibility classes; complete change inventory; migration plan/result grammar and cases | Definition complete and v2.0 published as active; package implementation remains separate |
 | D08 | YAML input profile, self-contained full field/structural catalogue, full-document fixtures, baseline-identified diagnostic serialization, and explicit advisory-profile boundary | Selected portable definition complete; profile algorithms and package implementation are separate |
 
 ## Compatibility ledger
 
 All changes below target v2. Some clarify previously undefined meaning; others deliberately tighten acceptance. None is backported through an editorial v1.1 amendment.
 
-| Area | Draft change | Migration requirement |
+| Area | v2 change | Migration requirement |
 |---|---|---|
 | Full structure | Self-contained v2 catalogue; projects container optional when services supply components; NFR objectives independently optional | Preserve required authored facts; remove placeholder projects/objectives deliberately; v1.1 requiredness remains unchanged |
 | ORM binding | EF Core/MongoDB exclusion uses explicit backend data-access pairs | Declare actual accesses; do not infer a binding from the global primary database |
@@ -64,8 +64,8 @@ All changes below target v2. Some clarify previously undefined meaning; others d
 | Error conventions | Explicit API applicability, typed envelope paths/code selector, unique codes and statuses restricted to 400–599 | Select managed APIs and repair ambiguous types, nesting, code locations, and non-error statuses |
 | Retry evaluation | Complete policy objects, one minimum attempt budget, longest applicable minimum wait, explicit replay eligibility | Review attempt counts and timing; do not infer missing policy members or replay safety |
 
-Existing `retry_policy`/`base_ms` and `retryPolicy`/`initialInterval` field names remain in their respective locations. This draft does not rename them merely to impose a naming convention.
+Existing `retry_policy`/`base_ms` and `retryPolicy`/`initialInterval` field names remain in their respective locations. This specification does not rename them merely to impose a naming convention.
 
 ## Completion boundary
 
-The selected portable field, identity/reference, composition, domain, ownership/binding, contract/error, persistence/recovery/cost, normalization, diagnostic, release-baseline, compatibility, and migration definitions are consolidated. The active v1.1 baseline and v2 draft.1 baseline are content-addressed; every v2 document/report rule has a migration classification. This is a complete specification draft, not a stable v2 release or a package-conformance claim. Stable promotion requires a new active manifest after review. Optional capability/advisory algorithms, mobile distribution, runtime execution, and package implementation remain separately scoped. Full-document fixtures declare that scope explicitly; earlier slice fixtures still claim only their named rules.
+The selected portable field, identity/reference, composition, domain, ownership/binding, contract/error, persistence/recovery/cost, normalization, diagnostic, release-baseline, compatibility, and migration definitions are consolidated. The active v1.1 and v2.0 baselines are content-addressed; every v2 document/report rule has a migration classification. This is the published v2 specification, not a package-conformance claim. It is active for the 2.x line as baseline `sdl-v2.0`, while v1.1 remains active for the 1.x line. Optional capability/advisory algorithms, mobile distribution, runtime execution, and package implementation remain separately scoped. Full-document fixtures declare that scope explicitly; earlier slice fixtures still claim only their named rules.

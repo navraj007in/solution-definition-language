@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-domain-metadata-draft
+target: sdl-v2-domain-metadata
 cases:
   - id: metadata-empty-arrays
     scope: domain-metadata

@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-contracts-draft
+target: sdl-v2-contracts
 cases:
   - id: contract-local-openapi
     scope: contracts

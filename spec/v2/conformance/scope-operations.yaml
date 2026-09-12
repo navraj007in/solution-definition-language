@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-scope-operations-draft
+target: sdl-v2-scope-operations
 cases:
   - id: scope-database-none
     scope: scope-operations

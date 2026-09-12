@@ -1,6 +1,6 @@
 # SDL v2 validation reports
 
-**Unreleased draft; v1.1 diagnostic codes are unchanged.** This defines a portable serialization of CF-001 outcomes. Rule IDs identify v2 specification requirements, not package error-code aliases. [diagnostics.schema.json](diagnostics.schema.json) defines record structure; DG-002–DG-004 add reference, outcome, and scope predicates.
+**Active for the 2.x line; v1.1 diagnostic codes are unchanged.** This defines a portable serialization of CF-001 outcomes. Rule IDs identify v2 specification requirements, not package error-code aliases. [diagnostics.schema.json](diagnostics.schema.json) defines record structure; DG-002–DG-004 add reference, outcome, and scope predicates.
 
 **DG-001 — Report envelope.** A report is a separate artifact with required `format: sdl-validation-report/v1`, `scope`, `outcome`, `sources`, `diagnostics`, and `advice`. All records are closed except `x-*`. Arrays remain required even when empty. It is neither SDL input nor a normalization success envelope, and cannot be imported as an architecture module. The format versions the report, not the SDL language. Every scope requires the exact release `baseline` under BL-001; an unknown or digest-mismatched baseline cannot support a conformance claim.
 
@@ -9,7 +9,7 @@ format: sdl-validation-report/v1
 scope:
   kind: full-document
   sdlVersion: "2.0"
-  baseline: sdl-v2.0-draft.1
+  baseline: sdl-v2.0
 outcome: accept
 sources:
   - id: solution.sdl.yaml
@@ -18,7 +18,7 @@ diagnostics: []
 advice: []
 ```
 
-A scope is either `{kind: full-document, sdlVersion: "2.0", baseline: "sdl-v2.0-draft.1"}` or `{kind: rules, sdlVersion: "2.0", baseline: "sdl-v2.0-draft.1", rules: [rule IDs...]}` with a nonempty list of distinct declared IDs. A rule-scoped result checks exactly the named requirements and their necessary input dependencies; it is not full-document conformance. Scope is always explicit. Structural checking alone uses `rules: [FD-001]` and cannot claim the semantic rules were executed. Future baselines use their own exact published ID; this format does not hard-code draft.1 as its only value.
+A scope is either `{kind: full-document, sdlVersion: "2.0", baseline: "sdl-v2.0"}` or `{kind: rules, sdlVersion: "2.0", baseline: "sdl-v2.0", rules: [rule IDs...]}` with a nonempty list of distinct declared IDs. A rule-scoped result checks exactly the named requirements and their necessary input dependencies; it is not full-document conformance. Scope is always explicit. Structural checking alone uses `rules: [FD-001]` and cannot claim the semantic rules were executed. Future baselines use their own exact published ID; this format does not hard-code one baseline value.
 
 A core diagnostic requires `rule` (a declared specification rule ID), `severity: error | warning`, `category: validation | resource`, `stage`, nonblank `message`, and `location`. `stage` is `input | source | composition | structure | semantics | normalization | result`; the last is for final validity/artifact checks. Optional `kind` is a nonempty machine-readable subtype; when a rule specifies an advisory kind, that exact kind is required. Other subtype vocabularies and message wording are implementation-specific. Location identifies the offending declaration or nearest available containing declaration. Optional `related` holds other contributing locations. Stage names identify the check that established the finding, not an assertion that all earlier stages succeeded on every independent subtree.
 
@@ -32,7 +32,7 @@ Related locations obey the same rules. Composition conflicts and override adviso
 
 A processor may stop at an established validation rejection without attempting later reads. If it does attempt them and encounters a resource failure, report resource-failure. Missing files and malformed input follow the classifications in IM/EC/IN; “resource” is not a catch-all for invalid references. Warning rules retain their nonblocking severity; a core rule must not be reclassified by a profile. Rejected or resource-failed operations produce no successful normalized-document envelope. An accepted report alone contains no document result: a normalization result, when returned, is a separate ND-006 artifact for that operation and scope.
 
-**DG-004 — Scoped advice and conformance claims.** Every rule ID in a report or its rule scope must be declared in this draft. Core diagnostics must concern the claimed scope; a rules-scoped report includes only diagnostics governed by one of its listed rules. Scope dependencies may instead cause the operation to stop with the appropriate dependency rule included in the scope; they cannot silently broaden an accepted claim. Full-document reports cover FD-006's complete portable pipeline and cannot be produced from a schema-only or slice-only check.
+**DG-004 — Scoped advice and conformance claims.** Every rule ID in a report or its rule scope must be declared in this specification. Core diagnostics must concern the claimed scope; a rules-scoped report includes only diagnostics governed by one of its listed rules. Scope dependencies may instead cause the operation to stop with the appropriate dependency rule included in the scope; they cannot silently broaden an accepted claim. Full-document reports cover FD-006's complete portable pipeline and cannot be produced from a schema-only or slice-only check.
 
 `advice` contains optional profile findings, each requiring `profile: {id, version}` (nonempty strings), nonempty `code`, nonblank `message`, and `severity: warning`; optional `location` follows DG-002. Profiles cannot insert findings into core `diagnostics`, change `outcome`, or change normalization results. The schema does not select or define advisory algorithms. External-language validation, deployment checks, and policy gates that have their own failures must publish separately identified results; they are not disguised as core SDL errors or as completed work merely because an advisory profile is enabled.
 

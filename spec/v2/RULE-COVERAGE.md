@@ -1,6 +1,6 @@
 # SDL v2 rule coverage and historical dispositions
 
-**Unreleased draft.** The [consolidated document contract](FULL-SPEC.md), structural schema, and seven linked semantic/report documents define the portable requirements. The [corpus](conformance/README.md) supplies scoped and full-document expected results. Rule-group coverage is checked mechanically; it is not a proof of exhaustive predicate coverage or package conformance.
+**Active for the 2.x line.** The [consolidated document contract](FULL-SPEC.md), structural schema, and seven linked semantic/report documents define the portable requirements. The [corpus](conformance/README.md) supplies scoped and full-document expected results. Rule-group coverage is checked mechanically; it is not a proof of exhaustive predicate coverage or package conformance.
 
 ## Historical error catalogue
 

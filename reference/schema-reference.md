@@ -58,7 +58,7 @@ Project identity, description, stage, and optional repository/region metadata.
 ### `architecture`
 Architecture style plus project/component layout across frontend, backend, mobile, and related services. v1.1 also defines one nested cross-cutting contract under `architecture`:
 
-- `architecture.errorConventions` — solution-wide error envelope, status↔code mapping, and default retry policy. This expresses a v1.1 language contract; package support is tracked separately. See [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Error Conventions*. The unreleased v2 baseline resolves the historical D05 gaps without changing v1.1.
+- `architecture.errorConventions` — solution-wide error envelope, status↔code mapping, and default retry policy. This expresses a v1.1 language contract; package support is tracked separately. See [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Error Conventions*. The v2 baseline resolves the historical D05 gaps without changing v1.1.
 
 Per-operation API contracts are intentionally **not** part of SDL. Use `contracts.apis[]` for the inventory and point to external OpenAPI / GraphQL SDL / gRPC files via `x-` extension fields.
 
@@ -66,10 +66,10 @@ Per-operation API contracts are intentionally **not** part of SDL. Use `contract
 Primary database plus secondary stores, storage, cache, queues, and search providers.
 
 ### `contracts`
-An inventory of REST, GraphQL, gRPC, webhook, and AsyncAPI surfaces. Per-operation definitions belong in external specifications. API ownership and portable pointer semantics remain historical v1.1 gaps; D01/D05 define them only for unreleased v2.
+An inventory of REST, GraphQL, gRPC, webhook, and AsyncAPI surfaces. Per-operation definitions belong in external specifications. API ownership and portable pointer semantics remain historical v1.1 gaps; D01/D05 define them for v2 only.
 
 ### `domain`
-Entity inventory with fields and relationships. Index and constraint metadata are accepted, but complete identity, type, key, ownership, and relationship semantics remain historical v1.1 gaps; [D02](../spec/completion-decisions.md#d02--domain-types-identity-and-relationships) defines them only for unreleased v2.
+Entity inventory with fields and relationships. Index and constraint metadata are accepted, but complete identity, type, key, ownership, and relationship semantics remain historical v1.1 gaps; [D02](../spec/completion-decisions.md#d02--domain-types-identity-and-relationships) defines them for v2 only.
 
 ### `features`
 Flat items with required `name` and optional `description`, `priority`, `stage`, and `status`. Dependencies, flags, and rollout policies use extensions; they are not first-class v1.1 fields.

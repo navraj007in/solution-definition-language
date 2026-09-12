@@ -9,7 +9,7 @@ This document is the normative SDL v1.1 specification. All other documents are s
 
 If any subordinate document conflicts with this spec, this spec wins.
 
-The content-addressed publication ID for this preserved contract is `sdl-v1.1-2026-09-12`; its exact authority files and digests are recorded in the [release manifest](v2/releases/sdl-v1.1-2026-09-12.json). The baseline ID accompanies conformance and migration claims outside SDL documents. Valid v1.1 source continues to contain only `sdlVersion: "1.1"`.
+The content-addressed publication ID for this preserved contract is `sdl-v1.1-2026-09-13`; its exact authority files and digests are recorded in the [release manifest](v2/releases/sdl-v1.1-2026-09-13.json). The baseline ID accompanies conformance and migration claims outside SDL documents. Valid v1.1 source continues to contain only `sdlVersion: "1.1"`.
 
 ### Specification status
 
@@ -17,7 +17,7 @@ Normative requirements describe the language independently of package support. L
 
 Some requirements still need a complete definition. These are identified as **[definition incomplete: Dxx]** and tracked in [Specification Completion Decisions](completion-decisions.md). The decision record contains proposals, not adopted language changes. Implementation gaps and specification gaps must be tracked separately.
 
-Incompatible completion rules are defined separately in the [unreleased v2 draft](v2/README.md). They do not change v1.1 interpretation or acceptance; a selected v2 rule does not silently resolve a historical v1.1 gap.
+Incompatible completion rules are defined separately in [SDL v2](v2/README.md), which is active for the 2.x line. They do not change v1.1 interpretation or acceptance; a v2 rule does not silently resolve a historical v1.1 gap.
 
 Examples under `costs`, `backupDr`, and `design` illustrate open metadata; their inner fields are not a normative field catalogue. A section does not need a generator consumer to be specified. The [package support matrix](../reference/section-support.md) reports implementation coverage, not specification completeness.
 

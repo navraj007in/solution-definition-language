@@ -1,6 +1,6 @@
-# SDL v2 draft — external contracts and error policies
+# SDL v2 — external contracts and error policies
 
-**Status: unreleased selected design for D05 and the retry portion of D04.** This document extends [Foundations](FOUNDATIONS.md) and [Ownership and Bindings](OWNERSHIP-BINDINGS.md). It does not change SDL v1.1 or assert package support. [Expected-result cases](conformance/contracts.yaml) cover these definitions.
+**Status: active v2 design for D05 and the retry portion of D04.** This document extends [Foundations](FOUNDATIONS.md) and [Ownership and Bindings](OWNERSHIP-BINDINGS.md). It does not change SDL v1.1 or assert package support. [Expected-result cases](conformance/contracts.yaml) cover these definitions.
 
 SDL inventories APIs and declares shared architectural policy. Operations, request/response schemas, protocol-specific errors, and operation replay guarantees remain in external contracts. The portable checks below establish reference resolution and SDL policy consistency; they do not certify an external document against its ecosystem specification or a running service against either document.
 

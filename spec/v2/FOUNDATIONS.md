@@ -1,10 +1,10 @@
 # SDL v2 foundations
 
-**Unreleased draft; v1.1 is unchanged.** This document selects the foundation semantics described in the [v2 draft](README.md). Rule identifiers in this document belong to the draft specification, not the package diagnostic-code registry. A conforming implementation of this draft must satisfy each applicable rule; diagnostic message wording and ordering are not prescribed.
+**Active for the 2.x line; v1.1 is unchanged.** This document defines the foundation semantics of the [v2 specification](README.md). Rule identifiers belong to the v2 specification, not the package diagnostic-code registry. A conforming implementation must satisfy each applicable rule; diagnostic message wording and ordering are not prescribed.
 
 Examples and machine-readable expected results live in the [conformance corpus](conformance/README.md). The [consolidated contract](FULL-SPEC.md) and [structural schema](sdl-v2.schema.json) now define all v2 container shapes without an implicit v1.1 fallback. [Validation reports](DIAGNOSTICS.md) serialize CF-001 outcomes.
 
-[Ownership and Bindings](OWNERSHIP-BINDINGS.md) extends these foundations with explicit team, project/service, API, database, integration, and hosting relationships. Its v2 changes include the canonical `deployment.environments` location and per-target/per-placement hosting fields; these replace the corresponding v1.1 locations only in the draft.
+[Ownership and Bindings](OWNERSHIP-BINDINGS.md) extends these foundations with explicit team, project/service, API, database, integration, and hosting relationships. Its v2 changes include the canonical `deployment.environments` location and per-target/per-placement hosting fields; these replace the corresponding v1.1 locations in v2 only.
 
 ## Input and value model
 
@@ -28,7 +28,7 @@ Resource limits must be disclosed. Exhausting a byte, node, alias-expansion, num
 
 **ST-002 — Assembly.** An imported fragment may omit document sections, object members, and `sdlVersion`. Missing required members of ordinary objects are checked on the assembled document. An array item is a complete declaration: its own required fields must be supplied in that source. In particular, project items need their required project fields, entity items need `name` and `fields`, and field items need `name` and `type`. Cross-source references and constraints involving multiple values are evaluated after composition. This permits a relationship to reference an entity declared in another module.
 
-**ST-003 — Version and final validity.** A full draft root uses `sdlVersion: "2.0"`. Every module that states a version must state the same version; a different version cannot be overwritten away. After resolution, check the complete document's required sections and fields, identities, references, cross-field predicates, and normalization validity in that order. A source with no imports follows the same stages. Scoped corpus fixtures intentionally omit unrelated full-document sections; their scope is explicit.
+**ST-003 — Version and final validity.** A full v2 root uses `sdlVersion: "2.0"`. Every module that states a version must state the same version; a different version cannot be overwritten away. After resolution, check the complete document's required sections and fields, identities, references, cross-field predicates, and normalization validity in that order. A source with no imports follows the same stages. Scoped corpus fixtures intentionally omit unrelated full-document sections; their scope is explicit.
 
 The stage order is input → local structural checks → graph resolution/composition → full structure → cross-field semantics → normalization → validity check. A stage failure stops successful completion; diagnostics may include other independently established errors, but need not enumerate errors in an unread or structurally invalid subtree.
 
@@ -144,7 +144,7 @@ Maintenance windows, `integrations.custom[].rateLimit`, growth estimates such as
 
 ## Domain field catalogue and key semantics
 
-**DM-001 — Entities and keys.** Each entity requires an identifier `name` and a nonempty `fields` array. Each field requires identifier `name` and string `type`. Each entity declares exactly one field with `primaryKey: true`. A field named `id` is not an implicit key. Composite primary keys are outside this draft's portable domain model; named tuple uniqueness/foreign-key constraints under [Domain Metadata](DOMAIN-METADATA.md) cannot substitute for the required single-field primary key. Field uniqueness is per entity under ID-002.
+**DM-001 — Entities and keys.** Each entity requires an identifier `name` and a nonempty `fields` array. Each field requires identifier `name` and string `type`. Each entity declares exactly one field with `primaryKey: true`. A field named `id` is not an implicit key. Composite primary keys are outside the v2 portable domain model; named tuple uniqueness/foreign-key constraints under [Domain Metadata](DOMAIN-METADATA.md) cannot substitute for the required single-field primary key. Field uniqueness is per entity under ID-002.
 
 Entity `description` and `table` remain optional strings. `table` is a physical naming hint, not entity identity or a database binding. Root `domain.entities` and `domain.relationships` remain optional arrays; an empty domain declares no entities. Entity `indexes`, `constraints`, and entity-local `relationships` have the typed records and predicates in [Domain Metadata](DOMAIN-METADATA.md). Root relationships retain DM-006 semantics, extended there with optional role names and explicit foreign-key bindings. No declaration implies provider-specific database DDL.
 
@@ -163,7 +163,7 @@ Entity `description` and `table` remain optional strings. `table` is a physical 
 
 Null is governed by DM-003 for every type, including `json`. No automatic string/number or date conversion occurs. UUID/date/datetime types do not select a language-runtime class or storage type. `number` and `decimal` share the admitted values but express different modeling intent; they are not interchangeable foreign-key types.
 
-A custom type must use `x-` followed by an ID-001 identifier, such as `x-Money`. It is an opaque type name whose values receive input-profile checks only; its application-specific validity is outside portable SDL. Arbitrary unprefixed type names are rejected in this draft. Extensions may supply additional meaning, but cannot silently redefine portable types.
+A custom type must use `x-` followed by an ID-001 identifier, such as `x-Money`. It is an opaque type name whose values receive input-profile checks only; its application-specific validity is outside portable SDL. Arbitrary unprefixed type names are rejected in v2. Extensions may supply additional meaning, but cannot silently redefine portable types.
 
 **DM-003 — Presence and nullability.** These flags describe the materialized logical record, after any application-side defaulting or generation. They are not requirements on an API request body.
 
@@ -219,7 +219,7 @@ The normalized value removes the two shorthand-list fields after reconciliation,
 
 **NM-003 — Preservation and defaults.** Missing, explicit null, empty string, empty object, empty array, zero, and false are distinct authored states. Structural validity determines where each is allowed; normalization must not repair an invalid authored field or treat every falsy value as absence. Preserve authored values except for an explicitly specified canonical transformation such as NM-002. Domain flag defaults in DM-003 define effective meaning; they do not authorize generation of architecture facts.
 
-The package's stage/cloud/framework defaults are not adopted as normative v2 defaults by this draft. A suggestion based on project stage, inferred hosting, or missing metadata must remain distinguishable from an authored declaration. [Normalization](NORMALIZATION.md) defines the closed default policy, effective-value catalogue, debt reconciliation, and provenance result format under D04. The normalized result must satisfy the same applicable language predicates as the valid pre-normalization document.
+The package's stage/cloud/framework defaults are not adopted as normative v2 defaults. A suggestion based on project stage, inferred hosting, or missing metadata must remain distinguishable from an authored declaration. [Normalization](NORMALIZATION.md) defines the closed default policy, effective-value catalogue, debt reconciliation, and provenance result format under D04. The normalized result must satisfy the same applicable language predicates as the valid pre-normalization document.
 
 ## Conformance and diagnostics
 

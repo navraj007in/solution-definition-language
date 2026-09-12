@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-normalization-draft
+target: sdl-v2-normalization
 cases:
   - id: normalize-no-debt
     scope: normalization

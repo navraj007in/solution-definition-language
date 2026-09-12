@@ -1,6 +1,6 @@
 # SDL release baselines and v1.1-to-v2 migration
 
-This document completes D07 for the selected portable specification. It identifies the active v1.1 editorial baseline, publishes a numbered v2 draft baseline, classifies every v2 change, and defines migration-plan and migration-result records. It does not make v2 a stable release or claim package support.
+This document completes D07 for the selected portable specification. It identifies the active v1.1 editorial baseline, publishes the active v2.0 baseline, classifies every v2 change, and defines migration-plan and migration-result records. It does not claim package support.
 
 ## Contract identity
 
@@ -10,18 +10,18 @@ The published baselines in this repository are:
 
 | Baseline | Language | Status | Meaning |
 |---|---|---|---|
-| `sdl-v1.1-2026-09-12` | `1.1` | active | The preserved v1.1 specification after the editorial consistency amendments |
-| `sdl-v2.0-draft.1` | `2.0` | draft | The first consolidated v2 specification baseline; not a stable language release |
+| `sdl-v1.1-2026-09-13` | `1.1` | active | The preserved v1.1 specification after the editorial consistency amendments |
+| `sdl-v2.0` | `2.0` | active | The published v2 specification baseline for the 2.x line |
 
 SDL documents do not gain a baseline field. A document remains portable source rather than embedding repository publication history. APIs, command output, validation reports, and migration results carry the baseline separately. A processor that only knows `sdlVersion` may state version-level support, but it cannot claim conformance to one of these exact baselines.
 
 **BL-002 — Content-addressed manifests.** A release manifest has `format: sdl-release-manifest/v1`, a unique ID, language version, status, publication date, and an ordered authority list. Each authority entry gives a repository-relative canonical path, role, precedence, and lowercase SHA-256 digest of the exact bytes. Paths use `/`, contain no empty, `.` or `..` segment, and are unique. Precedence is a positive integer and is unique; lower numbers win on contradiction. Roles are `normative-prose`, `structural-schema`, `normative-corpus`, or `derived-reference`.
 
-The publication date is a valid Gregorian calendar date in `YYYY-MM-DD`. The manifest schema is [release-manifest.schema.json](release-manifest.schema.json). The [v1.1 manifest](releases/sdl-v1.1-2026-09-12.json) preserves the active contract and its principal derived structure/reference. The [v2 draft manifest](releases/sdl-v2.0-draft.1.json) freezes the consolidated normative prose, structural/report/migration schemas, and migration plan. Generated field catalogues, navigation pages, audits, package source, and examples may be listed as derived material but do not outrank normative prose. A digest mismatch means the named baseline is not the checked-out content. Updating any listed byte requires a new baseline ID and manifest; never rewrite a published manifest to point to new content.
+The publication date is a valid Gregorian calendar date in `YYYY-MM-DD`. The manifest schema is [release-manifest.schema.json](release-manifest.schema.json). The [v1.1 manifest](releases/sdl-v1.1-2026-09-13.json) preserves the active contract and its principal derived structure/reference. The [v2 manifest](releases/sdl-v2.0.json) freezes the consolidated normative prose, structural/report/migration schemas, and migration plan. Generated field catalogues, navigation pages, audits, package source, and examples may be listed as derived material but do not outrank normative prose. A digest mismatch means the named baseline is not the checked-out content. Updating any listed byte requires a new baseline ID and manifest; never rewrite a published manifest to point to new content.
 
 **BL-003 — Baseline status and succession.** Status is `draft | active | superseded | retired`. A draft is reviewable and testable but not a stable language release. Active is the currently published stable contract for its version line. Superseded remains valid historical identity and may name its successor. Retired is retained only for historical/migration recognition. Status does not alter the bytes or semantics of a baseline, and changing status requires a new publication record rather than editing its content-addressed authority list.
 
-The active v1.1 baseline remains the stable language. The v2 draft baseline is the target used by this migration plan and the v2 conformance corpus. Promoting v2 requires a new active manifest, final review of the compatibility inventory, and explicit publication; package implementation is assessed separately.
+Both published baselines are active on their own version lines: `sdl-v1.1-2026-09-13` for 1.x and `sdl-v2.0` for 2.x. The v2.0 baseline is the target used by this migration plan and the v2 conformance corpus. It was promoted from the preceding numbered draft record by publishing this new active manifest after review of the compatibility inventory; package implementation is assessed separately.
 
 ## Compatibility classification
 
@@ -38,9 +38,9 @@ The active v1.1 baseline remains the stable language. The v2 draft baseline is t
 | `relocated-vocabulary` | Moves or splits a declaration so the old path is not equivalent at the target baseline | `breaking` |
 | `removed-vocabulary` | Removes a previously accepted field or enum value | `breaking` |
 
-`compatibility` is `compatible | conditional | breaking`. Conditional means the class is nonbreaking only when stated preconditions hold, such as an unused optional field. A record may describe several affected paths only when they share one classification, compatibility conclusion, and migration action. The [machine-readable plan](migrations/v1.1-to-v2.0-draft.1.json) is the complete inventory for this baseline pair. Every v2 document, normalization, and report rule from IN-001 through DG-004 is assigned to at least one record; a rule may appear in several when it governs distinct changes. BL/MG rules govern the manifests and migration artifacts themselves and are covered by their conformance cases rather than classified as changes to SDL documents.
+`compatibility` is `compatible | conditional | breaking`. Conditional means the class is nonbreaking only when stated preconditions hold, such as an unused optional field. A record may describe several affected paths only when they share one classification, compatibility conclusion, and migration action. The [machine-readable plan](migrations/v1.1-to-v2.0.json) is the complete inventory for this baseline pair. Every v2 document, normalization, and report rule from IN-001 through DG-004 is assigned to at least one record; a rule may appear in several when it governs distinct changes. BL/MG rules govern the manifests and migration artifacts themselves and are covered by their conformance cases rather than classified as changes to SDL documents.
 
-**BL-005 — Release assignment.** Editorial v1.1 amendments are frozen in `sdl-v1.1-2026-09-12`. They do not add a new accepted `sdlVersion`. All new fields, changed rules, validation tightening, normalization changes, relocations, and removals defined in `spec/v2` belong to `sdl-v2.0-draft.1`. Nothing in the plan assigns breaking behavior to v1.2. A later compatible v1.x addition needs its own baseline and compatibility record; it cannot be inferred from the v2 inventory.
+**BL-005 — Release assignment.** Editorial v1.1 amendments are frozen in `sdl-v1.1-2026-09-13`. They do not add a new accepted `sdlVersion`. All new fields, changed rules, validation tightening, normalization changes, relocations, and removals defined in `spec/v2` belong to `sdl-v2.0`. Nothing in the plan assigns breaking behavior to v1.2. A later compatible v1.x addition needs its own baseline and compatibility record; it cannot be inferred from the v2 inventory.
 
 ## Migration plan
 
@@ -85,7 +85,7 @@ A migration must not claim success when it skipped an applicable record, used a 
 
 The published plan is authoritative; this sequence explains its dependency order:
 
-1. Verify `sdl-v1.1-2026-09-12`, resolve/import/normalize using that baseline, and preserve source provenance.
+1. Verify `sdl-v1.1-2026-09-13`, resolve/import/normalize using that baseline, and preserve source provenance.
 2. Rewrite the version marker and exact safe aliases/value forms, including `dotnet-8` with an unambiguous runtime version and eligible percent strings.
 3. Collect author decisions for invalid identities, team/component ownership, database/storage IDs, project/service bindings, deployment targets/environments, typed domain metadata, recovery/cost records, external specs/errors, and ambiguous scalar units/counts.
 4. Apply selected transactional renames/references and structural relocations; retain unmatched open metadata under explicit extensions.

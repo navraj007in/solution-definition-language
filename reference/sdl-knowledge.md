@@ -84,7 +84,7 @@ Use these when the architecture requires them:
 - `backupDr`
 - `design`
 
-There is no root-level `environments` section in v1.1. CI/CD environment declarations use `deployment.ciCd.environments[]`; D01 defines richer deployment scope only for unreleased v2. `costs`, `backupDr`, and `design` are open v1.1 metadata, not mandatory detailed models.
+There is no root-level `environments` section in v1.1. CI/CD environment declarations use `deployment.ciCd.environments[]`; D01 defines richer deployment scope for v2 only. `costs`, `backupDr`, and `design` are open v1.1 metadata, not mandatory detailed models.
 
 ## Generation Rules
 

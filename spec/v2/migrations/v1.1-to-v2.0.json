@@ -1,8 +1,8 @@
 {
   "format": "sdl-migration-plan/v1",
-  "id": "sdl-v1.1-to-v2.0-draft.1",
-  "from": { "baseline": "sdl-v1.1-2026-09-12", "sdlVersion": "1.1" },
-  "to": { "baseline": "sdl-v2.0-draft.1", "sdlVersion": "2.0" },
+  "id": "sdl-v1.1-to-v2.0",
+  "from": { "baseline": "sdl-v1.1-2026-09-13", "sdlVersion": "1.1" },
+  "to": { "baseline": "sdl-v2.0", "sdlVersion": "2.0" },
   "records": [
     {
       "id": "MIG-001",

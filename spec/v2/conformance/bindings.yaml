@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-bindings-draft
+target: sdl-v2-bindings
 cases:
   - id: owner-team-reference
     scope: bindings

@@ -15,7 +15,7 @@ const prose = ['FOUNDATIONS.md', 'OWNERSHIP-BINDINGS.md', 'CONTRACTS-ERRORS.md',
   .map(filename => fs.readFileSync(path.join(directory, '..', filename), 'utf8')).join('\n');
 const declaredRules = new Set([...prose.matchAll(/(?:\*\*|\| )((?:IN|ST|ID|IM|SC|DM|NM|CF|OB|EC|DX|SO|ND|FD|DG|BL|MG)-\d{3})/g)].map(match => match[1]));
 const cases = [];
-for (const [filename, target] of [['cases.yaml', 'sdl-v2-foundations-draft'], ['bindings.yaml', 'sdl-v2-bindings-draft'], ['contracts.yaml', 'sdl-v2-contracts-draft'], ['domain-metadata.yaml', 'sdl-v2-domain-metadata-draft'], ['scope-operations.yaml', 'sdl-v2-scope-operations-draft'], ['normalization.yaml', 'sdl-v2-normalization-draft'], ['full-document.yaml', 'sdl-v2-full-document-draft'], ['diagnostics.yaml', 'sdl-v2-diagnostics-draft'], ['release-migration.yaml', 'sdl-v2-release-migration-draft']]) {
+for (const [filename, target] of [['cases.yaml', 'sdl-v2-foundations'], ['bindings.yaml', 'sdl-v2-bindings'], ['contracts.yaml', 'sdl-v2-contracts'], ['domain-metadata.yaml', 'sdl-v2-domain-metadata'], ['scope-operations.yaml', 'sdl-v2-scope-operations'], ['normalization.yaml', 'sdl-v2-normalization'], ['full-document.yaml', 'sdl-v2-full-document'], ['diagnostics.yaml', 'sdl-v2-diagnostics'], ['release-migration.yaml', 'sdl-v2-release-migration']]) {
   const manifest = YAML.parse(fs.readFileSync(path.join(directory, filename), 'utf8'), { version: '1.2', uniqueKeys: true });
   assert.equal(manifest.format, 'sdl-conformance-cases/v1');
   assert.equal(manifest.target, target);
@@ -57,10 +57,10 @@ checkSchema(reportSchema);
 checkSchema(releaseSchema);
 checkSchema(migrationSchema);
 
-const migrationPlan = JSON.parse(fs.readFileSync(path.join(directory, '../migrations/v1.1-to-v2.0-draft.1.json'), 'utf8'));
+const migrationPlan = JSON.parse(fs.readFileSync(path.join(directory, '../migrations/v1.1-to-v2.0.json'), 'utf8'));
 const migrationRecords = new Map(migrationPlan.records.map(record => [record.id, record]));
-const publishedBaselines = new Set(['sdl-v1.1-2026-09-12', 'sdl-v2.0-draft.1']);
-const baselineVersions = new Map([['sdl-v1.1-2026-09-12', '1.1'], ['sdl-v2.0-draft.1', '2.0']]);
+const publishedBaselines = new Set(['sdl-v1.1-2026-09-13', 'sdl-v2.0']);
+const baselineVersions = new Map([['sdl-v1.1-2026-09-13', '1.1'], ['sdl-v2.0', '2.0']]);
 
 // Checks report shape, internal source links, scope IDs, and outcome consistency.
 // It cannot establish the truth of an architectural finding or a claimed completed scope.

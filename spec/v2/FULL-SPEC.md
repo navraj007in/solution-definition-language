@@ -1,6 +1,6 @@
 # SDL v2 consolidated document contract
 
-**Unreleased draft; v1.1 is unchanged.** This document brings the selected v2 slices into one portable document contract. [Release Baselines and Migration](RELEASE-MIGRATION.md) defines the exact draft baseline and v1.1 migration contract. It does not assert package support or stable-release readiness.
+**Active for the 2.x line; v1.1 is unchanged.** This document brings the v2 slices into one portable document contract. [Release Baselines and Migration](RELEASE-MIGRATION.md) defines the exact baseline and v1.1 migration contract. It does not assert package support.
 
 ## Authority and complete structure
 

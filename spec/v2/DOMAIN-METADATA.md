@@ -1,6 +1,6 @@
-# SDL v2 draft — domain indexes, constraints, and relationships
+# SDL v2 — domain indexes, constraints, and relationships
 
-**Status: unreleased selected completion of D02's portable domain catalogue.** This document extends [domain foundations](FOUNDATIONS.md#domain-field-catalogue-and-key-semantics) and [database bindings](OWNERSHIP-BINDINGS.md). It replaces the draft's previously unspecified entity metadata arrays; it does not change v1.1. [Cases](conformance/domain-metadata.yaml) and a [worked example](examples/domain-metadata.sdl.yaml) accompany the definitions.
+**Status: active v2 completion of D02's portable domain catalogue.** This document extends [domain foundations](FOUNDATIONS.md#domain-field-catalogue-and-key-semantics) and [database bindings](OWNERSHIP-BINDINGS.md). It replaces the previously unspecified entity metadata arrays; it does not change v1.1. [Cases](conformance/domain-metadata.yaml) and a [worked example](examples/domain-metadata.sdl.yaml) accompany the definitions.
 
 The domain model describes logical records and relationships. An index is an access-path declaration, a constraint states a record invariant, and a relationship describes a named or unnamed association. None installs a database object, selects an ORM, or guarantees provider support. Every entity still requires exactly one explicit primary-key field; multi-field uniqueness and foreign keys do not introduce composite primary keys.
 

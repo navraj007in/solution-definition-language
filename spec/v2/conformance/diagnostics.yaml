@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-diagnostics-draft
+target: sdl-v2-diagnostics
 cases:
   - id: report-accepted
     scope: diagnostics
@@ -11,7 +11,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -47,7 +47,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -97,7 +97,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -149,7 +149,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: resource-failure
       sources:
         - id: solution.sdl.yaml
@@ -199,7 +199,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: resource-failure
       sources:
         - id: solution.sdl.yaml
@@ -267,7 +267,7 @@ cases:
         sdlVersion: "2.0"
         rules:
           - FD-001
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -303,7 +303,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -355,7 +355,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: broken.yaml
@@ -406,7 +406,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -468,7 +468,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -492,7 +492,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -515,7 +515,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -541,7 +541,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -574,7 +574,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -601,7 +601,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -634,7 +634,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -667,7 +667,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -700,7 +700,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -735,7 +735,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -768,7 +768,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -793,7 +793,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: resource-failure
       sources:
         - id: solution.sdl.yaml
@@ -818,7 +818,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -851,7 +851,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -884,7 +884,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -919,7 +919,7 @@ cases:
         sdlVersion: "2.0"
         rules:
           - IN-001
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml
@@ -951,7 +951,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -982,7 +982,7 @@ cases:
         kind: rules
         sdlVersion: "2.0"
         rules: []
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: accept
       sources:
         - id: solution.sdl.yaml
@@ -1030,7 +1030,7 @@ cases:
       scope:
         kind: full-document
         sdlVersion: "2.0"
-        baseline: sdl-v2.0-draft.1
+        baseline: sdl-v2.0
       outcome: reject
       sources:
         - id: solution.sdl.yaml

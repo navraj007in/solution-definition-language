@@ -1,6 +1,6 @@
 # SDL v2 ownership and bindings
 
-**Unreleased draft; v1.1 is unchanged.** This document defines the D01 ownership/deployment model and the ownership/persistence part of D02. It extends [Foundations](FOUNDATIONS.md); the existing namespaces, validation stages, scalar rules, and import algorithm still apply. New fields and replaced v1.1 locations are assigned to v2 in the [compatibility ledger](README.md#compatibility-ledger).
+**Active for the 2.x line; v1.1 is unchanged.** This document defines the D01 ownership/deployment model and the ownership/persistence part of D02. It extends [Foundations](FOUNDATIONS.md); the existing namespaces, validation stages, scalar rules, and import algorithm still apply. New fields and replaced v1.1 locations are assigned to v2 in the [compatibility ledger](README.md#compatibility-ledger).
 
 ## Model and applicability
 
@@ -48,7 +48,7 @@ An external implementation has no managed projects and requires no placement. Mi
 
 **OB-003 — Project source and language.** `path`, when authored, is `.` or a `/`-separated sequence of nonempty directory segments. Reject absolute paths, backslashes, NUL, colons (including drive/URI prefixes), and `.`/`..` segments except the standalone `.`. Resolve relative to the repository root supplied with the SDL input, not relative to an imported module. Imports never rebase this path. Path existence/build success is an implementation check; the language validates its declared form. Different projects may deliberately share a source directory, so path equality does not merge their identities.
 
-`language`, when authored, must form a pair in the table. This is the draft's compatibility vocabulary for the primary implementation language, not an inference rule or a claim about every auxiliary language used by a project. Runtime/SDK versions remain separate. Omitting `language` is valid and does not fabricate a value.
+`language`, when authored, must form a pair in the table. This is the v2 compatibility vocabulary for the primary implementation language, not an inference rule or a claim about every auxiliary language used by a project. Runtime/SDK versions remain separate. Omitting `language` is valid and does not fabricate a value.
 
 | Project framework | Accepted primary languages |
 |---|---|
@@ -66,7 +66,7 @@ An external implementation has no managed projects and requires no placement. Mi
 | Mobile `swift` | `swift` |
 | Mobile `kotlin` | `kotlin` |
 
-The previously scheduled removal of `dotnet-8` applies in this v2 draft. Migrate to `dotnet` and an explicit `runtimeVersion`; it is not a second framework/language pair.
+The previously scheduled removal of `dotnet-8` applies in v2. Migrate to `dotnet` and an explicit `runtimeVersion`; it is not a second framework/language pair.
 
 **OB-004 — API binding.** An authored API `component` resolves to one component in the existing global namespace. Both projects and services are allowed. Its absence means an inventory entry without an implementation binding; it does not refer to the API name or its owner. API ownership may differ from the bound component's ownership. Binding an API to an external service is allowed. External specification references and shared error-policy applicability are defined separately in [Contracts and Errors](CONTRACTS-ERRORS.md). The component binding itself does not define operations or establish protocol conformance.
 

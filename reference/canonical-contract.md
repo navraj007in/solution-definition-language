@@ -2,7 +2,7 @@
 
 This document is the canonical naming reference for the active SDL `v1.1` contract.
 
-The exact active publication is baseline `sdl-v1.1-2026-09-12`, identified by its [content-addressed manifest](../spec/v2/releases/sdl-v1.1-2026-09-12.json). Baseline identity is external metadata and is not an SDL field.
+The exact active publication is baseline `sdl-v1.1-2026-09-13`, identified by its [content-addressed manifest](../spec/v2/releases/sdl-v1.1-2026-09-13.json). Baseline identity is external metadata and is not an SDL field.
 
 Use it for:
 
@@ -71,7 +71,7 @@ Use `x-` extension fields for richer metadata that is not part of the stable con
 
 `imports` is an array and is the one root key that is **not** a document section. It is consumed by the resolver and stripped from the merged document before validation, so it never appears in a compiled SDL document. Full semantics in [`spec/SDL-v1.1.md`](../spec/SDL-v1.1.md) → *Modular SDL and Import Semantics*.
 
-Root solution files and imported modules may both declare imports. Depth-limit behavior and containing-file precedence remain undefined in the preserved v1.1 contract; [D03](../spec/completion-decisions.md#d03--import-completeness-and-precedence) defines them for the separately versioned v2 draft.
+Root solution files and imported modules may both declare imports. Depth-limit behavior and containing-file precedence remain undefined in the preserved v1.1 contract; [D03](../spec/completion-decisions.md#d03--import-completeness-and-precedence) defines them for the separately versioned v2 specification.
 
 ### Open Metadata and Extension Boundaries
 
@@ -95,7 +95,7 @@ Some concerns can be declared in more than one place. One location is canonical 
 | Backup / DR | `nonFunctional.backup` (enforced shape: frequency, retention, point-in-time recovery) | `backupDr` (placeholder: procedural DR content, open shape) | No normalization — they are different concerns. Tooling that needs backup posture reads `nonFunctional.backup`; `backupDr` is free-form until it gains a normative shape. |
 | Cost | `constraints.budget` (validated tier, consumed by budget warnings) | `evolution.costProjection`, `costs` (advisory / placeholder) | No normalization — `constraints.budget` is the only machine-consumed location; the others are advisory narrative. |
 
-For new v1.1 documents, use the canonical `technicalDebt` spelling; `techDebt` remains accepted with the same item shape. The reconciliation table describes current normalization behavior. Historical v1.1 collision and conversion gaps remain part of this preserved baseline; [D04](../spec/completion-decisions.md#d04--scalars-and-normalization) defines their incompatible completion only for unreleased v2.
+For new v1.1 documents, use the canonical `technicalDebt` spelling; `techDebt` remains accepted with the same item shape. The reconciliation table describes current normalization behavior. Historical v1.1 collision and conversion gaps remain part of this preserved baseline; [D04](../spec/completion-decisions.md#d04--scalars-and-normalization) defines their incompatible completion for v2 only.
 
 Compliance vocabularies must be read by location. Rule 24 in [SDL v1.1](../spec/SDL-v1.1.md#conditional-rules-errors) lists the root framework names; the lowercase shorthand identifiers are a separate authoring form. Accepted casing at each location and conversion from shorthand names to canonical root values remain part of D04. Package acceptance of additional spellings does not by itself establish language aliases.
 

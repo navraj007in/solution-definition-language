@@ -35,7 +35,7 @@ Start with identity and references, operational scalars, import precedence, and 
 
 Write examples and expected results as each definition is settled. Dependencies: D01–D04 and D08, with compatibility assessed under D07. Existing enums and container shapes are the baseline, not proof that all underlying semantics are complete.
 
-**Progress:** the first semantic slice is defined in the [v2 foundations draft](v2/README.md), with a [scoped conformance corpus](v2/conformance/README.md). It covers the input profile, identity/references, composition, operational scalars, domain keys/fields, and compliance conversion. The subsequent [full-document consolidation](v2/FULL-SPEC.md) completes the selected portable field catalogue and requiredness. Incompatible rules target v2 under the selected policy; v1.1 is preserved.
+**Progress:** the first semantic slice is defined in the [v2 foundations](v2/README.md), with a [scoped conformance corpus](v2/conformance/README.md). It covers the input profile, identity/references, composition, operational scalars, domain keys/fields, and compliance conversion. The subsequent [full-document consolidation](v2/FULL-SPEC.md) completes the selected portable field catalogue and requiredness. Incompatible rules target v2 under the selected policy; v1.1 is preserved.
 
 ### 3. Settle cross-section semantics
 
@@ -55,14 +55,14 @@ Dependencies: D07 and D08, plus the semantic decisions above. Implementation sup
 
 ## Versioning and Compatibility Policy
 
-`sdlVersion` identifies the language contract, not a package release. [D07](v2/RELEASE-MIGRATION.md) now identifies exact publications outside SDL documents: active `sdl-v1.1-2026-09-12` and unreleased `sdl-v2.0-draft.1`. Conformance and migration claims name both language version and baseline; no revision field is added to SDL.
+`sdlVersion` identifies the language contract, not a package release. [D07](v2/RELEASE-MIGRATION.md) now identifies exact publications outside SDL documents: active `sdl-v1.1-2026-09-13` for the 1.x line and active `sdl-v2.0` for the 2.x line. Conformance and migration claims name both language version and baseline; no revision field is added to SDL.
 
 - Editorial corrections align documents without changing the accepted vocabulary or intended meaning.
 - Compatible minor additions preserve the validity and meaning of existing conformant documents. Adding optional fields or values can be compatible; tightening a constraint is not automatically compatible merely because the field is optional.
 - Removing valid vocabulary, requiring new information in existing documents, or changing previously specified meaning requires a major language version. Interpretation includes defaults, identity, and merge behavior as well as structure.
 - Implementations should identify the contract baseline they support; package numbering alone is insufficient to describe language support.
 
-The selected completion policy preserves v1.1 and assigns incompatible rules to the [unreleased v2 draft](v2/README.md). Its compatibility ledger distinguishes selected draft semantics from current language requirements. Package implementation remains later work.
+The completion policy preserves v1.1 and assigns incompatible rules to the [v2 specification](v2/README.md). Its compatibility ledger distinguishes v2 semantics from v1.1 requirements. Package implementation remains later work.
 
 ### v1.2 boundary
 
@@ -74,7 +74,7 @@ v1.2 is planned, with no breaking changes assigned to it. In particular:
 
 ### Migration definition
 
-The [v1.1-to-v2 migration plan](v2/migrations/v1.1-to-v2.0-draft.1.json) identifies exact endpoints, affected path patterns, governing rules, compatibility, transformation safety, preconditions, and author decisions. Its result format carries replayable changes and cannot claim target conformance while decisions or resource failures remain. Existing migration utilities remain package capabilities; their presence or absence does not alter the language contract.
+The [v1.1-to-v2 migration plan](v2/migrations/v1.1-to-v2.0.json) identifies exact endpoints, affected path patterns, governing rules, compatibility, transformation safety, preconditions, and author decisions. Its result format carries replayable changes and cannot claim target conformance while decisions or resource failures remain. Existing migration utilities remain package capabilities; their presence or absence does not alter the language contract.
 
 ## Scope Decisions
 
@@ -84,13 +84,13 @@ Feature dependencies, flags, and rollout policies are extension metadata today. 
 
 [Scope and Operations](v2/SCOPE-OPERATIONS.md) defines database-free/storage-only designs, typed recovery coverage and cost scenarios. Design and compliance evidence metadata remain explicitly open; stage-derived heuristic advice is separately scoped. Provider execution, live prices, and certification verification are not core conformance claims.
 
-Inheritance, mixins, and executable infrastructure-feasibility analysis are not commitments in the current completion milestone. Project/service binding is now defined in the v2 ownership/binding draft. External references and shared error/retry policies are now defined in the v2 contracts draft, independently of current package support.
+Inheritance, mixins, and executable infrastructure-feasibility analysis are not commitments in the current completion milestone. Project/service binding is defined in the v2 ownership/binding specification. External references and shared error/retry policies are defined in the v2 contracts specification, independently of current package support.
 
 ## Versioning History
 
 | Version | Status | Scope |
 |---|---|---|
 | v0.1 | Retired | Original prototype; see the changelog |
-| v1.1 | Active, preserved baseline `sdl-v1.1-2026-09-12` | Current language surface above, including its historically documented completion gaps; exact bytes are content-addressed |
+| v1.1 | Active, preserved baseline `sdl-v1.1-2026-09-13` | Current language surface above, including its historically documented completion gaps; exact bytes are content-addressed |
 | v1.2 | Planned | Compatible additions only; exact scope follows the completion decisions |
-| v2.0 | Unreleased baseline `sdl-v2.0-draft.1` | Consolidated field/semantic/diagnostic contract, full fixtures, compatibility inventory, and migration grammar in `spec/v2/`; stable promotion and package implementation remain later work |
+| v2.0 | Active, published baseline `sdl-v2.0` | Consolidated field/semantic/diagnostic contract, full fixtures, compatibility inventory, and migration grammar in `spec/v2/`; package implementation remains later work |

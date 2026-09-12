@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-foundations-draft
+target: sdl-v2-foundations
 cases:
   - id: input-core-resolution
     scope: input

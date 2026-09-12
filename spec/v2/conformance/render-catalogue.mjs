@@ -7,7 +7,7 @@ const code = value => '`' + String(value).replaceAll('|', '\\|').replaceAll('`',
 export function renderCatalogue(schema) {
   const lines = [
     '# SDL v2 field catalogue', '',
-    '**Unreleased draft.** This catalogue is rendered from [sdl-v2.schema.json](sdl-v2.schema.json); [the consolidated contract](FULL-SPEC.md) and its linked semantic slices supply meanings and cross-field rules. No package definitions are required.', '',
+    '**Active for the 2.x line.** This catalogue is rendered from [sdl-v2.schema.json](sdl-v2.schema.json); [the consolidated contract](FULL-SPEC.md) and its linked semantic slices supply meanings and cross-field rules. No package definitions are required.', '',
     'Each group is a reusable schema definition; `$` is the root document. Dotted paths describe nested fields, `[]` array items, and `<oneOf N>`/`<anyOf N>` alternative shapes. Required means required when its containing object/declaration exists, subject to ST-002 fragment assembly. Array-item rows are not themselves named fields. Unlisted lower bounds are zero; omitted fields stay absent. Conditional predicates are shown verbatim so requiredness is not lost in a flat table. All numbers are exact input-profile values.', '',
     'Regenerate with `node spec/v2/conformance/render-catalogue.mjs --write`. The corpus checker compares this file with the rendering to detect drift.', ''
   ];

@@ -1,26 +1,26 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-release-migration-draft
+target: sdl-v2-release-migration
 cases:
   - id: baseline-v11-published
     scope: release-migration
     rules: [BL-001, BL-002, BL-003, BL-005]
     artifactKind: release-manifest
-    artifactFile: ../releases/sdl-v1.1-2026-09-12.json
+    artifactFile: ../releases/sdl-v1.1-2026-09-13.json
     expected:
       outcome: accept
       meaning:
         languageVersion: "1.1"
         status: active
-  - id: baseline-v2-draft-published
+  - id: baseline-v2-published
     scope: release-migration
     rules: [BL-001, BL-002, BL-003, BL-005]
     artifactKind: release-manifest
-    artifactFile: ../releases/sdl-v2.0-draft.1.json
+    artifactFile: ../releases/sdl-v2.0.json
     expected:
       outcome: accept
       meaning:
         languageVersion: "2.0"
-        status: draft
+        status: active
   - id: baseline-missing-authority
     scope: release-migration
     rules: [BL-002]
@@ -132,7 +132,7 @@ cases:
     scope: release-migration
     rules: [BL-004, MG-001, MG-002, MG-003, MG-004, MG-007, MG-008]
     artifactKind: migration-plan
-    artifactFile: ../migrations/v1.1-to-v2.0-draft.1.json
+    artifactFile: ../migrations/v1.1-to-v2.0.json
     expected:
       outcome: accept
       meaning:
@@ -145,8 +145,8 @@ cases:
     value:
       format: sdl-migration-plan/v1
       id: example-plan
-      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
-      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      from: {baseline: sdl-v1.1-2026-09-13, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0, sdlVersion: "2.0"}
       records:
         - &record
           id: MIG-001
@@ -170,7 +170,7 @@ cases:
       format: sdl-migration-plan/v1
       id: example-plan
       from: {baseline: sdl-v1.1-unknown, sdlVersion: "1.1"}
-      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      to: {baseline: sdl-v2.0, sdlVersion: "2.0"}
       records:
         - id: MIG-001
           title: First
@@ -191,8 +191,8 @@ cases:
     value:
       format: sdl-migration-plan/v1
       id: example-plan
-      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.0"}
-      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      from: {baseline: sdl-v1.1-2026-09-13, sdlVersion: "1.0"}
+      to: {baseline: sdl-v2.0, sdlVersion: "2.0"}
       records:
         - id: MIG-001
           title: First
@@ -213,8 +213,8 @@ cases:
     value:
       format: sdl-migration-plan/v1
       id: example-plan
-      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
-      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      from: {baseline: sdl-v1.1-2026-09-13, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0, sdlVersion: "2.0"}
       records:
         - id: MIG-001
           title: Unsafe automatic action
@@ -235,8 +235,8 @@ cases:
     value:
       format: sdl-migration-plan/v1
       id: example-plan
-      from: {baseline: sdl-v1.1-2026-09-12, sdlVersion: "1.1"}
-      to: {baseline: sdl-v2.0-draft.1, sdlVersion: "2.0"}
+      from: {baseline: sdl-v1.1-2026-09-13, sdlVersion: "1.1"}
+      to: {baseline: sdl-v2.0, sdlVersion: "2.0"}
       records:
         - id: MIG-001
           title: Removed but compatible
@@ -283,9 +283,9 @@ cases:
     sourceValue: {sdlVersion: "1.1"}
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: needs-decision
       candidate: {sdlVersion: "2.0"}
       changes:
@@ -313,9 +313,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: reject
       changes: []
       decisions: []
@@ -330,9 +330,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: resource-failure
       changes: []
       decisions: []
@@ -348,9 +348,9 @@ cases:
     sourceValue: {sdlVersion: "1.1"}
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: migrated
       document: {sdlVersion: "2.0"}
       changes:
@@ -370,9 +370,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: migrated
       document: {}
       changes: []
@@ -391,9 +391,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: needs-decision
       document: {}
       changes: []
@@ -412,9 +412,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: reject
       changes: []
       decisions: []
@@ -429,9 +429,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: resource-failure
       changes: []
       decisions: []
@@ -447,9 +447,9 @@ cases:
     sourceValue: {sdlVersion: "1.1"}
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: needs-decision
       changes: []
       decisions:
@@ -467,9 +467,9 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: needs-decision
       changes: []
       decisions:
@@ -490,9 +490,9 @@ cases:
     sourceValue: {sdlVersion: "1.1"}
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: needs-decision
       candidate: {sdlVersion: "2.0"}
       changes:
@@ -517,9 +517,9 @@ cases:
     sourceValue: {sdlVersion: "1.1"}
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
-      targetBaseline: sdl-v2.0-draft.1
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
+      targetBaseline: sdl-v2.0
       outcome: migrated
       document: {sdlVersion: "2.0"}
       changes:
@@ -539,8 +539,8 @@ cases:
     artifactKind: migration-result
     value:
       format: sdl-migration-result/v1
-      plan: sdl-v1.1-to-v2.0-draft.1
-      sourceBaseline: sdl-v1.1-2026-09-12
+      plan: sdl-v1.1-to-v2.0
+      sourceBaseline: sdl-v1.1-2026-09-13
       targetBaseline: sdl-v2.0-draft.2
       outcome: reject
       changes: []

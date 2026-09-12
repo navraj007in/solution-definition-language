@@ -240,7 +240,7 @@ solution:
 
 Use the [Section Support Matrix](section-support.md) for package validation, normalization, and generator coverage. This guide does not duplicate that table. Package coverage is independent of whether a language requirement is normative.
 
-For authoring, `features` includes optional `stage` and `status` in v1.1; `contracts` is an API inventory; `slos` declares component availability and latency objectives; and `resilience` declares solution-wide defaults. `costs`, `backupDr`, and `design` carry open v1.1 metadata. The [specification decisions](../spec/completion-decisions.md) preserve those v1.1 boundaries and define incompatible completions only in the unreleased v2 baseline.
+For authoring, `features` includes optional `stage` and `status` in v1.1; `contracts` is an API inventory; `slos` declares component availability and latency objectives; and `resilience` declares solution-wide defaults. `costs`, `backupDr`, and `design` carry open v1.1 metadata. The [specification decisions](../spec/completion-decisions.md) preserve those v1.1 boundaries and define incompatible completions in the v2 baseline only.
 
 ---
 

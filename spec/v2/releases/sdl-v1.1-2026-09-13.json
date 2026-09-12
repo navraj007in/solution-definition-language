@@ -1,15 +1,15 @@
 {
   "format": "sdl-release-manifest/v1",
-  "id": "sdl-v1.1-2026-09-12",
+  "id": "sdl-v1.1-2026-09-13",
   "languageVersion": "1.1",
   "status": "active",
-  "published": "2026-09-12",
+  "published": "2026-09-13",
   "authority": [
     {
       "path": "spec/SDL-v1.1.md",
       "role": "normative-prose",
       "precedence": 1,
-      "sha256": "97cf85205dbe3213ed87b7fc8e8ab71884048d9f04d079f7daf0fbc2cb5e5ac4"
+      "sha256": "a15066afe677cbb7f2a6f8d731313b97de53809d2b3d984dee8b800227ba57f3"
     },
     {
       "path": "schema/sdl-v1.1.schema.json",
@@ -21,8 +21,8 @@
       "path": "reference/canonical-contract.md",
       "role": "derived-reference",
       "precedence": 3,
-      "sha256": "a6ab68c8e952360bf61b565f85a4aa6816d7ee19fbb21b8351b3c6bced664735"
+      "sha256": "5406375ff6b8d32b75f55080e9684be895dd4186bbeb40717d17825de0d2b42a"
     }
   ],
-  "notes": "Preserved active v1.1 contract after the September 2026 editorial consistency amendments; documented definition gaps remain historical v1.1 behavior and are not backfilled from v2."
+  "notes": "Active v1.1 baseline for the 1.x line. Editorial amendment of the preceding 2026-09-12 record: v2 release-status cross-references were updated in the normative prose and canonical contract when SDL v2.0 was published. The v1.1 language requirements are unchanged."
 }

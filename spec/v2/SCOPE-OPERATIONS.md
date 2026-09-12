@@ -1,6 +1,6 @@
-# SDL v2 draft — persistence, recovery, costs, and metadata scope
+# SDL v2 — persistence, recovery, costs, and metadata scope
 
-**Status: unreleased selected D06 design.** This extends [Foundations](FOUNDATIONS.md), [Ownership and Bindings](OWNERSHIP-BINDINGS.md), and [Domain Metadata](DOMAIN-METADATA.md). It defines portable declarations and their consistency checks, independently of package support or live infrastructure feasibility. [Cases](conformance/scope-operations.yaml) and a [worked example](examples/scope-operations.sdl.yaml) accompany the rules. Existing v1.1 acceptance and meaning are preserved.
+**Status: active v2 D06 design.** This extends [Foundations](FOUNDATIONS.md), [Ownership and Bindings](OWNERSHIP-BINDINGS.md), and [Domain Metadata](DOMAIN-METADATA.md). It defines portable declarations and their consistency checks, independently of package support or live infrastructure feasibility. [Cases](conformance/scope-operations.yaml) and a [worked example](examples/scope-operations.sdl.yaml) accompany the rules. Existing v1.1 acceptance and meaning are preserved.
 
 All new records are closed except `x-*`; optional fields remain absent unless authored. A nonblank string contains at least one character other than ASCII space, tab, carriage return, or line feed. Identifiers use ID-001, booleans and numbers are not coerced, and durations use SC-001 with the bounds below. References are checked after composition. Nothing here provisions resources, validates actual prices, verifies recovery tests, or determines legal applicability.
 

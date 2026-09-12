@@ -2,7 +2,7 @@ format: sdl-validation-report/v1
 scope:
   kind: full-document
   sdlVersion: "2.0"
-  baseline: sdl-v2.0-draft.1
+  baseline: sdl-v2.0
 outcome: accept
 sources:
   - id: solution.sdl.yaml

@@ -1,5 +1,5 @@
 format: sdl-conformance-cases/v1
-target: sdl-v2-full-document-draft
+target: sdl-v2-full-document
 cases:
   - id: full-minimal
     scope: full-document

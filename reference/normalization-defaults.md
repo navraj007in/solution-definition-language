@@ -4,7 +4,7 @@ The SDL normalizer auto-infers sensible defaults when optional fields are omitte
 
 ## How It Works
 
-This reference is subordinate to [SDL v1.1](../spec/SDL-v1.1.md). It is the maintained table of existing normalization defaults; authoring guides link here instead of restating values. The unreleased [v2 normalization draft](../spec/v2/NORMALIZATION.md) now defines its separate core/default/suggestion policy under D04. This table continues to describe existing v1.1 implementation behavior; its inferred values are not automatically adopted as v2 language defaults.
+This reference is subordinate to [SDL v1.1](../spec/SDL-v1.1.md). It is the maintained table of existing normalization defaults; authoring guides link here instead of restating values. The [v2 normalization specification](../spec/v2/NORMALIZATION.md) now defines its separate core/default/suggestion policy under D04. This table continues to describe existing v1.1 implementation behavior; its inferred values are not automatically adopted as v2 language defaults.
 
 ```
 YAML input → parse() → validate() → normalize() → complete SDL document

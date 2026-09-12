@@ -4,10 +4,9 @@ SDL is a structured YAML specification for capturing complete software architect
 
 ## Status
 
-**SDL v1.1 is the active standard**, frozen as baseline `sdl-v1.1-2026-09-12`.
-New SDL documents, examples, generators, and integrations should target `sdlVersion: "1.1"`.
+**SDL v2.0 is the active specification for the 2.x line**, published as baseline `sdl-v2.0`. It provides a self-contained field/schema contract, full-document cases, diagnostics, and a classified v1.1 migration plan.
 
-The complete next-major specification is published for review as unreleased baseline `sdl-v2.0-draft.1`. It includes a self-contained field/schema contract, full-document cases, diagnostics, and a classified v1.1 migration plan. Package support and stable v2 promotion come later.
+**SDL v1.1 remains active for the 1.x line**, frozen as baseline `sdl-v1.1-2026-09-13`. The reference packages implement v1.1 only, so documents built with current tooling should still target `sdlVersion: "1.1"` until package support for v2 lands.
 
 ## Why SDL?
 
@@ -124,7 +123,7 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 ## Versions
 
 - **v1.1** — Active specification. Includes import Forms A/B/C, API inventories, domain modeling, feature `stage` and `status`, error conventions, compliance, SLOs, and resilience. Cost, recovery, and design sections carry open metadata.
-- **Specification completion** — [Completion Decisions](spec/completion-decisions.md) records the selected D01–D08 designs; the [v2 draft](spec/v2/README.md) contains the consolidated contract and migration baseline while the [language roadmap](spec/ROADMAP.md) separates specification maturity from package work.
+- **Specification completion** — [Completion Decisions](spec/completion-decisions.md) records the selected D01–D08 designs; the [v2 specification](spec/v2/README.md) contains the consolidated contract and migration baseline while the [language roadmap](spec/ROADMAP.md) separates specification maturity from package work.
 - **Package coverage** — The [Section Support Matrix](reference/section-support.md) reports validation, normalization, and generator support. Its labels do not determine whether a language requirement is normative or complete.
 
 ## Documentation
@@ -136,9 +135,9 @@ Every generator result carries a `tier` field: `deterministic` (correct by const
 | [Canonical Contract](reference/canonical-contract.md) | Canonical enums, artifact types, root section shapes, and alias policy for active `v1.1` |
 | [Section Support Matrix](reference/section-support.md) | Package support, schema strictness, normalization, and generator consumption |
 | [Generators](reference/generators.md) | Generator tiers, what each produces, what SDL sections it consumes |
-| [Specification v1.1](spec/SDL-v1.1.md) | Active normative specification; exact baseline `sdl-v1.1-2026-09-12` |
+| [Specification v1.1](spec/SDL-v1.1.md) | Active normative specification; exact baseline `sdl-v1.1-2026-09-13` |
 | [Completion Decisions](spec/completion-decisions.md) | Selected D01–D08 language designs and boundaries |
-| [SDL v2 draft](spec/v2/README.md) | Complete unreleased specification baseline `sdl-v2.0-draft.1`; packages and stable promotion remain later |
+| [SDL v2 specification](spec/v2/README.md) | Active 2.x baseline `sdl-v2.0`; package implementation remains later |
 | [Complexity Scoring Spec](reference/complexity-scoring.md) | Technical specification: formulas, thresholds, confidence model |
 | [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
 | [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
