@@ -2,8 +2,9 @@
 // Runs @sdl/core-v2 against spec/v2/conformance/ — the scopes/fields this
 // package implements so far: `input` (IN-001–IN-005), `identity`
 // (ID-001–ID-004), and `composition` (IM-001–IM-006) from cases.yaml, plus
-// the `expected.structure` field (FD-001) from full-document.yaml. See
-// README.md's status table for everything else.
+// `expected.structure` (FD-001) and `expected.outcome` (via
+// validateFullDocument(), structure + identity combined) from
+// full-document.yaml. See README.md's status table for everything else.
 //
 // This is deliberately separate from spec/v2/conformance/check-corpus.mjs,
 // which is an *integrity* checker: it verifies the fixture corpus is
@@ -16,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
-import { parseInputProfile, checkIdentity, validateStructure, compose } from '../dist/index.js';
+import { parseInputProfile, checkIdentity, validateStructure, compose, validateFullDocument } from '../dist/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const conformanceDir = join(__dirname, '..', '..', '..', 'spec', 'v2', 'conformance');
@@ -214,13 +215,47 @@ const KNOWN_COMPOSITION_GAPS = new Map([
   totalFail += failures.length;
 }
 
+// full-document.yaml: expected.outcome, via validateFullDocument() (structure
+// then identity — see validate-document.ts). Five documented gaps need
+// semantic slices this package doesn't have: FD-003's ORM exclusion, SO-001
+// (scope/operations), SC-001 (scalar grammar), DM-001 x2 (domain metadata).
+const KNOWN_FULL_DOCUMENT_OUTCOME_GAPS = new Map([
+  ['full-orm-explicit-mongodb', 'needs FD-003 ORM-exclusion semantics, not implemented yet'],
+  ['full-orm-database-none', 'needs SO-001 (scope/operations), not implemented yet'],
+  ['full-zero-duration', 'needs SC-001 (scalar-grammar validation), not implemented yet'],
+  ['full-domain-no-key', 'needs DM-001 (domain-metadata), not implemented yet'],
+  ['full-modular-key-removed', 'needs DM-001 (domain-metadata), not implemented yet'],
+]);
+{
+  const cases = fullDocumentManifest.cases.filter((c) => !KNOWN_FULL_DOCUMENT_OUTCOME_GAPS.has(c.id));
+  const knownGaps = fullDocumentManifest.cases.filter((c) => KNOWN_FULL_DOCUMENT_OUTCOME_GAPS.has(c.id));
+  let pass = 0;
+  const failures = [];
+  for (const c of cases) {
+    const result = validateFullDocument(c.value);
+    if (result.outcome === c.expected.outcome) {
+      pass++;
+    } else {
+      failures.push({ id: c.id, detail: `outcome: want ${c.expected.outcome}, got ${result.outcome}, diagnostics ${JSON.stringify(result.diagnostics.slice(0, 2))}` });
+    }
+  }
+  console.log(`[conformance] full-document.yaml expected.outcome (validateFullDocument) — ${pass}/${cases.length} passed`);
+  for (const f of failures) {
+    console.error(`  FAIL ${f.id}: ${f.detail}`);
+  }
+  for (const c of knownGaps) {
+    console.log(`[conformance] full-document.yaml expected.outcome — SKIPPED (known gap) ${c.id}: ${KNOWN_FULL_DOCUMENT_OUTCOME_GAPS.get(c.id)}`);
+  }
+  totalFail += failures.length;
+}
+
 const coveredScopes = new Set(['input', 'identity', 'composition']);
 const skippedScopes = [...new Set(manifest.cases.filter((c) => !coveredScopes.has(c.scope)).map((c) => c.scope))].sort();
 console.log(`[conformance] cases.yaml scopes not yet implemented, skipped: ${skippedScopes.join(', ')}`);
 console.log(
-  '[conformance] full-document.yaml: only expected.structure is checked (not outcome/value/meaning). ' +
-    'Not touched at all: bindings.yaml, contracts.yaml, domain-metadata.yaml, scope-operations.yaml, ' +
-    'normalization.yaml, diagnostics.yaml, release-migration.yaml.',
+  '[conformance] full-document.yaml: expected.structure and expected.outcome are checked ' +
+    '(not expected.value/meaning — no normalization). Not touched at all: bindings.yaml, contracts.yaml, ' +
+    'domain-metadata.yaml, scope-operations.yaml, normalization.yaml, diagnostics.yaml, release-migration.yaml.',
 );
 
 if (totalFail > 0) {
