@@ -4,5 +4,7 @@ export { checkIdentity } from './identity.js';
 export type { IdentityCheckResult } from './identity.js';
 export { validateStructure } from './structure.js';
 export type { StructureCheckResult } from './structure.js';
+export { compose } from './compose.js';
+export type { FileReader, ComposeOptions, ComposeResult, ComposeWarning } from './compose.js';
 export { sdlV2Schema } from './schema.js';
 export type { Diagnostic, Severity, Category, Stage, Path } from './diagnostics.js';
