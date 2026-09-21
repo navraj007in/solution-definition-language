@@ -41,11 +41,11 @@ jobs:
         working-directory: packages/core-v2
         run: node --test dist/__tests__/*.test.js
 
-      # Runs parseInputProfile() against every `scope: input` case in
-      # spec/v2/conformance/cases.yaml — the corpus's own check-corpus.mjs
+      # Runs this package against every case/field it implements in
+      # spec/v2/conformance/ — the corpus's own check-corpus.mjs
       # deliberately never invokes an implementation, so this is the only
       # place that actually exercises this package against the spec's cases.
-      - name: Run v2 conformance (implemented scopes only)
+      - name: Run v2 conformance (implemented scopes/fields only)
         working-directory: packages/core-v2
         run: node scripts/run-conformance.mjs
 

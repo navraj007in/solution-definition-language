@@ -216,7 +216,7 @@ The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
 - **Generators** — 13 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
 
-The `@sdl/core-v2` package in [packages/core-v2/](packages/core-v2/) is the early-stage v2 implementation, built directly from [spec/v2/](spec/v2/) rather than extended from `@sdl/core`. The input profile (IN-001–IN-005) and part of identity/references (ID-001–ID-004) are implemented so far; see its [README](packages/core-v2/README.md) for the full status table and why it's a separate package.
+The `@sdl/core-v2` package in [packages/core-v2/](packages/core-v2/) is the early-stage v2 implementation, built directly from [spec/v2/](spec/v2/) rather than extended from `@sdl/core`. The input profile (IN-001–IN-005), part of identity/references (ID-001–ID-004), and full-document structural validation against `sdl-v2.schema.json` are implemented so far; see its [README](packages/core-v2/README.md) for the full status table and why it's a separate package.
 
 ## Roadmap
 

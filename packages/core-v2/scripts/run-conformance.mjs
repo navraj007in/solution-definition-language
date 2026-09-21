@@ -1,24 +1,27 @@
 #!/usr/bin/env node
-// Runs @sdl/core-v2 against spec/v2/conformance/cases.yaml — the scopes
-// this package implements so far: `input` (IN-001–IN-005) and `identity`
-// (ID-001–ID-004). See README.md's status table for everything else.
+// Runs @sdl/core-v2 against spec/v2/conformance/ — the scopes/fields this
+// package implements so far: `input` (IN-001–IN-005) and `identity`
+// (ID-001–ID-004) from cases.yaml, plus the `expected.structure` field
+// (FD-001) from full-document.yaml. See README.md's status table for
+// everything else.
 //
 // This is deliberately separate from spec/v2/conformance/check-corpus.mjs,
 // which is an *integrity* checker: it verifies the fixture corpus is
 // internally consistent (unique IDs, valid YAML, linked files not drifted,
 // etc.) but "does not invoke SDL packages" — by design, it never runs an
 // actual implementation against the cases. This script is that missing
-// other half for the scopes this package covers.
+// other half for the scopes/fields this package covers.
 
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
-import { parseInputProfile, checkIdentity } from '../dist/index.js';
+import { parseInputProfile, checkIdentity, validateStructure } from '../dist/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const casesPath = join(__dirname, '..', '..', '..', 'spec', 'v2', 'conformance', 'cases.yaml');
-const manifest = parseYaml(readFileSync(casesPath, 'utf8'));
+const conformanceDir = join(__dirname, '..', '..', '..', 'spec', 'v2', 'conformance');
+const manifest = parseYaml(readFileSync(join(conformanceDir, 'cases.yaml'), 'utf8'));
+const fullDocumentManifest = parseYaml(readFileSync(join(conformanceDir, 'full-document.yaml'), 'utf8'));
 
 function getByPath(value, path) {
   let cur = value;
@@ -108,12 +111,34 @@ if (assertionProblems.length > 0) {
   totalFail += assertionProblems.length;
 }
 
+// full-document.yaml: only `expected.structure` (FD-001, the schema) is
+// checked here — `expected.outcome`, `expected.value`, and `expected.meaning`
+// need semantic validation, normalization, etc. this package doesn't have.
+{
+  let pass = 0;
+  const failures = [];
+  for (const c of fullDocumentManifest.cases) {
+    const result = validateStructure(c.value);
+    if (result.outcome === c.expected.structure) {
+      pass++;
+    } else {
+      failures.push({ id: c.id, detail: `structure: want ${c.expected.structure}, got ${result.outcome}` });
+    }
+  }
+  console.log(`[conformance] full-document.yaml expected.structure — ${pass}/${fullDocumentManifest.cases.length} passed`);
+  for (const f of failures) {
+    console.error(`  FAIL ${f.id}: ${f.detail}`);
+  }
+  totalFail += failures.length;
+}
+
 const coveredScopes = new Set(['input', 'identity']);
 const skippedScopes = [...new Set(manifest.cases.filter((c) => !coveredScopes.has(c.scope)).map((c) => c.scope))].sort();
 console.log(`[conformance] cases.yaml scopes not yet implemented, skipped: ${skippedScopes.join(', ')}`);
 console.log(
-  '[conformance] not touched at all: bindings.yaml, contracts.yaml, domain-metadata.yaml, ' +
-    'scope-operations.yaml, normalization.yaml, diagnostics.yaml, release-migration.yaml, full-document.yaml',
+  '[conformance] full-document.yaml: only expected.structure is checked (not outcome/value/meaning). ' +
+    'Not touched at all: bindings.yaml, contracts.yaml, domain-metadata.yaml, scope-operations.yaml, ' +
+    'normalization.yaml, diagnostics.yaml, release-migration.yaml.',
 );
 
 if (totalFail > 0) {
