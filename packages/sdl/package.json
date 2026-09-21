@@ -7,17 +7,19 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist-esm/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "scripts": {
     "sync:schema": "node -e \"require('fs').copyFileSync('src/schema/sdl-v1.1.schema.json','../../schema/sdl-v1.1.schema.json')\"",
-    "build": "npm run sync:schema && tsc && tsc -p tsconfig.esm.json",
+    "check:schema-mirror": "node scripts/check-schema-mirror.mjs",
+    "build": "npm run sync:schema && npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc",
-    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:esm": "tsc -p tsconfig.esm.json && node scripts/fix-esm-output.mjs",
     "test": "node --test dist/__tests__/**/*.test.js",
+    "test:packed": "node scripts/test-packed-esm.mjs",
     "pretest": "tsc"
   },
   "keywords": [

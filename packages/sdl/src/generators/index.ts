@@ -38,8 +38,12 @@ const GENERATOR_MAP: Partial<Record<ArtifactType, GeneratorFn>> = {
 /**
  * Confidence tier for each registry-backed artifact type.
  *
- * deterministic — correct by construction from SDL facts; same input always
- *   produces the same output; safe to use without manual review.
+ * deterministic — a mechanical, repeatable mapping from SDL facts; same
+ *   input always produces the same output. This is about the generation
+ *   process, not the operational correctness of the result — generated
+ *   CI/IaC still depends on external assumptions (provider capabilities,
+ *   credentials, regions, mutable base images/action versions) that SDL
+ *   does not verify, so it is not automatically safe to deploy unreviewed.
  *
  * inferred — derived from SDL facts via heuristics; structurally sound but
  *   may contain assumptions worth reviewing before committing.

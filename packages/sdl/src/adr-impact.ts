@@ -10,6 +10,7 @@
 
 export type AdrCategory =
   | 'architecture-style'
+  | 'lifecycle-stage'
   | 'component-topology'
   | 'authentication'
   | 'primary-database'
@@ -22,6 +23,7 @@ export type AdrCategory =
 
 export type AdrRuleCode =
   | 'ARCH_STYLE_CHANGED'
+  | 'LIFECYCLE_STAGE_CHANGED'
   | 'AUTH_CONFIG_CHANGED'
   | 'PRIMARY_DB_CHANGED'
   | 'CLOUD_PLATFORM_CHANGED'
@@ -113,14 +115,21 @@ function classifySectionChanges(sectionChanges: SdlSectionChange[]): RawHit[] {
   for (const sc of sectionChanges) {
     const section = sc.section;
 
-    // Solution-level: architecture style
+    // Solution-level: lifecycle stage (MVP / Growth / Enterprise, etc.)
+    //
+    // This is a maturity/lifecycle signal, not an architecture-style
+    // decision — a stage transition alone doesn't mean the architecture
+    // changed (that's `classifyArchitectureStyle` below, keyed off
+    // `architecture.style`). Categorising it as `architecture-style` made
+    // `generateAdrDraftFromDiff` produce an "Adopt a <style> architecture"
+    // draft for what is really a "we moved from MVP to Enterprise" note.
     if (section === 'solution') {
       const stageChange = sc.fields.find((f) => f.path === 'stage' || f.path === 'solution.stage');
       if (stageChange) {
         hits.push({
-          category: 'architecture-style',
-          ruleCode: 'ARCH_STYLE_CHANGED',
-          severity: 'medium',
+          category: 'lifecycle-stage',
+          ruleCode: 'LIFECYCLE_STAGE_CHANGED',
+          severity: 'low',
           confidence: 'high',
           reason: `Solution stage changed from "${stageChange.before}" to "${stageChange.after}"`,
           path: `solution.${stageChange.path}`,

@@ -1,6 +1,6 @@
 export { parse } from './parser';
 export type { ParseResult } from './parser';
-export { validate } from './validator';
+export { validate, validateSchema, validateDocument } from './validator';
 export { validateSemantics } from './semantic-validator';
 export { normalize } from './normalizer';
 export type { NormalizeResult } from './normalizer';
@@ -103,7 +103,7 @@ export type {
 } from './types';
 
 import { parse } from './parser';
-import { validate } from './validator';
+import { validateSchema } from './validator';
 import { validateSemantics } from './semantic-validator';
 import { normalize } from './normalizer';
 import { parseWithImports } from './resolver';
@@ -139,7 +139,10 @@ export function compileWithImports(
       success: false,
       errors: resolved.errors.map(e => ({
         type: 'error' as const,
-        code: e.type === 'missing-file' ? 'MISSING_IMPORT' : e.type === 'circular-import' ? 'CIRCULAR_IMPORT' : 'PARSE_ERROR',
+        code: e.type === 'missing-file' ? 'MISSING_IMPORT'
+          : e.type === 'circular-import' ? 'CIRCULAR_IMPORT'
+          : e.type === 'invalid-import' ? 'INVALID_IMPORT'
+          : 'PARSE_ERROR',
         path: e.path?.join('.') ?? '',
         message: `[${e.sourceModule}] ${e.message}`,
       })),
@@ -154,7 +157,7 @@ export function compileWithImports(
   }
 
   // Validate merged document
-  const validationResult = validate(resolved.document);
+  const validationResult = validateSchema(resolved.document);
   if (!validationResult.valid) {
     return {
       success: false,
@@ -221,7 +224,7 @@ export function compile(yamlString: string): CompileResult {
   }
 
   // 2. Validate against schema
-  const validationResult = validate(parseResult.data);
+  const validationResult = validateSchema(parseResult.data);
   if (!validationResult.valid) {
     return {
       success: false,

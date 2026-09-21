@@ -9,8 +9,14 @@ export interface GeneratedFile {
 /**
  * Confidence tier for a generator output.
  *
- * deterministic — output is correct by construction; same SDL always produces
- *   the same result and the result can be used without manual review.
+ * deterministic — output is a mechanical, repeatable mapping from SDL facts:
+ *   the same SDL always produces the same result. This describes the
+ *   generation process, not operational correctness — generated CI/IaC/config
+ *   can still depend on external assumptions (provider capabilities,
+ *   credentials, regions, mutable base images/action versions, current
+ *   platform behavior) that SDL does not verify. Determinism means you won't
+ *   see drift between runs; it does not mean the output is safe to deploy
+ *   unreviewed in a given environment.
  *
  * inferred — output is derived from SDL facts via heuristics; structurally
  *   sound but may contain assumptions worth reviewing before committing.

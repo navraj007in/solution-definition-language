@@ -117,10 +117,12 @@ const INFRA_FILES: Record<string, string[]> = {
   flyio: ['fly.toml'],
 };
 
+// ORMs with no entry here (e.g. Mongoose, whose schemas are inline JS/TS
+// with no fixed filename convention) are detected via package alone — see
+// the "Schema file detected" check in resolveDatabases below.
 const DB_SCHEMA_FILES: Record<string, string[]> = {
   prisma: ['prisma/schema.prisma', 'schema.prisma'],
   drizzle: ['drizzle.config.ts', 'drizzle.config.js'],
-  mongoose: [], // detected via package
   typeorm: ['ormconfig.json', 'ormconfig.ts'],
   sequelize: ['.sequelizerc'],
 };
@@ -279,17 +281,23 @@ function resolveDatabases(doc: SDLDocument, ev: ProgressEvidence): ComponentProg
     const dbPkgs = PROVIDER_PACKAGES[db.type] ?? [];
     const hasPkg = dbPkgs.length > 0 && hasAnyPackage(deps, dbPkgs);
 
-    // Check for ORM schema files
+    // Check for ORM schema files. Some ORMs (e.g. Mongoose) have no fixed
+    // config/schema filename convention — DB_SCHEMA_FILES has no entry for
+    // them, not an empty one that's impossible to satisfy. Only add the
+    // check when we actually have file patterns to look for; otherwise
+    // "done" would be permanently unreachable for those ORMs, since
+    // resolveStatus requires every check in the array to pass.
     const backend = doc.architecture.projects.backend?.[0];
     const orm = backend?.orm;
-    const ormFiles = orm ? DB_SCHEMA_FILES[orm.replace(/-/g, '')] ?? [] : [];
-    const hasSchema = ormFiles.length > 0 && hasAnyFile(files, ormFiles);
+    const ormFiles = orm ? DB_SCHEMA_FILES[orm.replace(/-/g, '')] : undefined;
 
     const checks: Array<[boolean, string]> = [
       [hasDataModel || hasDataModelPhase, 'Data model generated'],
       [hasPkg, `${db.type} driver detected`],
-      [hasSchema, 'Schema file detected'],
     ];
+    if (ormFiles && ormFiles.length > 0) {
+      checks.push([hasAnyFile(files, ormFiles), 'Schema file detected']);
+    }
 
     dbs.push({
       id: `database:${db.name || db.type}`,

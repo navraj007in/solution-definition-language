@@ -207,7 +207,35 @@ jobs:
       - name: Stage discovery outputs into workspace
         if: ${{ inputs.output_mode == 'branch' }}
         run: |
-          rsync -a --delete "${OUTPUT_DIR}/" ./
+          # Copy only the discovery runner's known output paths (the same
+          # ones the "Validate discovery output" step above checks for) into
+          # the workspace. Deliberately NOT `rsync --delete OUTPUT_DIR/ ./`:
+          # that mirrors the whole checkout (including .git/) to match
+          # OUTPUT_DIR, so it deletes everything else in the repository —
+          # unrelated files, .git/ itself, all of it. A discovery run has no
+          # reason to touch anything outside the paths it actually produces.
+          copy_if_present() {
+            src="${OUTPUT_DIR}/$1"
+            if [ -d "${src}" ]; then
+              # Merge contents into the destination directory (adds/replaces
+              # files; never deletes anything already there) rather than
+              # nesting src inside an existing dst of the same name.
+              mkdir -p "$1"
+              cp -a "${src}/." "$1/"
+            elif [ -f "${src}" ]; then
+              mkdir -p "$(dirname "$1")"
+              cp -a "${src}" "$1"
+            fi
+          }
+
+          copy_if_present "solution.sdl.yaml"
+          copy_if_present "sdl-discovery-report.md"
+          copy_if_present "confidence-report.json"
+          copy_if_present "unknowns-and-review-items.md"
+          copy_if_present "sdl-discovery.json"
+          copy_if_present "complexity-report.md"
+          copy_if_present "sdl"
+          copy_if_present "diagrams"
 
       - name: Create or update discovery pull request
         if: ${{ inputs.output_mode == 'branch' && inputs.open_pr }}

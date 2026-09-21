@@ -102,7 +102,7 @@ Each imported file contains one or more SDL sections. The system resolves and me
 
 ## What SDL Generates
 
-Every generator result carries a `tier` field: `deterministic` (correct by construction, safe to use directly), `inferred` (heuristic-based, worth reviewing), or `advisory` (starting point — always review before use).
+Every generator result carries a `tier` field: `deterministic` (a mechanical, repeatable mapping from SDL facts — the same SDL always produces the same output; this is about generation, not operational correctness, since generated CI/IaC still depends on external assumptions like provider capabilities, credentials, and mutable base images), `inferred` (heuristic-based, worth reviewing), or `advisory` (starting point — always review before use).
 
 | Output | Artifact Type | Tier |
 |---|---|---|
@@ -209,7 +209,7 @@ See [ROADMAP.md](ROADMAP.md) and [packages/agents/sdl-discovery/README.md](packa
 The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
 
 - **Parser** — YAML to typed SDL document
-- **Validator** — JSON Schema (AJV) + 13 semantic cross-section rules (reference integrity, uniqueness, cycle detection, config completeness, resilience thresholds, SLO ranges) + 5 structural allOf rules, all returning structured error codes
+- **Validator** — JSON Schema (AJV) + 14 semantic cross-section rules (reference integrity, uniqueness, cycle detection, config completeness, resilience thresholds, SLO ranges) + 5 structural allOf rules, all returning structured error codes. `validateDocument()` (and its alias `validate()`) run both passes; `validateSchema()` runs schema-only when you need the two reported separately
 - **Normalizer** — Auto-inference of defaults; returns `{ document, inferences }` so every filled field is visible with its reason
 - **Resolver** — Multi-file import resolution with merge semantics (array concatenation, object recursion, last-writer-wins scalars), circular import detection, and depth limit enforcement
 - **Diff** — Structural comparison of SDL versions

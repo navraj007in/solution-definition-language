@@ -31,6 +31,7 @@ Emitted by `compileWithImports()` / `parseWithImports()` when resolving modular 
 |---|---|
 | `MISSING_IMPORT` | An `imports[]` entry resolved to no file (neither `<path>.sdl.yaml` nor `<path>.sdl.yml`) |
 | `CIRCULAR_IMPORT` | A file appears twice on the same import chain (a module reachable through two *different* branches — a diamond dependency — is not circular; it is loaded once and later encounters are skipped) |
+| `INVALID_IMPORT` | An `imports[]` entry is structurally malformed (not a string or a `{name, path}` object), or an explicit `name` violates the identifier grammar (`^[a-zA-Z][a-zA-Z0-9_-]*$`) |
 | `PARSE_ERROR` | An imported module failed to parse as YAML |
 
 Any of these fails `compileWithImports()` — a document with unresolved imports never compiles successfully.

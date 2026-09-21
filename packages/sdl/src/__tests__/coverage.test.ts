@@ -106,6 +106,24 @@ describe('classifyDiffForAdr()', () => {
     assert.ok(result.suggestions.length > 0, 'should produce at least one suggestion');
   });
 
+  it('classifies a solution.stage change as lifecycle-stage, not architecture-style', () => {
+    // Regression test: a stage transition (e.g. MVP -> Enterprise) is a
+    // lifecycle/maturity signal, not an architecture decision — it used to
+    // be misclassified as ARCH_STYLE_CHANGED / 'architecture-style'.
+    const result = classifyDiffForAdr({
+      added: [], removed: [], modified: [],
+      crossCuttingChanged: true,
+      sectionChanges: [
+        { section: 'solution', fields: [{ path: 'stage', before: 'MVP', after: 'Enterprise' }] },
+      ],
+      hasChanges: true,
+    });
+    assert.ok(result.suggestions.some((s) => s.category === 'lifecycle-stage'));
+    assert.ok(!result.suggestions.some((s) => s.category === 'architecture-style'));
+    const suggestion = result.suggestions.find((s) => s.category === 'lifecycle-stage');
+    assert.ok(suggestion!.reasonCodes.includes('LIFECYCLE_STAGE_CHANGED'));
+  });
+
   it('detects auth strategy change', () => {
     const result = classifyDiffForAdr({
       added: [], removed: [], modified: [],
@@ -175,6 +193,24 @@ describe('generateAdrDraftFromDiff()', () => {
       const draft = generateAdrDraftFromDiff(doc as unknown as Record<string, unknown>, suggestion);
       assert.equal(draft.sourceCategory, suggestion.category);
     }
+  });
+
+  it('produces a lifecycle-stage draft distinct from architecture-style content', () => {
+    const impact = classifyDiffForAdr({
+      added: [], removed: [], modified: [],
+      crossCuttingChanged: true,
+      sectionChanges: [
+        { section: 'solution', fields: [{ path: 'stage', before: 'MVP', after: 'Enterprise' }] },
+      ],
+      hasChanges: true,
+    });
+    const suggestion = impact.suggestions.find((s) => s.category === 'lifecycle-stage');
+    assert.ok(suggestion);
+    const doc = loadCompiled('taskflow.yaml');
+    const draft = generateAdrDraftFromDiff(doc as unknown as Record<string, unknown>, suggestion!);
+    assert.equal(draft.sourceCategory, 'lifecycle-stage');
+    assert.ok(draft.title.toLowerCase().includes('lifecycle') || draft.title.toLowerCase().includes('stage'));
+    assert.ok(!draft.decision.toLowerCase().includes('architecture'));
   });
 
   it('draft alternatives is an array', () => {

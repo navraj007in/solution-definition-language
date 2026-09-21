@@ -56,6 +56,21 @@ const CATEGORY_DRAFTS: Record<AdrCategory, (doc: SdlDocLike, suggestion: AdrImpa
     sourceReasonCodes: s.reasonCodes,
   }),
 
+  'lifecycle-stage': (doc, s) => ({
+    title: 'Lifecycle Stage Change',
+    context: `${doc.solution?.name || 'This project'}'s lifecycle stage has changed${doc.solution?.stage ? ` to "${doc.solution.stage}"` : ''}. ${joinReasons(s)}`,
+    decision: doc.solution?.stage
+      ? `Treat "${doc.solution.stage}" as the current lifecycle stage for scoping decisions (budget, team size, resilience targets).`
+      : 'Lifecycle stage decision pending.',
+    consequences: 'This alone does not change the architecture — it is a signal to revisit stage-dependent decisions (NFR targets, team/budget constraints, resilience posture) and open a separate ADR for any of those that actually change as a result.',
+    alternatives: [
+      { option: 'No action', pros: 'Nothing to do if no downstream decisions change', cons: 'Stage-dependent targets may silently go stale' },
+      { option: 'Revisit NFRs and constraints for the new stage', pros: 'Keeps availability/scaling/budget targets honest', cons: 'Requires a follow-up review' },
+    ],
+    sourceCategory: s.category,
+    sourceReasonCodes: s.reasonCodes,
+  }),
+
   'component-topology': (doc, s) => ({
     title: 'Component Topology Change',
     context: `The system topology has changed. ${joinReasons(s)}${s.affectedComponents.length > 0 ? ` Affected components: ${s.affectedComponents.join(', ')}.` : ''}`,

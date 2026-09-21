@@ -7,12 +7,22 @@ on:
       - 'examples/**'
       - 'schema/**'
       - 'packages/sdl/**'
+      - 'spec/**'
+      - 'reference/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/validate-templates.yml'
   pull_request:
     paths:
       - 'templates/**'
       - 'examples/**'
       - 'schema/**'
       - 'packages/sdl/**'
+      - 'spec/**'
+      - 'reference/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/validate-templates.yml'
 
 jobs:
   validate:
@@ -26,7 +36,14 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/sdl
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+
+      # Non-mutating: `npm run sync:schema` (run later, inside `build`)
+      # regenerates the mirror, so checking it *after* build would hide
+      # exactly the drift this step exists to catch.
+      - name: Verify schema mirror is in sync
+        working-directory: packages/sdl
+        run: npm run check:schema-mirror
 
       - name: Build SDL package
         working-directory: packages/sdl
@@ -35,6 +52,13 @@ jobs:
       - name: Run tests
         working-directory: packages/sdl
         run: npm test
+
+      # Packs the tarball exactly as it would be published and verifies it
+      # loads under both require() and native Node ESM import — npm test
+      # above only exercises the CJS build via node --test.
+      - name: Verify packed package (CJS + native ESM)
+        working-directory: packages/sdl
+        run: npm run test:packed
 
       # Corpus validation lives in packages/sdl/src/__tests__/examples.test.ts,
       # which `npm test` above already runs. It globs templates/, every

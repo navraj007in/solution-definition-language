@@ -19,7 +19,7 @@ export interface ResolveWarning {
 }
 
 export interface ResolveError {
-  type: 'conflict' | 'circular-import' | 'missing-file' | 'parse-error';
+  type: 'conflict' | 'circular-import' | 'missing-file' | 'parse-error' | 'invalid-import';
   path?: string[];
   message: string;
   sourceModule: string;
@@ -364,10 +364,15 @@ function resolveFile(
   for (const raw of rawImports) {
     const entry = normalizeImportEntry(raw);
     if (entry === null) {
-      result.warnings.push({
-        type: 'scalar-override',
+      // A malformed imports[] entry means the architecture it would have
+      // declared can never be loaded. Treating that as a warning let
+      // compileWithImports() report success for a document with a declared
+      // import that was silently never merged in — an error surfaces it as
+      // the resolution failure it is instead.
+      result.errors.push({
+        type: 'invalid-import',
         path: ['imports'],
-        message: `Skipping invalid imports[] entry: must be a string or {name, path} object`,
+        message: `Invalid imports[] entry: must be a string or {name, path} object`,
         sourceModule: filePath,
       });
       continue;
@@ -379,10 +384,12 @@ function resolveFile(
   const seenNames = new Set<string>();
   for (const entry of entries) {
     if (entry.nameExplicit && !IMPORT_NAME_PATTERN.test(entry.name)) {
-      result.warnings.push({
-        type: 'scalar-override',
+      // Same reasoning as above: an identifier that violates the spec's
+      // import-name grammar should not quietly survive resolution.
+      result.errors.push({
+        type: 'invalid-import',
         path: ['imports'],
-        message: `Import name "${entry.name}" should match ${IMPORT_NAME_PATTERN.source}`,
+        message: `Import name "${entry.name}" must match ${IMPORT_NAME_PATTERN.source}`,
         sourceModule: filePath,
       });
     }

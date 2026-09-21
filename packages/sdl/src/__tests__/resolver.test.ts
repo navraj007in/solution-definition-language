@@ -127,15 +127,17 @@ describe('resolver — Form C (named imports)', () => {
     assert.ok(conflict, `expected duplicate-name conflict, got: ${JSON.stringify(result.errors)}`);
   });
 
-  it('warns when an explicit name violates the identifier pattern (e.g. starts with a digit)', () => {
+  it('errors when an explicit name violates the identifier pattern (e.g. starts with a digit)', () => {
     const reader = makeReader({
       'sdl/services.sdl.yaml': SOLUTION_FRAGMENT,
     });
     const root = ROOT_HEAD + `imports:\n  - name: 1services\n    path: sdl/services\n`;
     const result = parseWithImports(root, reader, 'root');
 
-    const warning = result.warnings.find(w => w.message.includes('Import name "1services"'));
-    assert.ok(warning, 'expected a name-pattern warning');
+    // An invalid identifier must not quietly survive resolution — it fails
+    // compilation rather than surviving as a warning-only annotation.
+    const error = result.errors.find(e => e.message.includes('Import name "1services"'));
+    assert.ok(error, 'expected a name-pattern error');
   });
 
   it('allows kebab-case names (hyphens are permitted)', () => {
@@ -146,8 +148,8 @@ describe('resolver — Form C (named imports)', () => {
     const result = parseWithImports(root, reader, 'root');
 
     assert.equal(result.errors.length, 0);
-    const nameWarnings = result.warnings.filter(w => w.message.includes('Import name'));
-    assert.equal(nameWarnings.length, 0);
+    const nameErrors = result.errors.filter(e => e.message.includes('Import name'));
+    assert.equal(nameErrors.length, 0);
   });
 
   it('rejects entries missing required fields (name without path, etc.)', () => {
@@ -155,8 +157,11 @@ describe('resolver — Form C (named imports)', () => {
     const root = ROOT_HEAD + `imports:\n  - name: orphan\n`;
     const result = parseWithImports(root, reader, 'root');
 
-    const skipped = result.warnings.find(w => w.message.includes('Skipping invalid imports[]'));
-    assert.ok(skipped, 'expected the malformed entry to be skipped with a warning');
+    // A malformed imports[] entry must fail resolution, not just warn — a
+    // warning would let compileWithImports() report success for an
+    // architecture that declared an import that was never loaded.
+    const invalid = result.errors.find(e => e.message.includes('Invalid imports[] entry'));
+    assert.ok(invalid, 'expected the malformed entry to be reported as an error');
   });
 });
 

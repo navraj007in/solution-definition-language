@@ -1,6 +1,10 @@
 dist/
 node_modules/
 package-lock.json
+# @sdl/core is the language reference implementation — its dependency graph
+# is committed so `npm ci` in CI (and any local install) reproduces exactly
+# what was tested, instead of "^"-range resolution drifting between runs.
+!packages/sdl/package-lock.json
 .DS_Store
 *.log
 *.env
