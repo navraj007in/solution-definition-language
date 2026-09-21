@@ -13,7 +13,7 @@ The v2 spec (`spec/v2/`) defines nine areas end to end: foundations (input profi
 | Stage | Spec section | Status |
 |---|---|---|
 | Input profile (IN-001–IN-005) | [FOUNDATIONS.md](../../spec/v2/FOUNDATIONS.md) | **Implemented** — `parseInputProfile()`, all 14 `scope: input` cases in `conformance/cases.yaml` pass |
-| Identity & references (ID-*) | FOUNDATIONS.md | Not started |
+| Identity & references (ID-001–ID-004) | FOUNDATIONS.md | **Partially implemented** — `checkIdentity()` covers components (ID-001/ID-002), service dependency references and cycle detection (ID-003/ID-004), and SLO-target references (ID-002/ID-003). All 11 `scope: identity` cases pass. ID-002's other ~17 identity sets (entities, fields, custom integrations, environments, indexes, constraints, named relationships, storage resources, data instances, recovery plans, cost scenarios/comparisons, compliance requirements, technical debt, teams, databases, hosting targets, features, API inventory) are not implemented — see the header comment in `src/identity.ts` |
 | Structural validation (ST-001, `sdl-v2.schema.json`) | FULL-SPEC.md | Not started |
 | Composition / resolver (IM-*) | FOUNDATIONS.md | Not started |
 | Semantic validation (cross-field, per-slice) | OWNERSHIP-BINDINGS.md, CONTRACTS-ERRORS.md, DOMAIN-METADATA.md, SCOPE-OPERATIONS.md | Not started |
@@ -35,7 +35,7 @@ Nothing here has been asked to accept `sdlVersion: "2.0"` end to end yet — tha
 npm run conformance
 ```
 
-Runs `parseInputProfile()` against every `scope: input` case in `spec/v2/conformance/cases.yaml` and reports pass/fail per case, plus which corpus scopes/manifests aren't wired up yet. This is separate from `spec/v2/conformance/check-corpus.mjs`, which checks the corpus's own internal consistency and deliberately never invokes an implementation.
+Runs `parseInputProfile()` and `checkIdentity()` against every `scope: input` / `scope: identity` case in `spec/v2/conformance/cases.yaml`, including the fixtures' own `assertions` (checked against the case's input, since neither function transforms the document), and reports pass/fail per case plus which corpus scopes/manifests aren't wired up yet. This is separate from `spec/v2/conformance/check-corpus.mjs`, which checks the corpus's own internal consistency and deliberately never invokes an implementation.
 
 ## Development
 

@@ -18,7 +18,11 @@ export type Severity = 'error' | 'warning';
 export type Category = 'validation' | 'resource';
 
 /**
- * DG-001's stage vocabulary. Only 'input' is produced by this package today.
+ * DG-001's stage vocabulary. Only 'input' and 'structure' are produced by
+ * this package today. Identity/reference checks (ID-*) are classified as
+ * 'structure' — DG-001 has no dedicated "identity" stage, and ST-003 groups
+ * "identities, references, cross-field predicates" together under the
+ * document's full-structure check, which is the closest documented fit.
  */
 export type Stage =
   | 'input'
@@ -29,6 +33,9 @@ export type Stage =
   | 'normalization'
   | 'result';
 
+/** Decoded key/index path to a node. `[]` means the document root. */
+export type Path = Array<string | number>;
+
 export interface Diagnostic {
   /** A rule ID from the v2 specification prose (e.g. "IN-002"), not a package error code. */
   rule: string;
@@ -36,6 +43,6 @@ export interface Diagnostic {
   category: Category;
   stage: Stage;
   message: string;
-  /** Decoded key/index path to the offending node, when known. `[]` means the document root. */
-  path?: Array<string | number>;
+  /** Decoded key/index path to the offending node, when known. */
+  path?: Path;
 }
