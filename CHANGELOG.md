@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- **`packages/core-v2/` — early-stage `@sdl/core-v2` package, the first v2 implementation work built directly from `spec/v2/` rather than extended from `@sdl/core`.** v2's identity model and composition/diagnostic contract don't map onto v1.1's resolver/diff/ADR shapes, so retrofitting them into `@sdl/core` would mean building them twice. Only the input profile is implemented (`parseInputProfile()`, spec/v2/FOUNDATIONS.md rules IN-001–IN-005); all 14 `scope: input` cases in `spec/v2/conformance/cases.yaml` pass via `npm run conformance`. Package uses `NodeNext`/ESM-only from the start (`.js`-suffixed relative imports, one build, no dual CJS/ESM step) rather than the post-build rewrite `@sdl/core` needed for its ESM output — see the fix above and `packages/core-v2/README.md`'s "Design choices carried over" section. New `.github/workflows/core-v2.yml` builds, tests, runs the conformance script, and runs `spec/v2/conformance/check-corpus.mjs` (previously not wired into any workflow) on `packages/core-v2/**` / `spec/v2/**` changes.
+
 ### Fixed
 
 - **`@sdl/core`'s published `import` entry point did not load under native Node ESM.** `tsc`'s `moduleResolution: "bundler"` compiled `dist-esm/*.js` with extension-less relative specifiers (`from './parser'`), which native ESM cannot resolve, and there was no `dist-esm/package.json` declaring `"type": "module"`. A bundler-based consumer worked; `node -e "import('@sdl/core')"` failed with `ERR_MODULE_NOT_FOUND`. `scripts/fix-esm-output.mjs` now post-processes the ESM build to fully-specify every relative import/export (including directory imports, resolved to `/index.js`), rewrites the schema's JSON import to a `createRequire()` load (native ESM JSON-import-attribute syntax differs across Node versions; `createRequire` does not), and writes `dist-esm/package.json`. `scripts/test-packed-esm.mjs` packs the tarball and verifies both `require('@sdl/core')` and native `import ... from '@sdl/core'` against it — CI now runs this (`npm run test:packed`) instead of only exercising the CJS build via `node --test`.

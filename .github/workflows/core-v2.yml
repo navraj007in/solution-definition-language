@@ -1,0 +1,56 @@
+name: SDL Core v2
+
+on:
+  push:
+    paths:
+      - 'packages/core-v2/**'
+      - 'spec/v2/**'
+      - '.github/workflows/core-v2.yml'
+  pull_request:
+    paths:
+      - 'packages/core-v2/**'
+      - 'spec/v2/**'
+      - '.github/workflows/core-v2.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install core-v2 dependencies
+        working-directory: packages/core-v2
+        run: npm ci --no-audit --no-fund
+
+      # check-corpus.mjs (run below) resolves its `yaml` dependency via
+      # packages/sdl/package.json, not this package's — it predates
+      # core-v2 and was written to reuse the existing v1.1 package install.
+      - name: Install packages/sdl dependencies (for check-corpus.mjs)
+        working-directory: packages/sdl
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        working-directory: packages/core-v2
+        run: npm run build
+
+      - name: Run unit tests
+        working-directory: packages/core-v2
+        run: node --test dist/__tests__/*.test.js
+
+      # Runs parseInputProfile() against every `scope: input` case in
+      # spec/v2/conformance/cases.yaml — the corpus's own check-corpus.mjs
+      # deliberately never invokes an implementation, so this is the only
+      # place that actually exercises this package against the spec's cases.
+      - name: Run v2 conformance (implemented scopes only)
+        working-directory: packages/core-v2
+        run: node scripts/run-conformance.mjs
+
+      # The spec's own fixture-integrity check — unaffected by this package,
+      # but run here too so a spec/v2/** change that breaks the corpus
+      # itself is caught in the same job that builds against it.
+      - name: Verify spec/v2 conformance corpus integrity
+        run: node spec/v2/conformance/check-corpus.mjs

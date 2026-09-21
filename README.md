@@ -6,7 +6,7 @@ SDL is a structured YAML specification for capturing complete software architect
 
 **SDL v2.0 is the active specification for the 2.x line**, published as baseline `sdl-v2.0`. It provides a self-contained field/schema contract, full-document cases, diagnostics, and a classified v1.1 migration plan.
 
-**SDL v1.1 remains active for the 1.x line**, frozen as baseline `sdl-v1.1-2026-09-13`. The reference packages implement v1.1 only, so documents built with current tooling should still target `sdlVersion: "1.1"` until package support for v2 lands.
+**SDL v1.1 remains active for the 1.x line**, frozen as baseline `sdl-v1.1-2026-09-13`. `@sdl/core` (`packages/sdl/`) implements v1.1 only, so documents built with it should still target `sdlVersion: "1.1"`. Early v2 package work has started in `packages/core-v2/` (see below) but does not yet accept `sdlVersion: "2.0"` end to end.
 
 ## Why SDL?
 
@@ -137,7 +137,7 @@ Every generator result carries a `tier` field: `deterministic` (a mechanical, re
 | [Generators](reference/generators.md) | Generator tiers, what each produces, what SDL sections it consumes |
 | [Specification v1.1](spec/SDL-v1.1.md) | Active normative specification; exact baseline `sdl-v1.1-2026-09-13` |
 | [Completion Decisions](spec/completion-decisions.md) | Selected D01–D08 language designs and boundaries |
-| [SDL v2 specification](spec/v2/README.md) | Active 2.x baseline `sdl-v2.0`; package implementation remains later |
+| [SDL v2 specification](spec/v2/README.md) | Active 2.x baseline `sdl-v2.0`; package implementation is [early-stage](packages/core-v2/README.md) |
 | [Complexity Scoring Spec](reference/complexity-scoring.md) | Technical specification: formulas, thresholds, confidence model |
 | [Schema Reference](reference/schema-reference.md) | v1.1-oriented field and section reference |
 | [Normalization](reference/normalization-defaults.md) | Auto-inference rules and mapping tables |
@@ -215,6 +215,8 @@ The `@sdl/core` npm package in [packages/sdl/](packages/sdl/) provides:
 - **Diff** — Structural comparison of SDL versions
 - **Generators** — 13 registry-backed artifact types + 5 direct API generators, each carrying a confidence tier (`deterministic`, `inferred`, or `advisory`)
 - **Progress Tracker** — Verification spec derivation for build progress
+
+The `@sdl/core-v2` package in [packages/core-v2/](packages/core-v2/) is the early-stage v2 implementation, built directly from [spec/v2/](spec/v2/) rather than extended from `@sdl/core`. Only the input profile (IN-001–IN-005) is implemented so far; see its [README](packages/core-v2/README.md) for the full status table and why it's a separate package.
 
 ## Roadmap
 

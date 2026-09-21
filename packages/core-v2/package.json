@@ -1,0 +1,39 @@
+{
+  "name": "@sdl/core-v2",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Reference implementation of the SDL v2 language contract (spec/v2/). Early-stage: only the input profile (IN-001–IN-005) is implemented so far — see README.md for status.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/__tests__/*.test.js",
+    "conformance": "npm run build && node scripts/run-conformance.mjs"
+  },
+  "keywords": [
+    "sdl",
+    "architecture",
+    "v2"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/navraj007in/solution-definition-language.git",
+    "directory": "packages/core-v2"
+  },
+  "homepage": "https://github.com/navraj007in/solution-definition-language",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
